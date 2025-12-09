@@ -1,0 +1,14 @@
+package auth
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"go-starter/cmd/web"
+)
+
+templ RegisterPage(c *fiber.Ctx) {
+	@web.Base(c) {
+		<h1>Register</h1>
+		@AuthForm("/api/auth/register")
+		<a href="/auth/login">Sign In</a>
+	}
+}

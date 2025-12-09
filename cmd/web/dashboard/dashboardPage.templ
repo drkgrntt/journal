@@ -1,0 +1,13 @@
+package dashboard
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"go-starter/cmd/web"
+)
+
+templ DashboardPage(c *fiber.Ctx) {
+	@web.Base(c) {
+		<h1>Dashboard Page</h1>
+		<p>Charts, upcoming activities, new leads, etc</p>
+	}
+}

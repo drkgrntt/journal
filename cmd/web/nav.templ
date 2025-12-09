@@ -1,0 +1,43 @@
+package web
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"go-starter/internal/models"
+	"go-starter/internal/utils"
+)
+
+templ Nav(c *fiber.Ctx) {
+	<nav>
+		<ul>
+			if utils.GetLocal[models.User](c, "currentUser") != nil {
+				<li>
+					<form
+						hx-post="/api/auth/logout"
+						hx-target="body"
+						hx-push-url="/auth/login"
+					>
+						<button type="submit">Logout</button>
+					</form>
+				</li>
+				<li>
+					<a href="/dashboard">Dashboard</a>
+				</li>
+				<li>
+					<a href="/entities">Entities</a>
+				</li>
+				<li>
+					<a href="/service-providers">Service Providers</a>
+				</li>
+				<li>
+					<a href="/people">Contacts</a>
+				</li>
+				<li>
+					<a href="/account">Account</a>
+				</li>
+			} else {
+				<li><a href="/auth/login">Sign in</a></li>
+				<li><a href="/auth/register">Sign up</a></li>
+			}
+		</ul>
+	</nav>
+}

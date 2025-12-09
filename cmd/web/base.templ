@@ -1,0 +1,27 @@
+package web
+
+import "github.com/gofiber/fiber/v2"
+
+templ Base(c *fiber.Ctx) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Seahorse</title>
+			<link href="/assets/css/output.css" rel="stylesheet"/>
+			<link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/3823/3823167.png"/>
+			<script src="/assets/js/index.js" type="module"></script>
+			<script src="/assets/js/lib/htmx.min.js"></script>
+		</head>
+		<body>
+			<main
+				hx-on:htmx:after-request="handleHtmxError?.(event)"
+				hx-boost="true"
+			>
+				@Nav(c)
+				{ children... }
+			</main>
+		</body>
+	</html>
+}

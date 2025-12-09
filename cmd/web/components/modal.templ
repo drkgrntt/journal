@@ -1,0 +1,13 @@
+package components
+
+import "fmt"
+
+templ Modal(id string, buttonText string) {
+	<button id={ fmt.Sprintf("%s-button", id) }>{ buttonText }</button>
+	<dialog modal id={ id } class="modal">
+		<div class="content">
+			<button close class="close">&times;</button>
+			{ children... }
+		</div>
+	</dialog>
+}
