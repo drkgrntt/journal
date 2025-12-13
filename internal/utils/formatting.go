@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 func FormatMoney(cost float64) string {
@@ -34,4 +35,19 @@ func CastToType[T any](data any) (error, T) {
 type KeyValue struct {
 	Key   string `json:"key"`
 	Value any    `json:"value"`
+}
+
+func SubstringToFullWords(input string, characters int) string {
+	pieces := strings.Split(input, " ")
+	result := ""
+	for i, piece := range pieces {
+		result += piece + " "
+		if len(result) >= characters {
+			if i < len(pieces)-1 {
+				result += "..."
+			}
+			break
+		}
+	}
+	return result
 }

@@ -1,0 +1,28 @@
+package journal
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"go-starter/cmd/web"
+	"go-starter/internal/models"
+)
+
+templ View(c *fiber.Ctx, journal *models.Journal) {
+	<a href={ templ.SafeURL(fmt.Sprintf("/journal/%s/edit", journal.ID.String())) }>Edit</a>
+	<button
+		hx-delete={ fmt.Sprintf("/api/journal/%s", journal.ID.String()) }
+	>
+		Delete
+	</button>
+	<h2 data-datetime={ journal.Date.Format("2006-01-02 15:04 -0700") }>{ journal.Date.Format("2006-01-02 15:04pm") }</h2>
+	<p>Topic: { journal.JournalType.Name }</p>
+	<p>Rating: { journal.Rating.Name }</p>
+	<p>{ journal.Entry }</p>
+}
+
+templ ViewPage(c *fiber.Ctx) {
+	@web.Base(c) {
+		<a href={ templ.SafeURL("/journal") }>Back</a>
+		@View(c, getJournal(c))
+	}
+}

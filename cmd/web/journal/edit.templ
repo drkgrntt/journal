@@ -1,0 +1,19 @@
+package journal
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"go-starter/cmd/web"
+	"go-starter/internal/models"
+)
+
+templ Edit(c *fiber.Ctx, journal *models.Journal) {
+	<a href={ templ.SafeURL(fmt.Sprintf("/journal/%s", journal.ID.String())) }>Back</a>
+	@Form(c, journal)
+}
+
+templ EditPage(c *fiber.Ctx) {
+	@web.Base(c) {
+		@Edit(c, getJournal(c))
+	}
+}

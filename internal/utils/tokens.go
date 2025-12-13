@@ -53,8 +53,7 @@ func CreateToken(userId uuid.UUID) (string, error) {
 }
 
 type TokenData struct {
-	UserID    uuid.UUID
-	AccountID uuid.UUID
+	UserID uuid.UUID
 }
 
 func ValidateToken(token string) (*TokenData, error) {
@@ -88,19 +87,14 @@ func ValidateToken(token string) (*TokenData, error) {
 	if claims["sub"] == nil {
 		return nil, fmt.Errorf("validate: no sub")
 	}
-	if claims["acc"] == nil {
-		return nil, fmt.Errorf("validate: no acc")
-	}
 
 	userId, err := uuid.Parse(claims["sub"].(string))
-	accountId, err := uuid.Parse(claims["acc"].(string))
 	if err != nil {
 		return nil, fmt.Errorf("validate: unable to parse tokens: %s", err)
 	}
 
 	tokenData := TokenData{
-		UserID:    userId,
-		AccountID: accountId,
+		UserID: userId,
 	}
 	return &tokenData, nil
 }

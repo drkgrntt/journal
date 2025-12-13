@@ -36,7 +36,7 @@ func init() {
 		logger.Error("Error starting scheduler", "error", err.Error())
 	}
 
-	s.Start()
+	// s.Start()
 }
 
 var (

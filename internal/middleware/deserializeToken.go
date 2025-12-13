@@ -25,13 +25,13 @@ func DeserializeToken(ctx *fiber.Ctx) error {
 	db := database.New()
 
 	var user models.User
-	err = db.DB.Where("user_id = ?", data.UserID).
+	err = db.DB.Where("id = ?", data.UserID).
 		First(&user).Error
 	if err != nil {
 		logger.Error("Error getting user: ", err.Error())
 		return ctx.Next()
 	}
 
-	ctx.Locals("currentUser", user)
+	ctx.Locals("currentUser", &user)
 	return ctx.Next()
 }

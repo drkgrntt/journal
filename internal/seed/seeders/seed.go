@@ -3,6 +3,7 @@ package seeders
 import (
 	"go-starter/internal/database"
 	"go-starter/internal/models"
+	"log"
 
 	"gorm.io/gorm"
 )
@@ -14,5 +15,21 @@ var (
 
 func Seed() {
 	db = database.New().DB
-	seedUsers()
+
+	var err error
+
+	err = seedUsers()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = seedRatings()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = seedJournalTypes()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

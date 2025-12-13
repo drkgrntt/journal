@@ -15,6 +15,8 @@ type User struct {
 	FirstName string `gorm:"not null" json:"firstName,omitempty"`
 	LastName  string `gorm:"not null" json:"lastName,omitempty"`
 	Password  string `gorm:"not null" json:"-"`
+
+	Journals []*Journal `gorm:"foreignKey:CreatorID" json:"journals,omitempty"`
 }
 
 func hashPassword(password string) string {

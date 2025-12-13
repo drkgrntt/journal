@@ -3,11 +3,12 @@ package dashboard
 import (
 	"github.com/gofiber/fiber/v2"
 	"go-starter/cmd/web"
+	"go-starter/cmd/web/journal"
 )
 
 templ DashboardPage(c *fiber.Ctx) {
 	@web.Base(c) {
-		<h1>Dashboard Page</h1>
-		<p>Charts, upcoming activities, new leads, etc</p>
+		<h1>How are you today?</h1>
+		@journal.Form(c, nil)
 	}
 }

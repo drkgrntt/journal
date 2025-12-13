@@ -1,3 +1,5 @@
+export * from "./dates.js"
+
 export function setToWindow(key, item) {
 	window[key] = item
 }

@@ -1,0 +1,77 @@
+package journal
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"go-starter/cmd/web/components"
+	"go-starter/internal/models"
+	"go-starter/internal/utils"
+	"time"
+)
+
+func journalDate(journal *models.Journal) *time.Time {
+	if journal != nil {
+		return journal.Date
+	}
+
+	t := time.Now()
+	return &t
+}
+
+func getJournalTypes(c *fiber.Ctx) []*models.JournalType {
+	types := utils.GetLocal[[]*models.JournalType](c, "journalTypes")
+	return *types
+}
+
+func getRatings(c *fiber.Ctx) []*models.Rating {
+	ratings := utils.GetLocal[[]*models.Rating](c, "ratings")
+	return *ratings
+}
+
+templ Form(c *fiber.Ctx, journal *models.Journal) {
+	<form
+		if journal != nil {
+			hx-put={ fmt.Sprintf("/api/journal/%s", journal.ID.String()) }
+		} else {
+			hx-post="/api/journal"
+		}
+		hx-trigger="submit"
+	>
+		@components.DateTimeInput("date", journalDate(journal))
+		<select name="journalType">
+			for _, journalType := range getJournalTypes(c) {
+				<option
+					value={ fmt.Sprint(journalType.ID) }
+					if journal != nil && journal.JournalTypeID == journalType.ID {
+						selected
+					}
+				>
+					{ journalType.Name }
+				</option>
+			}
+		</select>
+		<fieldset>
+			<legend>Rating</legend>
+			for _, rating := range getRatings(c) {
+				<input
+					id={ fmt.Sprint(rating.ID) }
+					type="radio"
+					name="rating"
+					value={ fmt.Sprint(rating.ID) }
+					if journal != nil && journal.RatingID == rating.ID {
+						checked
+					}
+				/>
+				<label for={ fmt.Sprint(rating.ID) }>{ rating.Name }</label>
+			}
+		</fieldset>
+		<textarea
+			name="entry"
+		>
+			if journal != nil {
+				{ journal.Entry }
+			}
+		</textarea>
+		<input type="submit"/>
+	</form>
+}

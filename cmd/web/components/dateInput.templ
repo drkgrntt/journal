@@ -1,0 +1,26 @@
+package components
+
+import (
+	"fmt"
+	"time"
+)
+
+templ DateInput(name string, defaultTime *time.Time) {
+	<input
+		class="input"
+		name={ fmt.Sprintf("%sString", name) }
+		id={ name }
+		type="date"
+		hx-on:change="setUnixValue(event.target.value, this.nextElementSibling)"
+		if defaultTime != nil {
+			value={ defaultTime.Format("2006-01-02T15:04") }
+		}
+	/>
+	<input
+		type="hidden"
+		name={ name }
+		if defaultTime != nil {
+			value={ fmt.Sprint(defaultTime.UnixMilli()) }
+		}
+	/>
+}

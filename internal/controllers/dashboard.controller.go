@@ -27,7 +27,7 @@ func (c *DashboardController) Init(db *gorm.DB, app *fiber.App) {
 
 func (c *DashboardController) RegisterViewRoutes() {
 	c.views.Use(middleware.RequireAuth)
-	c.views.Get("/", utils.RenderPage(dashboard.DashboardPage))
+	c.views.Get("/", middleware.SetRatings, middleware.SetJournalTypes, utils.RenderPage(dashboard.DashboardPage))
 }
 
 func (c *DashboardController) RegisterApiRoutes() {
