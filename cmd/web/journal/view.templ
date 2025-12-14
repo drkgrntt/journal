@@ -8,21 +8,41 @@ import (
 )
 
 templ View(c *fiber.Ctx, journal *models.Journal) {
-	<a href={ templ.SafeURL(fmt.Sprintf("/journal/%s/edit", journal.ID.String())) }>Edit</a>
-	<button
-		hx-delete={ fmt.Sprintf("/api/journal/%s", journal.ID.String()) }
+	<div class="actions">
+		<a class="back" href={ templ.SafeURL("/journal") }>
+			<i class="fa fa-chevron-left"></i>
+			Back
+		</a>
+		<a
+			href={ templ.SafeURL(fmt.Sprintf("/journal/%s/edit", journal.ID.String())) }
+		>
+			Edit
+		</a>
+		<a
+			href="#"
+			hx-confirm="Are you sure?"
+			hx-delete={ fmt.Sprintf("/api/journal/%s", journal.ID.String()) }
+		>
+			Delete
+		</a>
+	</div>
+	<h2
+		class="heading"
+		data-datetime={ journal.Date.Format("2006-01-02 15:04 -0700") }
 	>
-		Delete
-	</button>
-	<h2 data-datetime={ journal.Date.Format("2006-01-02 15:04 -0700") }>{ journal.Date.Format("2006-01-02 15:04pm") }</h2>
-	<p>Topic: { journal.JournalType.Name }</p>
-	<p>Rating: { journal.Rating.Name }</p>
-	<p>{ journal.Entry }</p>
+		{ journal.Date.Format("2006-01-02 15:04pm") }
+	</h2>
+	<div class="info">
+		<p>Topic: { journal.JournalType.Name }</p>
+		<p>Rating: { journal.Rating.Name }</p>
+	</div>
+	<p class="entry">{ journal.Entry }</p>
 }
 
 templ ViewPage(c *fiber.Ctx) {
 	@web.Base(c) {
-		<a href={ templ.SafeURL("/journal") }>Back</a>
-		@View(c, getJournal(c))
+		<div id="journal-view-page">
+			@View(c, getJournal(c))
+		</div>
 	}
 }
