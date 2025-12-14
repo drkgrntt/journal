@@ -57,7 +57,7 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 
 	var user models.User
 	err = c.db.Where("lower(email) = ?", strings.ToLower(body.Email)).First(&user).Error
-	if err != nil {
+	if err == nil {
 		return ctx.Status(http.StatusBadRequest).SendString("User already exists")
 	}
 
