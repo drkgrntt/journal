@@ -1,0 +1,36 @@
+.label {
+}
+
+.input,
+.textarea,
+.select {
+	padding: .4rem 1rem;
+	border: 1px solid var(--border-color);
+	border-radius: .3rem;
+}
+
+.select {
+	background-color: transparent;
+}
+
+.input {
+}
+
+.textarea {
+	resize: vertical;
+}
+
+.legend {
+	padding-bottom: .5rem;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: .3rem;
+}
+
+.checkField {
+	display: flex;
+	gap: .2rem;
+}

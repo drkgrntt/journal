@@ -7,24 +7,28 @@ import (
 )
 
 templ Nav(c *fiber.Ctx) {
-	<nav>
-		<ul>
+	<button
+		id="app-nav-toggle"
+		onclick="document.getElementById('app-nav').classList.toggle('open')"
+	>☰</button>
+	<nav id="app-nav">
+		<ul class="list">
 			if utils.GetLocal[models.User](c, "currentUser") != nil {
-				<li><a href="/dashboard">Dashboard</a></li>
-				<li><a href="/journal">My Journal</a></li>
-				<li><a href="/journal/new">New Journal Entry</a></li>
-				<li>
-					<form
+				<li class="list-item"><a class="link" href="/dashboard">Dashboard</a></li>
+				<li class="list-item"><a class="link" href="/journal">My Journal</a></li>
+				<li class="list-item"><a class="link" href="/journal/new">New Journal Entry</a></li>
+				<li class="list-item">
+					<a
+						class="link"
+						href="#"
 						hx-post="/api/auth/logout"
 						hx-target="body"
 						hx-push-url="/auth/login"
-					>
-						<button type="submit">Logout</button>
-					</form>
+					>Logout</a>
 				</li>
 			} else {
-				<li><a href="/auth/login">Sign in</a></li>
-				<li><a href="/auth/register">Sign up</a></li>
+				<li class="list-item"><a class="link" href="/auth/login">Sign in</a></li>
+				<li class="list-item"><a class="link" href="/auth/register">Sign up</a></li>
 			}
 		</ul>
 	</nav>

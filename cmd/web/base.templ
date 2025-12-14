@@ -8,14 +8,19 @@ templ Base(c *fiber.Ctx) {
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<title>Mental Health Journal</title>
+			<title>Journal</title>
+			<link href="/assets/fontawesome/css/fontawesome.css" rel="stylesheet"/>
+			<link href="/assets/fontawesome/css/solid.css" rel="stylesheet"/>
+			<link href="/assets/fontawesome/css/sharp-thin.css" rel="stylesheet"/>
 			<link href="/assets/css/output.css" rel="stylesheet"/>
 			<link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/3823/3823167.png"/>
 			<script src="/assets/js/index.js" type="module"></script>
 			<script src="/assets/js/lib/htmx.min.js"></script>
 		</head>
 		<body>
+			<div class="top-bar"></div>
 			<main
+				class="main"
 				hx-on:htmx:after-request="handleHtmxError?.(event)"
 				hx-boost="true"
 			>

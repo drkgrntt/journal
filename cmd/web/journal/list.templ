@@ -31,6 +31,7 @@ func nextPage(c *fiber.Ctx) int {
 
 templ loadMore(c *fiber.Ctx) {
 	<button
+		class="button"
 		hx-get={ fmt.Sprintf("/journal/list?page=%d", nextPage(c)) }
 		hx-target="[journal-list]"
 		hx-swap="beforeend"
@@ -46,13 +47,20 @@ templ loadMore(c *fiber.Ctx) {
 
 templ listItemsWithButton(c *fiber.Ctx, includeButton bool) {
 	for _, journal := range getJournals(c) {
-		<li>
+		<li class="item">
 			<a href={ templ.SafeURL(fmt.Sprintf("/journal/%s", journal.ID.String())) }>
-				<h2 data-datetime={ journal.Date.Format("2006-01-02 15:04 -0700") }>{ journal.Date.Format("2006-01-02 15:04pm") }</h2>
+				<h2
+					data-datetime={ journal.Date.Format("2006-01-02 15:04 -0700") }
+					class="date"
+				>
+					{ journal.Date.Format("2006-01-02 15:04pm") }
+				</h2>
 			</a>
-			<p>Topic: { journal.JournalType.Name }</p>
-			<p>Rating: { journal.Rating.Name }</p>
-			<p>{ utils.SubstringToFullWords(journal.Entry, 100) }</p>
+			<div class="info">
+				<p class="topic">Topic: { journal.JournalType.Name }</p>
+				<p class="rating">Rating: { journal.Rating.Name }</p>
+			</div>
+			<p class="entry">{ utils.SubstringToFullWords(journal.Entry, 100) }</p>
 		</li>
 	}
 	if includeButton {
@@ -75,9 +83,12 @@ templ ListItems(c *fiber.Ctx) {
 
 templ ListPage(c *fiber.Ctx) {
 	@web.Base(c) {
-		<ul journal-list>
-			@listItemsWithButton(c, false)
-		</ul>
-		@loadMore(c)
+		<div id="journal-list-page">
+			<h1 class="heading">Journal Entries</h1>
+			<ul class="list" journal-list>
+				@listItemsWithButton(c, false)
+			</ul>
+			@loadMore(c)
+		</div>
 	}
 }

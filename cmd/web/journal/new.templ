@@ -6,12 +6,18 @@ import (
 )
 
 templ New(c *fiber.Ctx) {
-	<a href={ templ.SafeURL("/journal") }>Back</a>
 	@Form(c, nil)
 }
 
 templ NewPage(c *fiber.Ctx) {
 	@web.Base(c) {
-		@New(c)
+		<div id="new-journal-page">
+			<a class="back" href={ templ.SafeURL("/journal") }>
+				<i class="far fa-chevron-left"></i>
+				Back
+			</a>
+			<h1 class="heading">New Journal Entry</h1>
+			@New(c)
+		</div>
 	}
 }

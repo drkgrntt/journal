@@ -1,0 +1,12 @@
+.main {
+	position: relative;
+	max-width: 80rem;
+	margin: 0 auto;
+	padding: .5rem;
+}
+
+.top-bar {
+	background-color: var(--primary-color);
+	height: 3.5rem;
+	width: 100vw;
+}

@@ -30,6 +30,7 @@ func getRatings(c *fiber.Ctx) []*models.Rating {
 
 templ Form(c *fiber.Ctx, journal *models.Journal) {
 	<form
+		id="journal-form"
 		if journal != nil {
 			hx-put={ fmt.Sprintf("/api/journal/%s", journal.ID.String()) }
 		} else {
@@ -37,41 +38,57 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 		}
 		hx-trigger="submit"
 	>
-		@components.DateTimeInput("date", journalDate(journal))
-		<select name="journalType">
-			for _, journalType := range getJournalTypes(c) {
-				<option
-					value={ fmt.Sprint(journalType.ID) }
-					if journal != nil && journal.JournalTypeID == journalType.ID {
-						selected
-					}
-				>
-					{ journalType.Name }
-				</option>
-			}
-		</select>
-		<fieldset>
-			<legend>Rating</legend>
+		<div class="field">
+			<label class="label" for="date">Date</label>
+			@components.DateTimeInput("date", journalDate(journal))
+		</div>
+		<div class="field">
+			<label class="label" for="journalType">Topic</label>
+			<select
+				name="journalType"
+				class="select"
+			>
+				for _, journalType := range getJournalTypes(c) {
+					<option
+						value={ fmt.Sprint(journalType.ID) }
+						if journal != nil && journal.JournalTypeID == journalType.ID {
+							selected
+						}
+					>
+						{ journalType.Name }
+					</option>
+				}
+			</select>
+		</div>
+		<fieldset class="field">
+			<legend class="label legend">Rating</legend>
 			for _, rating := range getRatings(c) {
-				<input
-					id={ fmt.Sprint(rating.ID) }
-					type="radio"
-					name="rating"
-					value={ fmt.Sprint(rating.ID) }
-					if journal != nil && journal.RatingID == rating.ID {
-						checked
-					}
-				/>
-				<label for={ fmt.Sprint(rating.ID) }>{ rating.Name }</label>
+				<div class="check-field">
+					<input
+						id={ fmt.Sprint(rating.ID) }
+						type="radio"
+						name="rating"
+						value={ fmt.Sprint(rating.ID) }
+						if journal != nil && journal.RatingID == rating.ID {
+							checked
+						}
+					/>
+					<label class="label" for={ fmt.Sprint(rating.ID) }>{ rating.Name }</label>
+				</div>
 			}
 		</fieldset>
-		<textarea
-			name="entry"
-		>
-			if journal != nil {
-				{ journal.Entry }
-			}
-		</textarea>
-		<input type="submit"/>
+		<div class="field">
+			<label class="label" for="entry">Entry</label>
+			<textarea
+				rows="8"
+				name="entry"
+				class="textarea"
+			>
+				if journal != nil {
+					{ journal.Entry }
+				}
+			</textarea>
+		</div>
+		<input class="button" type="submit"/>
 	</form>
 }
