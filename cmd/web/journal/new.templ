@@ -1,0 +1,17 @@
+package journal
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"go-starter/cmd/web"
+)
+
+templ New(c *fiber.Ctx) {
+	<a href={ templ.SafeURL("/journal") }>Back</a>
+	@Form(c, nil)
+}
+
+templ NewPage(c *fiber.Ctx) {
+	@web.Base(c) {
+		@New(c)
+	}
+}

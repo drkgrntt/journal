@@ -10,6 +10,9 @@ templ Nav(c *fiber.Ctx) {
 	<nav>
 		<ul>
 			if utils.GetLocal[models.User](c, "currentUser") != nil {
+				<li><a href="/dashboard">Dashboard</a></li>
+				<li><a href="/journal">My Journal</a></li>
+				<li><a href="/journal/new">New Journal Entry</a></li>
 				<li>
 					<form
 						hx-post="/api/auth/logout"
