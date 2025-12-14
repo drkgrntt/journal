@@ -26,7 +26,7 @@ func SetRatings(ctx *fiber.Ctx) error {
 	db := database.New()
 
 	var ratings []*models.Rating
-	err := db.DB.Find(&ratings).Error
+	err := db.DB.Order("value DESC").Find(&ratings).Error
 	if err != nil {
 		logger.Error("Error getting ratings: ", "error message", err.Error())
 		return ctx.Next()
