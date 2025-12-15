@@ -1,0 +1,56 @@
+package actionItems
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"go-starter/internal/models"
+)
+
+templ Form(
+	c *fiber.Ctx,
+	journal *models.Journal,
+	actionItem *models.ActionItem,
+) {
+	<form
+		id="action-item-form"
+		if actionItem != nil {
+			hx-put={ fmt.Sprintf("/api/action-items/%s", actionItem.ID.String()) }
+		} else {
+			hx-post="/api/action-items"
+		}
+		hx-swap="beforeend"
+		hx-target="[action-items]"
+		hx-trigger="submit"
+		hx-swap-oob="outerHTML"
+	>
+		<label for="text" class="label">Action Item</label>
+		<input
+			placeholder="Add an action item"
+			class="input"
+			id="text"
+			name="text"
+			if actionItem != nil {
+				value={ actionItem.Text }
+			}
+		/>
+		if journal != nil {
+			<input
+				type="hidden"
+				name="journalId"
+				value={ journal.ID.String() }
+			/>
+		}
+		if actionItem != nil {
+			<input
+				type="hidden"
+				name="isComplete"
+				value={ fmt.Sprint(actionItem.IsComplete()) }
+			/>
+		}
+		<button
+			class="button"
+		>
+			<i class="fas fa-plus"></i>
+		</button>
+	</form>
+}

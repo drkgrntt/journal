@@ -36,6 +36,7 @@ func (c *JournalController) getJournal(ctx *fiber.Ctx) error {
 	err := c.db.Where("id = ?", id).
 		Preload("JournalType").
 		Preload("Rating").
+		Preload("ActionItems").
 		First(&journal).Error
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(fiber.Map{"message": "Journal not found"})
@@ -76,10 +77,11 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 }
 
 type JournalBody struct {
-	Date          int    `form:"date"`
-	JournalTypeID int    `form:"journalType"`
-	RatingID      int    `form:"rating"`
-	Entry         string `form:"entry"`
+	Date          int      `form:"date"`
+	JournalTypeID int      `form:"journalType"`
+	RatingID      int      `form:"rating"`
+	Entry         string   `form:"entry"`
+	ActionItemIDs []string `form:"actionItemIds"`
 }
 
 func (c *JournalController) parseJournalFromBody(ctx *fiber.Ctx, journal *models.Journal) error {
@@ -100,6 +102,15 @@ func (c *JournalController) parseJournalFromBody(ctx *fiber.Ctx, journal *models
 
 	journal.Rating = nil
 	journal.JournalType = nil
+
+	if len(body.ActionItemIDs) > 0 {
+		actionItems := []*models.ActionItem{}
+		err := c.db.Where("id in (?)", body.ActionItemIDs).Find(&actionItems).Error
+		if err != nil {
+			return err
+		}
+		journal.ActionItems = actionItems
+	}
 
 	return nil
 }
@@ -134,9 +145,30 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 	user := utils.GetLocal[models.User](ctx, "currentUser")
 	journal.Base = &models.Base{CreatorID: user.ID, LastUpdaterID: user.ID}
 
-	err = c.db.Create(journal).Error
+	tx := c.db.Begin()
+	defer tx.Rollback()
+
+	if tx.Error != nil {
+		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating journal"})
+	}
+
+	err = tx.Create(journal).Error
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating journal"})
+	}
+
+	for _, actionItem := range journal.ActionItems {
+		actionItem.JournalID = journal.ID
+	}
+
+	err = tx.Save(&journal.ActionItems).Error
+	if err != nil {
+		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action items"})
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action items"})
 	}
 
 	ctx.Set("HX-Redirect", fmt.Sprintf("/journal/%s", journal.ID.String()))

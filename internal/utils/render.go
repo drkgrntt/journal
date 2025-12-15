@@ -29,3 +29,20 @@ func RenderComponent(component templ.Component, ctx *fiber.Ctx) (err error) {
 
 	return
 }
+
+func RenderComponents(components []templ.Component, ctx *fiber.Ctx) (err error) {
+	buf := new(bytes.Buffer)
+	for _, component := range components {
+		err = component.Render(ctx.Context(), buf)
+		if err != nil {
+			return ctx.Status(http.StatusBadRequest).SendString(err.Error())
+		}
+	}
+
+	err = ctx.Status(http.StatusOK).SendString(buf.String())
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).SendString(err.Error())
+	}
+
+	return
+}

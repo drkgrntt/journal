@@ -1,0 +1,25 @@
+#action-item-list {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: .5rem;
+
+	.item {
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		border-bottom: 1px solid var(--border-color);
+	}		
+
+	.text {
+		flex: 1;
+
+		&.completed {
+			text-decoration: line-through;
+		}
+	}
+	
+	.button {
+		border: none;
+	}
+}

@@ -11,4 +11,20 @@
 	.back {
 		text-decoration: none;
 	}
+
+	.body {
+		display: grid;
+		align-items: flex-start;
+		grid-gap: 1rem;
+
+		& > * {
+		}
+
+		& > :first-child {
+		}
+
+		@media screen and (min-width: 40rem) {
+			grid-template-columns: 2fr 1fr;
+		}
+	}
 }

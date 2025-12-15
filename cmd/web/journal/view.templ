@@ -4,45 +4,57 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"go-starter/cmd/web"
+	"go-starter/cmd/web/actionItems"
 	"go-starter/internal/models"
 )
 
 templ View(c *fiber.Ctx, journal *models.Journal) {
-	<div class="actions">
-		<a class="back" href={ templ.SafeURL("/journal") }>
-			<i class="fa fa-chevron-left"></i>
-			Back
-		</a>
-		<a
-			href={ templ.SafeURL(fmt.Sprintf("/journal/%s/edit", journal.ID.String())) }
+	<div class="journal">
+		<div class="actions">
+			<a class="back" href={ templ.SafeURL("/journal") }>
+				<i class="fa fa-chevron-left"></i>
+				Back
+			</a>
+			<a
+				href={ templ.SafeURL(fmt.Sprintf("/journal/%s/edit", journal.ID.String())) }
+			>
+				Edit
+			</a>
+			<a
+				href="#"
+				hx-confirm="Are you sure?"
+				hx-delete={ fmt.Sprintf("/api/journal/%s", journal.ID.String()) }
+			>
+				Delete
+			</a>
+		</div>
+		<h2
+			class="heading"
+			data-datetime={ journal.Date.Format("2006-01-02 15:04 -0700") }
 		>
-			Edit
-		</a>
-		<a
-			href="#"
-			hx-confirm="Are you sure?"
-			hx-delete={ fmt.Sprintf("/api/journal/%s", journal.ID.String()) }
-		>
-			Delete
-		</a>
+			{ journal.Date.Format("2006-01-02 15:04pm") }
+		</h2>
+		<div class="info">
+			if journal.JournalType != nil {
+				<p>Topic: { journal.JournalType.Name }</p>
+			}
+			if journal.Rating != nil {
+				<p>Rating: { journal.Rating.Name }</p>
+			}
+		</div>
+		<p class="entry">{ journal.Entry }</p>
 	</div>
-	<h2
-		class="heading"
-		data-datetime={ journal.Date.Format("2006-01-02 15:04 -0700") }
-	>
-		{ journal.Date.Format("2006-01-02 15:04pm") }
-	</h2>
-	<div class="info">
-		<p>Topic: { journal.JournalType.Name }</p>
-		<p>Rating: { journal.Rating.Name }</p>
-	</div>
-	<p class="entry">{ journal.Entry }</p>
 }
 
 templ ViewPage(c *fiber.Ctx) {
 	@web.Base(c) {
 		<div id="journal-view-page">
-			@View(c, getJournal(c))
+			<div>
+				@View(c, getJournal(c))
+			</div>
+			<div class="action-items">
+				@actionItems.Combined(c, getJournal(c))
+			</div>
 		</div>
 	}
 }

@@ -4,22 +4,30 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"go-starter/cmd/web"
+	"go-starter/cmd/web/actionItems"
 	"go-starter/internal/models"
 )
 
-templ Edit(c *fiber.Ctx, journal *models.Journal) {
-	@Form(c, journal)
+templ editContent(c *fiber.Ctx, journal *models.Journal) {
+	<a class="back" href={ templ.SafeURL(fmt.Sprintf("/journal/%s", journal.ID.String())) }>
+		<i class="far fa-chevron-left"></i>
+		Back
+	</a>
+	<h1 class="heading">Edit Journal Entry</h1>
+	<div class="body">
+		<div class="journal-form">
+			@Form(c, journal)
+		</div>
+		<div class="action-items">
+			@actionItems.Combined(c, journal)
+		</div>
+	</div>
 }
 
 templ EditPage(c *fiber.Ctx) {
 	@web.Base(c) {
 		<div id="edit-journal-page">
-			<a class="back" href={ templ.SafeURL(fmt.Sprintf("/journal/%s", getJournal(c).ID.String())) }>
-				<i class="far fa-chevron-left"></i>
-				Back
-			</a>
-			<h1 class="heading">Edit Journal Entry</h1>
-			@Edit(c, getJournal(c))
+			@editContent(c, getJournal(c))
 		</div>
 	}
 }

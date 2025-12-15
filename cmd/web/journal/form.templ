@@ -89,6 +89,13 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 				}
 			</textarea>
 		</div>
+		<div id="action-item-ids">
+			if journal != nil {
+				for _, actionItem := range journal.ActionItems {
+					<input type="hidden" name="actionItemIds[]" value={ actionItem.ID.String() }/>
+				}
+			}
+		</div>
 		<input class="button" type="submit"/>
 	</form>
 }
