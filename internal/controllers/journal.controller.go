@@ -39,6 +39,7 @@ func (c *JournalController) getJournal(ctx *fiber.Ctx) error {
 		Preload("ActionItems").
 		First(&journal).Error
 	if err != nil {
+		ctx.Set("HX-Redirect", "/journal")
 		return ctx.Status(http.StatusNotFound).JSON(fiber.Map{"message": "Journal not found"})
 	}
 	ctx.Locals("journal", &journal)
@@ -161,9 +162,11 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 		actionItem.JournalID = journal.ID
 	}
 
-	err = tx.Save(&journal.ActionItems).Error
-	if err != nil {
-		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action items"})
+	if len(journal.ActionItems) > 0 {
+		err = tx.Save(&journal.ActionItems).Error
+		if err != nil {
+			return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action items"})
+		}
 	}
 
 	err = tx.Commit().Error

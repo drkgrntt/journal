@@ -125,8 +125,9 @@ func (c *ActionItemController) createActionItem(ctx *fiber.Ctx) error {
 	user := utils.GetLocal[models.User](ctx, "currentUser")
 	actionItem.Base = &models.Base{CreatorID: user.ID, LastUpdaterID: user.ID}
 
-	err = c.db.Create(actionItem).Error
+	err = c.db.Create(&actionItem).Error
 	if err != nil {
+		logger.Error(err.Error())
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action item"})
 	}
 
@@ -151,6 +152,7 @@ func (c *ActionItemController) updateActionItem(ctx *fiber.Ctx) error {
 
 	err = c.db.Save(actionItem).Error
 	if err != nil {
+		logger.Error(err.Error())
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error updating journal"})
 	}
 

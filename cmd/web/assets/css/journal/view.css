@@ -38,5 +38,6 @@
 	.entry {
 		border-top:  1px solid var(--border-color);
 		padding: 1rem 0;
+		white-space: pre-line;
 	}
 }
