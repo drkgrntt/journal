@@ -8,7 +8,9 @@ import (
 
 templ DashboardPage(c *fiber.Ctx) {
 	@web.Base(c) {
-		<h1>How are you today?</h1>
-		@journal.Form(c, nil)
+		<div id="dashboard-page">
+			<h1 class="heading">How are you today?</h1>
+			@journal.Form(c, nil)
+		</div>
 	}
 }

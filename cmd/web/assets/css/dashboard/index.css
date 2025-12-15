@@ -1,0 +1,14 @@
+#dashboard-page {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	max-width: 40rem;
+	margin: 0 auto;
+
+	.heading {
+		padding-bottom: 1rem;
+		font-size: 1.5rem;
+		font-weight: 600;
+	}
+}
+

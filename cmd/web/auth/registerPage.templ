@@ -7,8 +7,10 @@ import (
 
 templ RegisterPage(c *fiber.Ctx) {
 	@web.Base(c) {
-		<h1>Register</h1>
-		@AuthForm("/api/auth/register")
-		<a href="/auth/login">Sign In</a>
+		<div id="register-page">
+			<h1 class="heading">Register</h1>
+			@AuthForm("/api/auth/register")
+			<a href="/auth/login">Sign In</a>
+		</div>
 	}
 }

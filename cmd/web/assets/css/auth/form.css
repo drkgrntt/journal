@@ -1,0 +1,8 @@
+#auth-form {
+	max-width: 500px;
+	padding: 1px 0;
+
+	display: grid;
+	gap: 1rem;
+	align-items: center;
+}

@@ -1,0 +1,10 @@
+#register-page {
+	display: grid;
+	gap: 1rem;
+	align-items: center;
+
+	.heading {
+		font-size: 1.5rem;
+		font-weight: 600;
+	}
+}

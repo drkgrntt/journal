@@ -2,14 +2,19 @@ package auth
 
 templ AuthForm(action string) {
 	<form
+		id="auth-form"
 		hx-post={ action }
 		hx-target="body"
 		hx-push-url="/dashboard"
 	>
-		<label for="email">Email</label>
-		<input id="email" name="email" type="text"/>
-		<label for="password">Password</label>
-		<input id="password" name="password" type="password"/>
-		<button type="submit">Submit</button>
+		<div class="field">
+			<label class="label" for="email">Email</label>
+			<input class="input" id="email" name="email" type="text"/>
+		</div>
+		<div class="field">
+			<label class="label" for="password">Password</label>
+			<input class="input" id="password" name="password" type="password"/>
+		</div>
+		<button class="button" type="submit">Submit</button>
 	</form>
 }
