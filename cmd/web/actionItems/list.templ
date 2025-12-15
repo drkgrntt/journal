@@ -35,6 +35,13 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 				name="text"
 				value={ actionItem.Text }
 			/>
+			if actionItem.HasJournal() {
+				<input
+					type="hidden"
+					name="journalId"
+					value={ actionItem.JournalID.String() }
+				/>
+			}
 			<button
 				type="submit"
 				class="button"

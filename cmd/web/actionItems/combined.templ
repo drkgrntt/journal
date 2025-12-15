@@ -17,5 +17,9 @@ templ Combined(c *fiber.Ctx, journal *models.Journal) {
 		<h3 class="heading">Action Items</h3>
 		@Form(c, journal, nil)
 		@List(c, getActionItems(journal))
+		if journal != nil {
+			<h4>Outstanding:</h4>
+			@List(c, journal.OutstandingActionItems)
+		}
 	</div>
 }

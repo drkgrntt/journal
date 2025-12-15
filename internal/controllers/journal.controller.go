@@ -30,6 +30,22 @@ func (c *JournalController) Init(db *gorm.DB, app *fiber.App) {
 	c.api = app.Group("api/journal")
 }
 
+func (c *JournalController) setOutstandingActionItems(ctx *fiber.Ctx) error {
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+
+	var actionItems []*models.ActionItem
+	c.db.
+		// Created by me
+		Where("creator_id = ?", currentUser.ID).
+		// Incomplete
+		Where("completed_at IS NULL").
+		Order("created_at desc").
+		Find(&actionItems)
+
+	ctx.Locals("outstandingActionItems", &actionItems)
+	return ctx.Next()
+}
+
 func (c *JournalController) getJournal(ctx *fiber.Ctx) error {
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	id := ctx.Params("id")
@@ -38,12 +54,26 @@ func (c *JournalController) getJournal(ctx *fiber.Ctx) error {
 		Where("creator_id = ?", currentUser.ID).
 		Preload("JournalType").
 		Preload("Rating").
-		Preload("ActionItems").
+		Preload("ActionItems", c.db.Order("created_at desc")).
 		First(&journal).Error
+
 	if err != nil {
 		ctx.Set("HX-Redirect", "/journal")
 		return ctx.Status(http.StatusNotFound).JSON(fiber.Map{"message": "Journal not found"})
 	}
+
+	c.db.
+		// None from this journal
+		Where("journal_id != ?", journal.ID).
+		// Created by me
+		Where("creator_id = ?", currentUser.ID).
+		// Created before this journal
+		Where("created_at < ?", journal.CreatedAt).
+		// Incomplete or completed after this journal
+		Where("completed_at IS NULL OR completed_at > ?", journal.CreatedAt).
+		Order("created_at desc").
+		Find(&journal.OutstandingActionItems)
+
 	ctx.Locals("journal", &journal)
 	return ctx.Next()
 }
@@ -122,7 +152,7 @@ func (c *JournalController) RegisterViewRoutes() {
 	c.views.Use(middleware.RequireAuth)
 
 	c.views.Get("/", c.getJournals, utils.RenderPage(journal.ListPage))
-	c.views.Get("/new", middleware.SetJournalTypes, middleware.SetRatings, utils.RenderPage(journal.NewPage))
+	c.views.Get("/new", middleware.SetJournalTypes, middleware.SetRatings, c.setOutstandingActionItems, utils.RenderPage(journal.NewPage))
 	c.views.Get("/list", c.getJournals, utils.RenderPage(journal.ListItems))
 
 	c.views.Get("/:id", c.getJournal, utils.RenderPage(journal.ViewPage))
@@ -156,18 +186,24 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating journal"})
 	}
 
+	actionItems := journal.ActionItems
+	journal.ActionItems = nil
+
 	err = tx.Create(&journal).Error
 	if err != nil {
 		logger.Error(err.Error())
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating journal"})
 	}
 
-	for _, actionItem := range journal.ActionItems {
+	for _, actionItem := range actionItems {
+		if actionItem.HasJournal() {
+			continue
+		}
 		actionItem.JournalID = journal.ID
 	}
 
-	if len(journal.ActionItems) > 0 {
-		err = tx.Save(&journal.ActionItems).Error
+	if len(actionItems) > 0 {
+		err = tx.Save(&actionItems).Error
 		if err != nil {
 			return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action items"})
 		}

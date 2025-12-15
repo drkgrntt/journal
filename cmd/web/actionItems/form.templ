@@ -33,18 +33,25 @@ templ Form(
 				value={ actionItem.Text }
 			}
 		/>
-		if journal != nil {
-			<input
-				type="hidden"
-				name="journalId"
-				value={ journal.ID.String() }
-			/>
-		}
 		if actionItem != nil {
+			if actionItem.HasJournal() {
+				<input
+					type="hidden"
+					name="journalId"
+					value={ actionItem.JournalID.String() }
+				/>
+			}
 			<input
 				type="hidden"
 				name="isComplete"
 				value={ fmt.Sprint(actionItem.IsComplete()) }
+			/>
+		}
+		if  journal != nil && (actionItem == nil || !actionItem.HasJournal()) {
+			<input
+				type="hidden"
+				name="journalId"
+				value={ journal.ID.String() }
 			/>
 		}
 		<button

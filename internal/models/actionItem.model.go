@@ -24,6 +24,10 @@ type ActionItem struct {
 	IsEncrypted bool `gorm:"type:bool;not null" json:"isEncrypted"`
 }
 
+func (a *ActionItem) HasJournal() bool {
+	return a.JournalID != uuid.Nil
+}
+
 func (a *ActionItem) IsComplete() bool {
 	if a.CompletedAt == nil {
 		return false
@@ -37,10 +41,6 @@ func (a *ActionItem) IsComplete() bool {
 }
 
 func (a *ActionItem) EncryptText() error {
-	if a.IsEncrypted {
-		return nil
-	}
-
 	encrypted, err := utils.Encrypt(a.Text)
 	if err != nil {
 		logger.Error(err.Error())
