@@ -31,9 +31,11 @@ func (c *JournalController) Init(db *gorm.DB, app *fiber.App) {
 }
 
 func (c *JournalController) getJournal(ctx *fiber.Ctx) error {
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	id := ctx.Params("id")
 	var journal models.Journal
 	err := c.db.Where("id = ?", id).
+		Where("creator_id = ?", currentUser.ID).
 		Preload("JournalType").
 		Preload("Rating").
 		Preload("ActionItems").
