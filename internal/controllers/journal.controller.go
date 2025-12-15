@@ -152,11 +152,13 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 	defer tx.Rollback()
 
 	if tx.Error != nil {
+		logger.Error(err.Error())
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating journal"})
 	}
 
-	err = tx.Create(journal).Error
+	err = tx.Create(&journal).Error
 	if err != nil {
+		logger.Error(err.Error())
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating journal"})
 	}
 
