@@ -14,6 +14,8 @@ func seedJournalTypes() error {
 		{BaseType: &models.BaseType{Name: "Professional", Code: "professional"}},
 		{BaseType: &models.BaseType{Name: "Hobbies", Code: "hobbies"}},
 		{BaseType: &models.BaseType{Name: "Creative", Code: "creative"}},
+		{BaseType: &models.BaseType{Name: "Health", Code: "health"}},
+		{BaseType: &models.BaseType{Name: "Spiritual", Code: "spiritual"}},
 	}
 
 	err := db.Create(&types).Error

@@ -78,6 +78,29 @@ func (c *JournalController) getJournal(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
+func (c *JournalController) getSurroundingJournals(ctx *fiber.Ctx) error {
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	journal := utils.GetLocal[models.Journal](ctx, "journal")
+
+	err := c.db.Where("creator_id = ?", currentUser.ID).
+		Where("created_at < ?", journal.CreatedAt).
+		Order("created_at desc").
+		First(&journal.PreviousJournal).Error
+	if err != nil {
+		journal.PreviousJournal = nil
+	}
+
+	err = c.db.Where("creator_id = ?", currentUser.ID).
+		Where("created_at > ?", journal.CreatedAt).
+		Order("created_at asc").
+		First(&journal.NextJournal).Error
+	if err != nil {
+		journal.NextJournal = nil
+	}
+
+	return ctx.Next()
+}
+
 func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 	page := ctx.QueryInt("page")
 	pageSize := 10
@@ -155,7 +178,7 @@ func (c *JournalController) RegisterViewRoutes() {
 	c.views.Get("/new", middleware.SetJournalTypes, middleware.SetRatings, c.setOutstandingActionItems, utils.RenderPage(journal.NewPage))
 	c.views.Get("/list", c.getJournals, utils.RenderPage(journal.ListItems))
 
-	c.views.Get("/:id", c.getJournal, utils.RenderPage(journal.ViewPage))
+	c.views.Get("/:id", c.getJournal, c.getSurroundingJournals, utils.RenderPage(journal.ViewPage))
 	c.views.Get("/:id/edit", c.getJournal, middleware.SetJournalTypes, middleware.SetRatings, utils.RenderPage(journal.EditPage))
 }
 

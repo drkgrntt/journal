@@ -43,6 +43,26 @@ templ View(c *fiber.Ctx, journal *models.Journal) {
 			}
 		</div>
 		<p class="entry">{ journal.Entry }</p>
+		<div class="pagination">
+			if journal.PreviousJournal != nil {
+				<a
+					class="previous"
+					href={ templ.SafeURL(fmt.Sprintf("/journal/%s", journal.PreviousJournal.ID.String())) }
+				>
+					<i class="fa fa-chevron-left"></i>
+					Previous
+				</a>
+			}
+			if journal.NextJournal != nil {
+				<a
+					class="next"
+					href={ templ.SafeURL(fmt.Sprintf("/journal/%s", journal.NextJournal.ID.String())) }
+				>
+					Next
+					<i class="fa fa-chevron-right"></i>
+				</a>
+			}
+		</div>
 	</div>
 }
 

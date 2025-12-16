@@ -8,5 +8,5 @@
 .top-bar {
 	background-color: var(--primary-color);
 	height: 3.5rem;
-	width: 100vw;
+	width: 100%;
 }

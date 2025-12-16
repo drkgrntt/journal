@@ -23,10 +23,13 @@ type Journal struct {
 	Rating   *Rating `gorm:"not null" json:"rating,omitempty"`
 	RatingID int     `gorm:"type:int;not null" json:"ratingId,omitempty"`
 
-	ActionItems            []*ActionItem `gorm:"foreignKey:JournalID" json:"actionItems,omitempty"`
-	OutstandingActionItems []*ActionItem `json:"outstandingActionItems,omitempty"`
+	ActionItems []*ActionItem `gorm:"foreignKey:JournalID" json:"actionItems,omitempty"`
 
 	IsEncrypted bool `gorm:"type:bool;not null" json:"isEncrypted"`
+
+	OutstandingActionItems []*ActionItem `json:"outstandingActionItems,omitempty"`
+	NextJournal            *Journal      `gorm:"-" json:"nextJournal,omitempty"`
+	PreviousJournal        *Journal      `gorm:"-" json:"previousJournal,omitempty"`
 }
 
 func (j *Journal) EncryptEntry() error {
