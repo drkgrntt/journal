@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"go-starter/cmd/web"
+	"go-starter/cmd/web/components"
 	"go-starter/internal/models"
 	"go-starter/internal/utils"
 )
@@ -48,13 +49,19 @@ templ loadMore(c *fiber.Ctx) {
 templ listItemsWithButton(c *fiber.Ctx, includeButton bool) {
 	for _, journal := range getJournals(c) {
 		<li class="item">
-			<a href={ templ.SafeURL(fmt.Sprintf("/journal/%s", journal.ID.String())) }>
+			<a
+				class="link"
+				href={ templ.SafeURL(fmt.Sprintf("/journal/%s", journal.ID.String())) }
+			>
 				<h2
 					data-datetime={ journal.Date.Format("2006-01-02 15:04 -0700") }
 					class="date"
 				>
 					{ journal.Date.Format("2006-01-02 15:04pm") }
 				</h2>
+				if journal.IsEncrypted {
+					@components.Lock()
+				}
 			</a>
 			<div class="info">
 				if journal.JournalType != nil {

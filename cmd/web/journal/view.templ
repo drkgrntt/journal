@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go-starter/cmd/web"
 	"go-starter/cmd/web/actionItems"
+	"go-starter/cmd/web/components"
 	"go-starter/internal/models"
 )
 
@@ -28,12 +29,17 @@ templ View(c *fiber.Ctx, journal *models.Journal) {
 				Delete
 			</a>
 		</div>
-		<h2
-			class="heading"
-			data-datetime={ journal.Date.Format("2006-01-02 15:04 -0700") }
-		>
-			{ journal.Date.Format("2006-01-02 15:04pm") }
-		</h2>
+		<div class="top">
+			<h2
+				class="heading"
+				data-datetime={ journal.Date.Format("2006-01-02 15:04 -0700") }
+			>
+				{ journal.Date.Format("2006-01-02 15:04pm") }
+			</h2>
+			if journal.IsEncrypted {
+				@components.Lock()
+			}
+		</div>
 		<div class="info">
 			if journal.JournalType != nil {
 				<p>Topic: { journal.JournalType.Name }</p>

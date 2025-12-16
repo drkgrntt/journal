@@ -1,0 +1,8 @@
+.lock {
+	display: inline-block;
+	font-size: .8rem;
+
+	.fa-lock {
+		color: #333;
+	}
+}
