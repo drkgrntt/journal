@@ -3,7 +3,9 @@ package actionItems
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"go-starter/cmd/web"
 	"go-starter/internal/models"
+	"go-starter/internal/utils"
 )
 
 func completedClass(actionItem *models.ActionItem) string {
@@ -22,50 +24,70 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 		}
 		class="item"
 	>
-		<form
-			hx-put={ fmt.Sprintf("/api/action-items/%s", actionItem.ID.String()) }
-		>
-			<input
-				type="hidden"
-				name="isComplete"
-				value={ fmt.Sprint(!actionItem.IsComplete()) }
-			/>
-			<input
-				type="hidden"
-				name="text"
-				value={ actionItem.Text }
-			/>
-			if actionItem.HasJournal() {
+		<div class="created">
+			<span data-datetime={ actionItem.CreatedAt.Format("2006-01-02 15:04 -0700") }>
+				{ actionItem.CreatedAt.Format("2006-01-02 15:04") }
+			</span>
+		</div>
+		<div class="info">
+			<form
+				hx-put={ fmt.Sprintf("/api/action-items/%s", actionItem.ID.String()) }
+			>
 				<input
 					type="hidden"
-					name="journalId"
-					value={ actionItem.JournalID.String() }
+					name="isComplete"
+					value={ fmt.Sprint(!actionItem.IsComplete()) }
 				/>
-			}
+				<input
+					type="hidden"
+					name="text"
+					value={ actionItem.Text }
+				/>
+				if actionItem.HasJournal() {
+					<input
+						type="hidden"
+						name="journalId"
+						value={ actionItem.JournalID.String() }
+					/>
+				}
+				<button
+					type="submit"
+					class="button"
+				>
+					<i class="fa fa-check"></i>
+				</button>
+			</form>
+			<p class={ fmt.Sprintf("text %s", completedClass(actionItem)) }>
+				{ actionItem.Text }
+				if actionItem.HasJournalType() {
+					<span class="journal-type">({ actionItem.Journal.JournalType.Name })</span>
+				}
+			</p>
 			<button
-				type="submit"
 				class="button"
+				hx-get={ fmt.Sprintf("/action-items/%s/form", actionItem.ID.String()) }
+				hx-swap="none"
 			>
-				<i class="fa fa-check"></i>
+				<i class="fa fa-pen"></i>
 			</button>
-		</form>
-		<p class={ fmt.Sprintf("text %s", completedClass(actionItem)) }>{ actionItem.Text }</p>
-		<button
-			class="button"
-			hx-get={ fmt.Sprintf("/action-items/%s/form", actionItem.ID.String()) }
-			hx-swap="none"
-		>
-			<i class="fa fa-pen"></i>
-		</button>
-		<button
-			class="button"
-			hx-delete={ fmt.Sprintf("/api/action-items/%s", actionItem.ID.String()) }
-			hx-swap="delete"
-			hx-confirm="Are you sure?"
-			hx-target="closest [action-item]"
-		>
-			<i class="fa fa-trash"></i>
-		</button>
+			<button
+				class="button"
+				hx-delete={ fmt.Sprintf("/api/action-items/%s", actionItem.ID.String()) }
+				hx-swap="delete"
+				hx-confirm="Are you sure?"
+				hx-target="closest [action-item]"
+			>
+				<i class="fa fa-trash"></i>
+			</button>
+		</div>
+		if actionItem.IsComplete() {
+			<div class="completed">
+				Completed
+				<span data-datetime={ actionItem.CompletedAt.Format("2006-01-02 15:04 -0700") }>
+					{ actionItem.CompletedAt.Format("2006-01-02 15:04") }
+				</span>
+			</div>
+		}
 	</li>
 	<div
 		hx-swap-oob="beforeend:#action-item-ids"
@@ -84,4 +106,21 @@ templ List(c *fiber.Ctx, actionItems []*models.ActionItem) {
 			@ListItem(c, actionItem)
 		}
 	</ul>
+}
+
+func getActionItems(c *fiber.Ctx) []*models.ActionItem {
+	actionItems := utils.GetLocal[[]*models.ActionItem](c, "actionItems")
+	if actionItems == nil {
+		return []*models.ActionItem{}
+	}
+	return *actionItems
+}
+
+templ ListPage(c *fiber.Ctx) {
+	@web.Base(c) {
+		<div id="action-item-list-page">
+			<h1 class="heading">Action Items</h1>
+			@List(c, getActionItems(c))
+		</div>
+	}
 }

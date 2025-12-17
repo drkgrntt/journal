@@ -5,7 +5,7 @@ import (
 	"go-starter/internal/models"
 )
 
-func getActionItems(journal *models.Journal) []*models.ActionItem {
+func getActionItemsFromJournal(journal *models.Journal) []*models.ActionItem {
 	if journal != nil {
 		return journal.ActionItems
 	}
@@ -16,7 +16,7 @@ templ Combined(c *fiber.Ctx, journal *models.Journal) {
 	<div id="action-items-combined">
 		<h3 class="heading">Action Items</h3>
 		@Form(c, journal, nil)
-		@List(c, getActionItems(journal))
+		@List(c, getActionItemsFromJournal(journal))
 		if journal != nil {
 			<h4>Outstanding:</h4>
 			@List(c, journal.OutstandingActionItems)

@@ -50,8 +50,25 @@ func (c *ActionItemController) getActionItem(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
+func (c *ActionItemController) getActionItems(ctx *fiber.Ctx) error {
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+
+	var actionItems []*models.ActionItem
+	c.db.
+		Preload("Journal.JournalType").
+		Where("creator_id = ?", currentUser.ID).
+		Order("created_at desc").
+		Find(&actionItems)
+
+	ctx.Locals("actionItems", &actionItems)
+
+	return ctx.Next()
+}
+
 func (c *ActionItemController) RegisterViewRoutes() {
 	c.views.Use(middleware.RequireAuth)
+
+	c.views.Get("/", c.getActionItems, utils.RenderPage(actionItems.ListPage))
 
 	c.views.Get("/:id/form", c.getActionItem, c.getActionItemForm)
 }

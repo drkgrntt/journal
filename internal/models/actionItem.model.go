@@ -28,6 +28,16 @@ func (a *ActionItem) HasJournal() bool {
 	return a.JournalID != uuid.Nil
 }
 
+func (a *ActionItem) HasJournalType() bool {
+	if a.Journal == nil {
+		return false
+	}
+	if a.Journal.JournalType == nil {
+		return false
+	}
+	return true
+}
+
 func (a *ActionItem) IsComplete() bool {
 	if a.CompletedAt == nil {
 		return false
