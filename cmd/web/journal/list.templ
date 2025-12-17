@@ -71,7 +71,7 @@ templ listItemsWithButton(c *fiber.Ctx, includeButton bool) {
 					<p class="rating">Rating: { journal.Rating.Name }</p>
 				}
 			</div>
-			<p class="entry">{ utils.SubstringToFullWords(journal.Entry, 100) }</p>
+			<p class="entry">{ utils.SubstringToFullWords(journal.Entry, 130) }</p>
 		</li>
 	}
 	if includeButton {

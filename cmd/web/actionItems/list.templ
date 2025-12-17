@@ -116,10 +116,65 @@ func getActionItems(c *fiber.Ctx) []*models.ActionItem {
 	return *actionItems
 }
 
+func getJournalTypes(c *fiber.Ctx) []*models.JournalType {
+	journalTypes := utils.GetLocal[[]*models.JournalType](c, "journalTypes")
+	if journalTypes == nil {
+		return []*models.JournalType{}
+	}
+	return *journalTypes
+}
+
+templ listPageFilters(c *fiber.Ctx) {
+	<div
+		id="action-item-list-filters"
+	>
+		<div class="filter-set">
+			<div>
+				<a
+					class={ "filter", templ.KV("active", c.Query("completed") == "") }
+					href={ templ.SafeURL(fmt.Sprintf("/action-items?journalType=%s", c.Query("journalType"))) }
+				>
+					All
+				</a>
+			</div>
+			<a
+				class={ "filter", templ.KV("active", c.Query("completed") == "true") }
+				href={ templ.SafeURL(fmt.Sprintf("/action-items?completed=true&journalType=%s", c.Query("journalType"))) }
+			>
+				Complete
+			</a>
+			<a
+				class={ "filter", templ.KV("active", c.Query("completed") == "false") }
+				href={ templ.SafeURL(fmt.Sprintf("/action-items?completed=false&journalType=%s", c.Query("journalType"))) }
+			>
+				Incomplete
+			</a>
+		</div>
+		<h4 class="filter-heading">Journal Types</h4>
+		<div class="filter-set">
+			<a
+				href={ templ.SafeURL(fmt.Sprintf("/action-items?completed=%s", c.Query("completed"))) }
+				class={ "filter", templ.KV("active", c.Query("journalType") == "") }
+			>
+				Any
+			</a>
+			for _, journalType := range getJournalTypes(c) {
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("/action-items?journalType=%s&completed=%s", journalType.Code, c.Query("completed"))) }
+					class={ "filter", templ.KV("active", c.Query("journalType") == journalType.Code) }
+				>
+					{ journalType.Name }
+				</a>
+			}
+		</div>
+	</div>
+}
+
 templ ListPage(c *fiber.Ctx) {
 	@web.Base(c) {
 		<div id="action-item-list-page">
 			<h1 class="heading">Action Items</h1>
+			@listPageFilters(c)
 			@List(c, getActionItems(c))
 		</div>
 	}
