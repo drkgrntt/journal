@@ -74,20 +74,20 @@ func (c *ActionItemController) getActionItems(ctx *fiber.Ctx) error {
 		tx = tx.Where("journal_id IN (SELECT id FROM journals WHERE journal_type_id IN (SELECT id FROM journal_types WHERE code = ?))", journalTypeParam)
 	}
 
-	// pageSize := 10
-	// page := ctx.QueryInt("page")
-	// tx = tx.Limit(pageSize + 1).Offset(page * pageSize)
+	pageSize := 10
+	page := ctx.QueryInt("page")
+	tx = tx.Limit(pageSize + 1).Offset(page * pageSize)
 
 	tx.Find(&actionItems)
 	ctx.Locals("actionItems", &actionItems)
 
-	// if len(actionItems) > pageSize {
-	// 	actionItems = actionItems[:pageSize]
-	// 	hasMore := true
-	// 	nextPage := page + 1
-	// 	ctx.Locals("hasMore", &hasMore)
-	// 	ctx.Locals("nextPage", &nextPage)
-	// }
+	if len(actionItems) > pageSize {
+		actionItems = actionItems[:pageSize]
+		hasMore := true
+		nextPage := page + 1
+		ctx.Locals("hasMore", &hasMore)
+		ctx.Locals("nextPage", &nextPage)
+	}
 
 	return ctx.Next()
 }
@@ -96,6 +96,7 @@ func (c *ActionItemController) RegisterViewRoutes() {
 	c.views.Use(middleware.RequireAuth)
 
 	c.views.Get("/", middleware.SetJournalTypes, c.getActionItems, utils.RenderPage(actionItems.ListPage))
+	c.views.Get("/list", c.getActionItems, utils.RenderPage(actionItems.ListItems))
 	c.views.Get("/:id/form", c.getActionItem, c.getActionItemForm)
 }
 

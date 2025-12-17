@@ -19,7 +19,7 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 	<li
 		action-item
 		id={ fmt.Sprintf("action-item-%s", actionItem.ID.String()) }
-		if c.Method() != "POST" {
+		if c.Method() != "POST" && c.Method() != "GET" {
 			hx-swap-oob={ fmt.Sprintf("outerHTML:#action-item-%s", actionItem.ID.String()) }
 		}
 		class="item"
@@ -100,12 +100,29 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 	</div>
 }
 
+templ loadMore(c *fiber.Ctx) {
+	<button
+		class="button"
+		hx-get={ fmt.Sprintf("/action-items/list?page=%d", web.NextPage(c)) }
+		hx-target="[action-items-list]"
+		hx-swap="beforeend"
+		hx-swap-oob="true"
+		id="action-items-next-page"
+		if !web.HasMore(c) {
+			style="display: none;"
+		}
+	>
+		Load more
+	</button>
+}
+
 templ List(c *fiber.Ctx, actionItems []*models.ActionItem) {
-	<ul id="action-item-list" action-items>
+	<ul id="action-item-list" action-items-list>
 		for _, actionItem := range actionItems {
 			@ListItem(c, actionItem)
 		}
 	</ul>
+	@loadMore(c)
 }
 
 func getActionItems(c *fiber.Ctx) []*models.ActionItem {
@@ -114,6 +131,13 @@ func getActionItems(c *fiber.Ctx) []*models.ActionItem {
 		return []*models.ActionItem{}
 	}
 	return *actionItems
+}
+
+templ ListItems(c *fiber.Ctx) {
+	for _, actionItem := range getActionItems(c) {
+		@ListItem(c, actionItem)
+	}
+	@loadMore(c)
 }
 
 func getJournalTypes(c *fiber.Ctx) []*models.JournalType {
