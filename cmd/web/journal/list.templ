@@ -21,6 +21,7 @@ templ loadMore(c *fiber.Ctx) {
 		hx-target="[journal-list]"
 		hx-swap="beforeend"
 		hx-swap-oob="true"
+		id="journal-next-page"
 		if !web.HasMore(c) {
 			style="display: none;"
 		}
