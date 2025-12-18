@@ -237,7 +237,13 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action items"})
 	}
 
-	ctx.Set("HX-Redirect", fmt.Sprintf("/journal/%s", journal.ID.String()))
+	addAnotherEntry := ctx.FormValue("addAnotherEntry")
+	if addAnotherEntry == "true" {
+		ctx.Set("HX-Redirect", "/journal/new")
+	} else {
+		ctx.Set("HX-Redirect", fmt.Sprintf("/journal/%s", journal.ID.String()))
+	}
+
 	return ctx.Status(http.StatusCreated).JSON(journal)
 }
 
@@ -257,7 +263,13 @@ func (c *JournalController) updateJournal(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error updating journal"})
 	}
 
-	ctx.Set("HX-Redirect", fmt.Sprintf("/journal/%s", journal.ID.String()))
+	addAnotherEntry := ctx.FormValue("addAnotherEntry")
+	if addAnotherEntry == "true" {
+		ctx.Set("HX-Redirect", "/journal/new")
+	} else {
+		ctx.Set("HX-Redirect", fmt.Sprintf("/journal/%s", journal.ID.String()))
+	}
+
 	return ctx.Status(http.StatusOK).JSON(journal)
 }
 

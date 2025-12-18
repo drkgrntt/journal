@@ -89,6 +89,15 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 				}
 			</textarea>
 		</div>
+		<div class="checkField">
+			<input
+				type="checkbox"
+				name="addAnotherEntry"
+				id="addAnotherEntry"
+				value="true"
+			/>
+			<label class="label" for="addAnotherEntry">Add another entry</label>
+		</div>
 		<div id="action-item-ids">
 			if journal != nil {
 				for _, actionItem := range journal.ActionItems {
