@@ -15,6 +15,27 @@
 		font-weight: 600;
 	}
 
+	.sorts {
+		display: flex;
+		gap: .5rem;
+	}
+
+	.sort {
+		background-color: transparent;
+		color: var(--text-color);
+		border: 1px solid var(--border-color);
+		border-radius: 999px;
+		padding: .5rem 1rem;
+		cursor: pointer;
+		text-decoration: none;
+
+		&.active {
+			background-color: #333;
+			border: 1px solid #333;
+			color: white
+		}
+	}
+
 	.list {
 		border: 1px groove var(--border-color);
 		border-radius: .5rem;

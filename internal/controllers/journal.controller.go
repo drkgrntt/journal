@@ -107,25 +107,67 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	journals := []*models.Journal{}
-	err := c.db.Where("creator_id = ?", currentUser.ID).
+	tx := c.db.Where("creator_id = ?", currentUser.ID).
 		Preload("JournalType").
 		Preload("Rating").
 		Order("date desc").
-		Order("created_at desc").
-		Limit(pageSize + 1).
-		Offset(page * pageSize).
-		Find(&journals).Error
+		Order("created_at desc")
+
+	isSortByDate := ctx.Query("sort") == "date"
+
+	if isSortByDate {
+		daySubquery := c.db.
+			Table("journals").
+			Select("date_trunc('day', date)").
+			Where("creator_id = ?", currentUser.ID).
+			Group("date_trunc('day', date)").
+			Order("date_trunc('day', date) DESC").
+			Offset(page).
+			Limit(1)
+
+		tx.Where(
+			"date >= (?) AND date < (?) + INTERVAL '1 day'",
+			daySubquery,
+			daySubquery,
+		)
+	} else {
+		tx.Limit(pageSize + 1).
+			Offset(page * pageSize)
+	}
+
+	err := tx.Find(&journals).Error
 
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "No journals found"})
 	}
 
-	if len(journals) > pageSize {
-		journals = journals[:pageSize]
-		hasMore := true
+	if isSortByDate {
 		nextPage := page + 1
+		nextDaySubquery := c.db.
+			Table("journals").
+			Select("1").
+			Where("creator_id = ?", currentUser.ID).
+			Group("date_trunc('day', date)").
+			Order("date_trunc('day', date) DESC").
+			Offset(nextPage).
+			Limit(1)
+
+		var hasMore bool
+		c.db.Raw(
+			"SELECT EXISTS (?)",
+			nextDaySubquery,
+		).Scan(&hasMore)
+
 		ctx.Locals("hasMore", &hasMore)
 		ctx.Locals("nextPage", &nextPage)
+	} else {
+		if len(journals) > pageSize {
+			journals = journals[:pageSize]
+			hasMore := true
+			nextPage := page + 1
+			ctx.Locals("hasMore", &hasMore)
+			ctx.Locals("nextPage", &nextPage)
+		}
 	}
 
 	ctx.Locals("journals", &journals)
