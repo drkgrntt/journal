@@ -104,7 +104,7 @@ templ loadMore(c *fiber.Ctx) {
 	<button
 		class="button"
 		hx-get={ fmt.Sprintf("/action-items/list?page=%d", web.NextPage(c)) }
-		hx-target="[action-items-list]"
+		hx-target="[action-item-list]"
 		hx-swap="beforeend"
 		hx-swap-oob="true"
 		id="action-items-next-page"
@@ -117,7 +117,7 @@ templ loadMore(c *fiber.Ctx) {
 }
 
 templ List(c *fiber.Ctx, actionItems []*models.ActionItem) {
-	<ul id="action-item-list" action-items-list>
+	<ul id="action-item-list" action-item-list>
 		for _, actionItem := range actionItems {
 			@ListItem(c, actionItem)
 		}
