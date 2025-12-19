@@ -70,7 +70,12 @@ templ ListItems(c *fiber.Ctx) {
 templ ListPage(c *fiber.Ctx) {
 	@web.Base(c) {
 		<div id="journal-list-page">
-			<h1 class="heading">Journal Entries</h1>
+			<div class="top">
+				<h1 class="heading">Journal Entries</h1>
+				<a href="/journal/new" class="button">
+					<i class="fa fa-pen"></i>
+				</a>
+			</div>
 			<div class="sorts">
 				<a
 					href="/journal"

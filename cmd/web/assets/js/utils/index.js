@@ -27,6 +27,13 @@ export function handleHtmxError(event) {
 }
 setToWindow("handleHtmxError", handleHtmxError)
 
+export function handleHtmxSuccess(event, message) {
+	if (!event.detail.failed) {
+		alert(message)
+	}
+}
+setToWindow("handleHtmxSuccess", handleHtmxSuccess)
+
 export function setUnixValue(dateString, element) {
 	if (!element) return
 	const date = new Date(dateString)

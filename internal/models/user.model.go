@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -19,7 +21,24 @@ type User struct {
 	Journals []*Journal `gorm:"foreignKey:CreatorID" json:"journals,omitempty"`
 }
 
-func hashPassword(password string) string {
+func (u *User) FullName() string {
+	fullName := ""
+	if u.FirstName != "" {
+		fullName += u.FirstName
+	}
+	if u.LastName != "" {
+		if u.FirstName != "" {
+			fullName += " "
+		}
+		fullName += u.LastName
+	}
+	if fullName == "" {
+		fullName = u.Email
+	}
+	return fullName
+}
+
+func (u *User) hashPassword(password string) string {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(hashedPassword)
 }
@@ -29,14 +48,15 @@ func (u *User) ComparePasswords(candidatePassword string) error {
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
-	u.Password = hashPassword(u.Password)
+	u.Password = u.hashPassword(u.Password)
 	return nil
 }
 
 func (u *User) BeforeUpdate(tx *gorm.DB) error {
+	fmt.Println(tx.Statement.Changed("Password"))
 	if tx.Statement.Changed("Password") {
-		updatedUser := tx.Statement.Dest.(User)
-		hashedPassword := hashPassword(updatedUser.Password)
+		updatedUser := tx.Statement.Dest.(*User)
+		hashedPassword := u.hashPassword(updatedUser.Password)
 		tx.Statement.SetColumn("Password", hashedPassword)
 	}
 	return nil

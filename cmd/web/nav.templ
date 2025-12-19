@@ -1,10 +1,6 @@
 package web
 
-import (
-	"github.com/gofiber/fiber/v2"
-	"go-starter/internal/models"
-	"go-starter/internal/utils"
-)
+import "github.com/gofiber/fiber/v2"
 
 templ Nav(c *fiber.Ctx) {
 	<button
@@ -13,11 +9,12 @@ templ Nav(c *fiber.Ctx) {
 	>☰</button>
 	<nav id="app-nav">
 		<ul class="list">
-			if utils.GetLocal[models.User](c, "currentUser") != nil {
+			if CurrentUser(c) != nil {
 				<li class="list-item"><a class="link" href="/dashboard">Dashboard</a></li>
 				<li class="list-item"><a class="link" href="/journal">My Journal</a></li>
 				<li class="list-item"><a class="link" href="/journal/new">New Journal Entry</a></li>
 				<li class="list-item"><a class="link" href="/action-items">Action Items</a></li>
+				<li class="list-item"><a class="link" href="/profile">Profile</a></li>
 				<li class="list-item">
 					<a
 						class="link"

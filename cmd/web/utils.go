@@ -1,6 +1,7 @@
 package web
 
 import (
+	"go-starter/internal/models"
 	"go-starter/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -20,4 +21,8 @@ func NextPage(c *fiber.Ctx) int {
 		return 0
 	}
 	return *nextPage
+}
+
+func CurrentUser(c *fiber.Ctx) *models.User {
+	return utils.GetLocal[models.User](c, "currentUser")
 }
