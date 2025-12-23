@@ -1,0 +1,53 @@
+package thankful
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"go-starter/internal/models"
+)
+
+templ Form(
+	c *fiber.Ctx,
+	journal *models.Journal,
+	thankful *models.Thankful,
+) {
+	<form
+		id="thankful-form"
+		if thankful != nil {
+			hx-put={ fmt.Sprintf("/api/thankfuls/%s", thankful.ID.String()) }
+		} else {
+			hx-post="/api/thankfuls"
+		}
+		hx-swap="beforeend"
+		hx-target="[thankful-list]"
+		hx-trigger="submit"
+		hx-swap-oob="outerHTML"
+	>
+		<input
+			id="thankful-text"
+			name="text"
+			placeholder="What are you thankful for?"
+			class="input"
+			if thankful != nil {
+				value={ thankful.Text }
+			}
+		/>
+		if thankful != nil && thankful.HasJournal() {
+			<input
+				type="hidden"
+				name="journalId"
+				value={ thankful.JournalID.String() }
+			/>
+		}
+		if  journal != nil && (thankful == nil || !thankful.HasJournal()) {
+			<input
+				type="hidden"
+				name="journalId"
+				value={ journal.ID.String() }
+			/>
+		}
+		<button class="button" type="submit">
+			<i class="far fa-plus"></i>
+		</button>
+	</form>
+}

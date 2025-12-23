@@ -17,14 +17,13 @@
 		align-items: flex-start;
 		grid-gap: 1rem;
 
-		& > * {
-		}
-
-		& > :first-child {
-		}
-
 		@media screen and (min-width: 40rem) {
 			grid-template-columns: 2fr 1fr;
 		}
+	}
+
+	.right-margin {
+		display: grid;
+		grid-gap: 1rem;
 	}
 }

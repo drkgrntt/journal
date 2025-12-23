@@ -175,6 +175,10 @@ func (c *ActionItemController) createActionItem(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action item"})
 	}
 
+	if actionItem.HasJournal() {
+		c.db.Where("id = ?", actionItem.JournalID).First(&actionItem.Journal)
+	}
+
 	components := []templ.Component{
 		actionItems.ListItem(ctx, &actionItem),
 		actionItems.Form(ctx, actionItem.Journal, nil),
@@ -198,6 +202,10 @@ func (c *ActionItemController) updateActionItem(ctx *fiber.Ctx) error {
 	if err != nil {
 		logger.Error(err.Error())
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error updating journal"})
+	}
+
+	if actionItem.HasJournal() {
+		c.db.Where("id = ?", actionItem.JournalID).First(&actionItem.Journal)
 	}
 
 	components := []templ.Component{

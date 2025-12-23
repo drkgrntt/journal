@@ -1,0 +1,116 @@
+package thankful
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"go-starter/cmd/web"
+	"go-starter/internal/models"
+	"go-starter/internal/utils"
+)
+
+templ ListItem(c *fiber.Ctx, thankful *models.Thankful) {
+	<li
+		thankful
+		id={ fmt.Sprintf("thankful-%s", thankful.ID.String()) }
+		if c.Method() != "POST" && c.Method() != "GET" {
+			hx-swap-oob={ fmt.Sprintf("outerHTML:#thankful-%s", thankful.ID.String()) }
+		}
+		class="item"
+	>
+		<div class="created">
+			<span data-datetime={ thankful.CreatedAt.Format("2006-01-02 15:04 -0700") }>
+				{ thankful.CreatedAt.Format("2006-01-02 15:04") }
+			</span>
+		</div>
+		<div class="info">
+			<p class="text">
+				{ thankful.Text }
+				if thankful.HasJournalType() {
+					<span class="journal-type">({ thankful.Journal.JournalType.Name })</span>
+				}
+			</p>
+			<button
+				class="button"
+				hx-get={ fmt.Sprintf("/thankfuls/%s/form", thankful.ID.String()) }
+				hx-swap="none"
+			>
+				<i class="fa fa-pen"></i>
+			</button>
+			<button
+				class="button"
+				hx-delete={ fmt.Sprintf("/api/thankfuls/%s", thankful.ID.String()) }
+				hx-swap="delete"
+				hx-confirm="Are you sure?"
+				hx-target="closest [thankful]"
+			>
+				<i class="fa fa-trash"></i>
+			</button>
+		</div>
+	</li>
+	<div
+		hx-swap-oob="beforeend:#thankful-ids"
+	>
+		<input
+			type="hidden"
+			name="thankfulIds[]"
+			value={ thankful.ID.String() }
+		/>
+	</div>
+}
+
+templ loadMore(c *fiber.Ctx) {
+	<button
+		class="button"
+		hx-get={ fmt.Sprintf("/thankfuls/list?page=%d", web.NextPage(c)) }
+		hx-target="[thankful-list]"
+		hx-swap="beforeend"
+		hx-swap-oob="true"
+		id="thankfuls-next-page"
+		if !web.HasMore(c) {
+			style="display: none;"
+		}
+	>
+		Load more
+	</button>
+}
+
+templ List(c *fiber.Ctx, thankfuls []*models.Thankful) {
+	<ul id="thankful-list" thankful-list>
+		for _, thankful := range thankfuls {
+			@ListItem(c, thankful)
+		}
+	</ul>
+	@loadMore(c)
+}
+
+func getThankfuls(c *fiber.Ctx) []*models.Thankful {
+	thankfuls := utils.GetLocal[[]*models.Thankful](c, "thankfuls")
+	if thankfuls == nil {
+		return []*models.Thankful{}
+	}
+	return *thankfuls
+}
+
+templ ListItems(c *fiber.Ctx) {
+	for _, thankful := range getThankfuls(c) {
+		@ListItem(c, thankful)
+	}
+	@loadMore(c)
+}
+
+func getJournalTypes(c *fiber.Ctx) []*models.JournalType {
+	journalTypes := utils.GetLocal[[]*models.JournalType](c, "journalTypes")
+	if journalTypes == nil {
+		return []*models.JournalType{}
+	}
+	return *journalTypes
+}
+
+templ ListPage(c *fiber.Ctx) {
+	@web.Base(c) {
+		<div id="thankful-list-page">
+			<h1 class="heading">Thankfuls</h1>
+			@List(c, getThankfuls(c))
+		</div>
+	}
+}

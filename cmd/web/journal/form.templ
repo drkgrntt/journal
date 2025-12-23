@@ -98,13 +98,22 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 			/>
 			<label class="label" for="addAnotherEntry">Add another entry</label>
 		</div>
-		<div id="action-item-ids">
-			if journal != nil {
-				for _, actionItem := range journal.ActionItems {
-					<input type="hidden" name="actionItemIds[]" value={ actionItem.ID.String() }/>
+		<div class="bottom">
+			<div id="action-item-ids">
+				if journal != nil {
+					for _, actionItem := range journal.ActionItems {
+						<input type="hidden" name="actionItemIds[]" value={ actionItem.ID.String() }/>
+					}
 				}
-			}
+			</div>
+			<div id="thankful-ids">
+				if journal != nil {
+					for _, thankful := range journal.Thankfuls {
+						<input type="hidden" name="thankfulIds[]" value={ thankful.ID.String() }/>
+					}
+				}
+			</div>
+			<input class="button" type="submit"/>
 		</div>
-		<input class="button" type="submit"/>
 	</form>
 }

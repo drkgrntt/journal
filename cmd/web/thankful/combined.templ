@@ -1,0 +1,21 @@
+package thankful
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"go-starter/internal/models"
+)
+
+func getThankfulsFromJournal(journal *models.Journal) []*models.Thankful {
+	if journal != nil {
+		return journal.Thankfuls
+	}
+	return []*models.Thankful{}
+}
+
+templ Combined(c *fiber.Ctx, journal *models.Journal) {
+	<div id="thankfuls-combined">
+		<h3 class="heading">Thankful</h3>
+		@Form(c, journal, nil)
+		@List(c, getThankfulsFromJournal(journal))
+	</div>
+}

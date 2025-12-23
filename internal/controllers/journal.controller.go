@@ -55,6 +55,7 @@ func (c *JournalController) getJournal(ctx *fiber.Ctx) error {
 		Preload("JournalType").
 		Preload("Rating").
 		Preload("ActionItems", c.db.Order("created_at desc")).
+		Preload("Thankfuls", c.db.Order("created_at desc")).
 		First(&journal).Error
 
 	if err != nil {
@@ -180,6 +181,7 @@ type JournalBody struct {
 	RatingID      int      `form:"rating"`
 	Entry         string   `form:"entry"`
 	ActionItemIDs []string `form:"actionItemIds"`
+	ThankfulIDs   []string `form:"thankfulIds"`
 }
 
 func (c *JournalController) parseJournalFromBody(ctx *fiber.Ctx, journal *models.Journal) error {
@@ -208,6 +210,15 @@ func (c *JournalController) parseJournalFromBody(ctx *fiber.Ctx, journal *models
 			return err
 		}
 		journal.ActionItems = actionItems
+	}
+
+	if len(body.ThankfulIDs) > 0 {
+		thankfuls := []*models.Thankful{}
+		err := c.db.Where("id in (?)", body.ThankfulIDs).Find(&thankfuls).Error
+		if err != nil {
+			return err
+		}
+		journal.Thankfuls = thankfuls
 	}
 
 	return nil
@@ -252,7 +263,9 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 	}
 
 	actionItems := journal.ActionItems
+	thankfuls := journal.Thankfuls
 	journal.ActionItems = nil
+	journal.Thankfuls = nil
 
 	err = tx.Create(&journal).Error
 	if err != nil {
@@ -271,6 +284,20 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 		err = tx.Save(&actionItems).Error
 		if err != nil {
 			return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action items"})
+		}
+	}
+
+	for _, thankful := range thankfuls {
+		if thankful.HasJournal() {
+			continue
+		}
+		thankful.JournalID = journal.ID
+	}
+
+	if len(thankfuls) > 0 {
+		err = tx.Save(&thankfuls).Error
+		if err != nil {
+			return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating thankfuls"})
 		}
 	}
 

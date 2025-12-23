@@ -55,4 +55,9 @@
 	.next {
 		margin-left: auto;
 	}
+
+	.right-margin {
+		display: grid;
+		grid-gap: 1rem;
+	}
 }

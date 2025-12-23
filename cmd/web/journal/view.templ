@@ -6,6 +6,7 @@ import (
 	"go-starter/cmd/web"
 	"go-starter/cmd/web/actionItems"
 	"go-starter/cmd/web/components"
+	"go-starter/cmd/web/thankful"
 	"go-starter/internal/models"
 )
 
@@ -78,8 +79,13 @@ templ ViewPage(c *fiber.Ctx) {
 			<div>
 				@View(c, getJournal(c))
 			</div>
-			<div class="action-items">
-				@actionItems.Combined(c, getJournal(c))
+			<div class="right-margin">
+				<div class="action-items">
+					@actionItems.Combined(c, getJournal(c))
+				</div>
+				<div class="thankfuls">
+					@thankful.Combined(c, getJournal(c))
+				</div>
 			</div>
 		</div>
 	}

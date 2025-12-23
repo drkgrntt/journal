@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go-starter/cmd/web"
 	"go-starter/cmd/web/actionItems"
+	"go-starter/cmd/web/thankful"
 	"go-starter/internal/models"
 )
 
@@ -18,8 +19,13 @@ templ editContent(c *fiber.Ctx, journal *models.Journal) {
 		<div class="journal-form">
 			@Form(c, journal)
 		</div>
-		<div class="action-items">
-			@actionItems.Combined(c, journal)
+		<div class="right-margin">
+			<div class="action-items">
+				@actionItems.Combined(c, journal)
+			</div>
+			<div class="thankfuls">
+				@thankful.Combined(c, journal)
+			</div>
 		</div>
 	</div>
 }

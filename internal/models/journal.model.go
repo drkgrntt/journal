@@ -24,6 +24,7 @@ type Journal struct {
 	RatingID int     `gorm:"type:int;not null" json:"ratingId,omitempty"`
 
 	ActionItems []*ActionItem `gorm:"foreignKey:JournalID" json:"actionItems,omitempty"`
+	Thankfuls   []*Thankful   `gorm:"foreignKey:JournalID" json:"thankfuls,omitempty"`
 
 	IsEncrypted bool `gorm:"type:bool;not null" json:"isEncrypted"`
 

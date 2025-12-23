@@ -1,0 +1,13 @@
+#thankful-form {
+	width: 100%;
+	display: flex;
+	gap: .5rem;
+
+	.label {
+		display: none;
+	}
+
+	.input {
+		flex: 1;
+	}
+}

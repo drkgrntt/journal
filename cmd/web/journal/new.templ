@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go-starter/cmd/web"
 	"go-starter/cmd/web/actionItems"
+	"go-starter/cmd/web/thankful"
 	"go-starter/internal/models"
 	"go-starter/internal/utils"
 )
@@ -28,13 +29,22 @@ templ NewPage(c *fiber.Ctx) {
 				<div class="journal-form">
 					@Form(c, nil)
 				</div>
-				<div class="action-items">
-					<h3 class="heading">Action Items</h3>
-					@actionItems.Form(c, nil, nil)
-					@actionItems.List(c, []*models.ActionItem{})
-					<br/>
-					<h4>Outstanding:</h4>
-					@actionItems.List(c, getOutstandingActionItems(c))
+				<div class="right-margin">
+					<div class="action-items">
+						<h3 class="heading">Action Items</h3>
+						@actionItems.Form(c, nil, nil)
+						@actionItems.List(c, []*models.ActionItem{})
+						<br/>
+						if len(getOutstandingActionItems(c)) > 0 {
+							<h4>Outstanding:</h4>
+							@actionItems.List(c, getOutstandingActionItems(c))
+						}
+					</div>
+					<div class="thankfuls">
+						<h3 class="heading">Today I'm Thankful For</h3>
+						@thankful.Form(c, nil, nil)
+						@thankful.List(c, []*models.Thankful{})
+					</div>
 				</div>
 			</div>
 		</div>
