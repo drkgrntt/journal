@@ -54,6 +54,10 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 						if journal != nil && journal.JournalTypeID == journalType.ID {
 							selected
 						}
+						else
+						if journal == nil && journalType.IsDefault() {
+							selected
+						}
 					>
 						{ journalType.Name }
 					</option>

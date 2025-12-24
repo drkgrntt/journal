@@ -90,6 +90,23 @@ templ ListPage(c *fiber.Ctx) {
 					By Date
 				</a>
 			</div>
+			<h4 class="filter-heading">Topics</h4>
+			<div class="sorts">
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("/journal")) }
+					class={ "sort", templ.KV("active", c.Query("topic") == "") }
+				>
+					All
+				</a>
+				for _, journalType := range getJournalTypes(c) {
+					<a
+						href={ templ.SafeURL(fmt.Sprintf("/journal?topic=%s", journalType.Code)) }
+						class={ "sort", templ.KV("active", c.Query("topic") == journalType.Code) }
+					>
+						{ journalType.Name }
+					</a>
+				}
+			</div>
 			<ul class="list" journal-list>
 				@listItemsWithButton(c, false)
 			</ul>

@@ -174,7 +174,7 @@ templ listPageFilters(c *fiber.Ctx) {
 				Incomplete
 			</a>
 		</div>
-		<h4 class="filter-heading">Journal Types</h4>
+		<h4 class="filter-heading">Journal Topics</h4>
 		<div class="filter-set">
 			<a
 				href={ templ.SafeURL(fmt.Sprintf("/action-items?completed=%s", c.Query("completed"))) }

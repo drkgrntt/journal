@@ -114,6 +114,11 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		Order("date desc").
 		Order("created_at desc")
 
+	topic := ctx.Query("topic")
+	if topic != "" {
+		tx = tx.Where("journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)", topic)
+	}
+
 	isSortByDate := ctx.Query("sort") == "date"
 
 	if isSortByDate {
@@ -227,7 +232,7 @@ func (c *JournalController) parseJournalFromBody(ctx *fiber.Ctx, journal *models
 func (c *JournalController) RegisterViewRoutes() {
 	c.views.Use(middleware.RequireAuth)
 
-	c.views.Get("/", c.getJournals, utils.RenderPage(journal.ListPage))
+	c.views.Get("/", middleware.SetJournalTypes, c.getJournals, utils.RenderPage(journal.ListPage))
 	c.views.Get("/new", middleware.SetJournalTypes, middleware.SetRatings, c.setOutstandingActionItems, utils.RenderPage(journal.NewPage))
 	c.views.Get("/list", c.getJournals, utils.RenderPage(journal.ListItems))
 
