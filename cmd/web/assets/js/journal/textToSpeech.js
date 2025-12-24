@@ -33,9 +33,6 @@ export function textToSpeech(button, inputQuery) {
 	recognition.onerror = function(event) {
 		console.log(event)
 		resetButton()
-		if (event.error == 'no-speech') {
-			console.log('No speech was detected. Try again.');
-		}
 	};
 
 	button.onclick = function(e) {
