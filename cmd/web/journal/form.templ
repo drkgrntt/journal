@@ -82,11 +82,20 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 			}
 		</fieldset>
 		<div class="field">
-			<label class="label" for="entry">Entry</label>
+			<span class="label-container">
+				<label class="label" for="entry">Entry</label>
+				<button
+					class="button"
+					onclick="event.preventDefault(); textToSpeech(this, 'textarea#entry')"
+				>
+					<i class="fa fa-microphone"></i>
+				</button>
+			</span>
 			<textarea
 				rows="8"
 				name="entry"
 				class="textarea"
+				id="entry"
 			>
 				if journal != nil {
 					{ journal.Entry }

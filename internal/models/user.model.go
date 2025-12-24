@@ -1,8 +1,6 @@
 package models
 
 import (
-	"fmt"
-
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -53,7 +51,6 @@ func (u *User) BeforeCreate(tx *gorm.DB) error {
 }
 
 func (u *User) BeforeUpdate(tx *gorm.DB) error {
-	fmt.Println(tx.Statement.Changed("Password"))
 	if tx.Statement.Changed("Password") {
 		updatedUser := tx.Statement.Dest.(*User)
 		hashedPassword := u.hashPassword(updatedUser.Password)
