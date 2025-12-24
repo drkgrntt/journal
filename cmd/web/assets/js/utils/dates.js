@@ -12,7 +12,7 @@ htmx.onLoad(function(_e) {
 				break;
 			case !!element.dataset.datetime:
 				element.innerHTML = new Date(element.dataset.datetime).toLocaleString(undefined, {
-					dateStyle: "long",
+					dateStyle: "medium",
 					timeStyle: "short"
 				})
 				break;

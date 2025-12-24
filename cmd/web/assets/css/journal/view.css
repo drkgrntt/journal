@@ -1,6 +1,8 @@
 #journal-view-page {
 	display: grid;
 	grid-gap: 1rem;
+	max-width: 60rem;
+	margin: 0 auto;
 
 	@media screen and (min-width: 40rem) {
 		grid-template-columns: 2fr 1fr;

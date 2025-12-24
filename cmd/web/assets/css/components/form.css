@@ -5,13 +5,22 @@
 .textarea,
 .select {
 	padding: .4rem 1rem;
-	border: 1px solid var(--border-color);
-	border-radius: .3rem;
+	border: none;
+	border-bottom: 1px solid var(--border-color);
 	font-size: 1rem;
 }
 
 .select {
 	background-color: transparent;
+
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+
+	background-image: url("/assets/fontawesome/svgs/solid/chevron-down.svg");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 12px;
 }
 
 .input {

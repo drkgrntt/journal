@@ -1,8 +1,15 @@
 .button {
 	background-color: transparent;
 	color: var(--text-color);
-	border: 1px solid var(--border-color);
+	border: none;
 	border-radius: .3rem;
 	padding: .5rem 1rem;
 	cursor: pointer;
+	transition: .25s ease;
+	/* box-shadow: 0 0 .3rem var(--border-color); */
+
+	&:hover {
+		box-shadow: 0 0 .5rem var(--border-color);
+		scale: 1.03;
+	}
 }

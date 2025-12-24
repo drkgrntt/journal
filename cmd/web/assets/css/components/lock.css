@@ -3,6 +3,6 @@
 	font-size: .8rem;
 
 	.fa-lock {
-		color: #333;
+		color: var(--text-secondary-color);
 	}
 }

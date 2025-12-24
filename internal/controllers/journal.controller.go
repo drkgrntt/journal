@@ -111,6 +111,7 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 	tx := c.db.Where("creator_id = ?", currentUser.ID).
 		Preload("JournalType").
 		Preload("Rating").
+		Preload("Thankfuls").
 		Order("date desc").
 		Order("created_at desc")
 
@@ -125,8 +126,13 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		daySubquery := c.db.
 			Table("journals").
 			Select("date_trunc('day', date)").
-			Where("creator_id = ?", currentUser.ID).
-			Group("date_trunc('day', date)").
+			Where("creator_id = ?", currentUser.ID)
+
+		if topic != "" {
+			daySubquery = daySubquery.Where("journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)", topic)
+		}
+
+		daySubquery.Group("date_trunc('day', date)").
 			Order("date_trunc('day', date) DESC").
 			Offset(page).
 			Limit(1)
@@ -152,8 +158,13 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		nextDaySubquery := c.db.
 			Table("journals").
 			Select("1").
-			Where("creator_id = ?", currentUser.ID).
-			Group("date_trunc('day', date)").
+			Where("creator_id = ?", currentUser.ID)
+
+		if topic != "" {
+			nextDaySubquery = nextDaySubquery.Where("journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)", topic)
+		}
+
+		nextDaySubquery.Group("date_trunc('day', date)").
 			Order("date_trunc('day', date) DESC").
 			Offset(nextPage).
 			Limit(1)

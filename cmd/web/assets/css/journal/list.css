@@ -31,7 +31,7 @@
 		color: var(--text-color);
 		border: 1px solid var(--border-color);
 		border-radius: 999px;
-		padding: .5rem 1rem;
+		padding: .3rem .5rem;
 		cursor: pointer;
 		text-decoration: none;
 
@@ -43,7 +43,6 @@
 	}
 
 	.list {
-		border: 1px groove var(--border-color);
 		border-radius: .5rem;
 		padding: 2rem 1rem;
 		box-shadow: 0 0 1.5rem #ccc;
@@ -63,23 +62,57 @@
 	}
 
 	.date {
-		font-size: 1.2rem;
+		font-size: 1rem;
 		font-weight: 600;
-		letter-spacing: .05rem;
+		letter-spacing: .03rem;
 		padding-bottom: .5rem;
 	}
 
 	.info {
 		display: flex;
 		justify-content: space-between;
+		font-size: .8rem;
+		font-style: italic;
 	}
 
-	.topic {}
+	.topic {
+		color: var(--text-secondary-color);
+	}
 
-	.rating {}
+	.rating {
+		color: var(--text-secondary-color);
+		.color {
+			font-size: 1.2rem;
+			&.awful {
+				color: var(--awful-color);
+			}
+			&.bad {
+				color: var(--bad-color);
+			}
+			&.fine {
+				color: var(--fine-color);
+			}
+			&.good {
+				color: var(--good-color);
+			}
+			&.great {
+				color: var(--great-color);
+			}
+		}
+	}
 
 	.entry {
 		padding-top: .5rem;
+	}
+
+	.actions {
+		display: flex;
+		gap: 1rem;
+		justify-content: flex-end;
+		font-size: .8rem;
+		* {
+			color: var(--text-secondary-color);
+		}
 	}
 }
 
