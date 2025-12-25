@@ -4,6 +4,7 @@
 .input,
 .textarea,
 .select {
+	background-color: transparent;
 	padding: .4rem 1rem;
 	border: none;
 	border-bottom: 1px solid var(--border-color);

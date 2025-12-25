@@ -1,3 +1,7 @@
+body {
+	background-color: var(--background-color);
+}
+
 .main {
 	position: relative;
 	max-width: 80rem;
@@ -6,7 +10,19 @@
 }
 
 .top-bar {
-	background-color: var(--primary-color);
+	background-color: var(--primary-color-light);
 	height: 3.5rem;
 	width: 100%;
+	display: flex;
+	align-items: center;
+	padding: 0 .5rem;
+}
+
+.title {
+	font-size: 1.5rem;
+	font-weight: 300;
+	letter-spacing: .1rem;
+	margin-left: 1rem;
+	font-style: italic;
+	color: var(--text-color);
 }

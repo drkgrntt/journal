@@ -18,7 +18,9 @@ templ Base(c *fiber.Ctx) {
 			<script src="/assets/js/lib/htmx.min.js"></script>
 		</head>
 		<body>
-			<div class="top-bar"></div>
+			<div class="top-bar">
+				<h1 class="title">Mindfulness Journal</h1>
+			</div>
 			<main
 				class="main"
 				hx-on:htmx:after-request="handleHtmxError?.(event)"
