@@ -96,8 +96,9 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 		HTTPOnly: true,
 		SameSite: "Lax",
 		Secure:   os.Getenv("APP_ENV") == "production",
-		Expires:  time.Now().Add(7 * 24 * time.Hour),
 		Path:     "/",
+		Expires:  time.Now().Add(time.Hour * 24 * 30),
+		MaxAge:   60 * 60 * 24 * 30,
 	})
 
 	return ctx.Redirect("/dashboard")
@@ -134,8 +135,9 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 		HTTPOnly: true,
 		SameSite: "Lax",
 		Secure:   os.Getenv("APP_ENV") == "production",
-		Expires:  time.Now().Add(7 * 24 * time.Hour),
 		Path:     "/",
+		MaxAge:   60 * 60 * 24 * 30,
+		Expires:  time.Now().Add(time.Hour * 24 * 30),
 	})
 
 	return ctx.Redirect("/dashboard")
