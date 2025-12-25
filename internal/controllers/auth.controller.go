@@ -6,7 +6,9 @@ import (
 	"go-starter/internal/models"
 	"go-starter/internal/utils"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -92,6 +94,10 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 		Name:     "x-token",
 		Value:    token,
 		HTTPOnly: true,
+		SameSite: "Lax",
+		Secure:   os.Getenv("APP_ENV") == "production",
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
+		Path:     "/",
 	})
 
 	return ctx.Redirect("/dashboard")
@@ -126,6 +132,10 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 		Name:     "x-token",
 		Value:    token,
 		HTTPOnly: true,
+		SameSite: "Lax",
+		Secure:   os.Getenv("APP_ENV") == "production",
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
+		Path:     "/",
 	})
 
 	return ctx.Redirect("/dashboard")
