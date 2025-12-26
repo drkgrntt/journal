@@ -182,7 +182,15 @@ templ ratingCalendarJs() {
 				return total + journal.rating.value
 			}, 0) / filtered.length
 
-			td.innerHTML = `<span title='${dateString}\nRating: ${ averageRating.toFixed(1) } / 5\nFrom ${filtered.length} journal(s)' style="color: ${ colorForRating(averageRating) }">●</span>`;
+			const link = document.createElement('a');
+			link.href = `/journal?date=${td.dataset.calendarDate}&tz=${Intl.DateTimeFormat().resolvedOptions().timeZone}`
+			link.title = `${dateString}\nRating: ${ averageRating.toFixed(1) } / 5\nFrom ${filtered.length} journal(s)`;
+			link.style.color = colorForRating(averageRating);
+			link.style.textDecoration = 'none';
+			link.textContent = '●';
+
+			td.innerHTML = '';
+			td.appendChild(link);
 		})
 	})();
 	</script>

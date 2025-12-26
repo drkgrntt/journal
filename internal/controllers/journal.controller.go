@@ -116,6 +116,23 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		Order("date desc").
 		Order("created_at desc")
 
+	date := ctx.Query("date")
+	tz := ctx.Query("tz")
+	if date != "" && tz != "" {
+		t, err := time.Parse("2006-01-02", date)
+		if err != nil {
+			return err
+		}
+
+		tz, err := time.LoadLocation(tz)
+		if err != nil {
+			return err
+		}
+
+		t = t.In(tz)
+		tx = tx.Where("date >= ? AND date < ?", t, t.AddDate(0, 0, 1))
+	}
+
 	topic := ctx.Query("topic")
 	if topic != "" {
 		tx = tx.Where("journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)", topic)
