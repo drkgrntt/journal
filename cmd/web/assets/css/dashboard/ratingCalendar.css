@@ -1,0 +1,24 @@
+.rating-calendar {
+	padding: .5rem;
+	border-radius: .5rem;
+	background-color: var(--secondary-color-lightest);
+	box-shadow: 0 0 .5rem rgba(0, 0, 0, .1);
+
+	table {
+		width: 100%;
+	}
+
+	caption {
+		font-size: 1.2rem;
+		font-weight: 600;
+		padding: .5rem 0;
+	}
+
+	th, td {
+		padding: .2rem .5rem;
+		text-align: center;
+	}
+	td {
+		font-size: 2rem;
+	}
+}

@@ -11,6 +11,8 @@ templ DashboardPage(c *fiber.Ctx) {
 		<div id="dashboard-page">
 			<h1 class="heading">How are you today?</h1>
 			@journal.Form(c, nil)
+			<br/>
+			@RatingCalendar(c)
 		</div>
 	}
 }

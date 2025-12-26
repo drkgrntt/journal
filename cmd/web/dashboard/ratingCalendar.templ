@@ -1,0 +1,173 @@
+package dashboard
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"go-starter/internal/models"
+	"go-starter/internal/utils"
+	"time"
+)
+
+var weekdays = map[time.Weekday]int{
+	time.Sunday:    1,
+	time.Monday:    2,
+	time.Tuesday:   3,
+	time.Wednesday: 4,
+	time.Thursday:  5,
+	time.Friday:    6,
+	time.Saturday:  7,
+}
+
+func weeksInMonth(month time.Month, year int) [][]int {
+	var weeks [][]int
+	t := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
+	var monthStarted bool
+	for t.Month() == month {
+		week := make([]int, 7)
+		for i := range week {
+			if t.Month() == month && (monthStarted || i == weekdays[t.Weekday()]) {
+				week[i] = t.Day()
+				monthStarted = true
+			}
+
+			if monthStarted {
+				t = t.AddDate(0, 0, 1)
+			}
+		}
+		weeks = append(weeks, week)
+	}
+	return weeks
+}
+
+templ RatingCalendar(c *fiber.Ctx) {
+	<div class="rating-calendar">
+		<table>
+			<caption>{ time.Now().Format("January 2006") }</caption>
+			<thead>
+				<tr>
+					<th>Su</th>
+					<th>Mo</th>
+					<th>Tu</th>
+					<th>We</th>
+					<th>Th</th>
+					<th>Fr</th>
+					<th>Sa</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, week := range weeksInMonth(time.Now().Month(), time.Now().Year()) {
+					<tr>
+						for _, day := range week {
+							<td
+								if day != 0 {
+									data-calendar-date={ time.Date(time.Now().Year(), time.Now().Month(), day, 0, 0, 0, 0, time.UTC).Format("2006-01-02") }
+								}
+							>
+								if day != 0 {
+									{ fmt.Sprint(day) }
+								}
+							</td>
+						}
+					</tr>
+				}
+			</tbody>
+		</table>
+		@templ.JSONScript("calendar-journals", utils.GetLocal[[]*models.Journal](c, "journals"))
+		@ratingCalendarJs()
+	</div>
+}
+
+templ ratingCalendarJs() {
+	<script>
+	(function() {
+		const ratingColors = [
+		  { value: 1, color: '#C44536' }, // awful
+		  { value: 2, color: '#E27A3F' }, // bad
+		  { value: 3, color: '#E0B84C' }, // fine
+		  { value: 4, color: '#6FBF8F' }, // good
+		  { value: 5, color: '#2FA4A9' }, // great
+		];
+		function hexToHsl(hex) {
+		  hex = hex.replace('#', '');
+		  const r = parseInt(hex.substring(0, 2), 16) / 255;
+		  const g = parseInt(hex.substring(2, 4), 16) / 255;
+		  const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+		  const max = Math.max(r, g, b);
+		  const min = Math.min(r, g, b);
+		  let h, s;
+		  const l = (max + min) / 2;
+
+		  if (max === min) {
+			h = s = 0;
+		  } else {
+			const d = max - min;
+			s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+			switch (max) {
+			  case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+			  case g: h = (b - r) / d + 2; break;
+			  case b: h = (r - g) / d + 4; break;
+			}
+
+			h *= 60;
+		  }
+
+		  return { h, s: s * 100, l: l * 100 };
+		}
+		function hslToCss({ h, s, l }) {
+		  return `hsl(${h}, ${s}%, ${l}%)`;
+		}
+		function lerp(a, b, t) {
+		  return a + (b - a) * t;
+		}
+		function interpolateHsl(c1, c2, t) {
+		  return {
+			h: lerp(c1.h, c2.h, t),
+			s: lerp(c1.s, c2.s, t),
+			l: lerp(c1.l, c2.l, t),
+		  };
+		}
+		function colorForRating(value) {
+		  const clamped = Math.max(1, Math.min(5, value));
+
+		  const lower = Math.floor(clamped);
+		  const upper = Math.ceil(clamped);
+
+		  if (lower === upper) {
+			return ratingColors[lower - 1].color;
+		  }
+
+		  const t = clamped - lower;
+
+		  const c1 = hexToHsl(ratingColors[lower - 1].color);
+		  const c2 = hexToHsl(ratingColors[upper - 1].color);
+
+		  return hslToCss(interpolateHsl(c1, c2, t));
+		}
+
+		const calendar = document.querySelector(".rating-calendar");
+		const journals = JSON.parse(document.getElementById("calendar-journals").textContent);
+		const calendarDates = calendar.querySelectorAll("[data-calendar-date]");
+
+		calendarDates.forEach(function(td) {
+			const date = new Date(td.dataset.calendarDate);
+			const filtered = journals.filter(function(journal) {
+				const journalDate = new Date(journal.date);	
+				return journalDate.getDate() === date.getDate()
+			})
+
+			if (filtered.length === 0) {
+				td.innerHTML = "<span title='No Journals'>●</span>";
+				return;
+			}
+
+			const averageRating = filtered.reduce(function(total, journal) {
+				return total + journal.rating.value
+			}, 0) / filtered.length
+
+			td.innerHTML = `<span title='${ averageRating.toFixed(2) }' style="color: ${ colorForRating(averageRating) }">●</span>`;
+		})
+	})();
+	</script>
+}
