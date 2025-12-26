@@ -1,0 +1,29 @@
+package components
+
+templ KebabMenu() {
+	<div class="kebab-menu">
+		<button
+			class="button"
+			onclick="
+				const d = this.nextElementSibling;
+				d.show();
+				setTimeout(function() {
+					function handler(e) {
+						if (!d.contains(e.target)) {
+							d.close();
+							document.removeEventListener('click', handler);
+						}
+					};
+					document.addEventListener('click', handler);
+				});
+			"
+		>
+			<i class="fa fa-ellipsis-v"></i>
+		</button>
+		<dialog
+			class="dialog"
+		>
+			{ children... }
+		</dialog>
+	</div>
+}

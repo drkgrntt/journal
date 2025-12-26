@@ -1,0 +1,16 @@
+.kebab-menu {
+	position: relative;
+
+	.dialog {
+		margin: 0;
+		padding: .5rem;
+		border-radius: .3rem;
+		border: none;
+		box-shadow: 0 0 .5rem var(--border-color);
+		position: absolute;
+		top: 2.5rem;
+		right: 0;
+		transform: translateX(-60%);
+		z-index: 1000;
+	}
+}

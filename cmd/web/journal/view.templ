@@ -17,18 +17,24 @@ templ View(c *fiber.Ctx, journal *models.Journal) {
 				<i class="fa fa-chevron-left"></i>
 				Back
 			</a>
-			<a
-				href={ templ.SafeURL(fmt.Sprintf("/journal/%s/edit", journal.ID.String())) }
-			>
-				Edit
-			</a>
-			<a
-				href="#"
-				hx-confirm="Are you sure?"
-				hx-delete={ fmt.Sprintf("/api/journal/%s", journal.ID.String()) }
-			>
-				Delete
-			</a>
+			@components.KebabMenu() {
+				<div class="kebab-content">
+					<a
+						class="action-link"
+						href={ templ.SafeURL(fmt.Sprintf("/journal/%s/edit", journal.ID.String())) }
+					>
+						Edit
+					</a>
+					<a
+						class="action-link"
+						href="#"
+						hx-confirm="Are you sure?"
+						hx-delete={ fmt.Sprintf("/api/journal/%s", journal.ID.String()) }
+					>
+						Delete
+					</a>
+				</div>
+			}
 		</div>
 		<div class="top">
 			<h2
