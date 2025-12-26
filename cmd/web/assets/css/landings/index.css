@@ -1,0 +1,72 @@
+@import url("/assets/css/landings/about.css");
+@import url("/assets/css/landings/privacy.css");
+
+.landing {
+  max-width: 65ch;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+	h2 {
+	  font-size: 2rem;
+	  font-weight: 600;
+	  letter-spacing: -0.01em;
+	  line-height: 1.2;
+	  margin-bottom: 0.5rem;
+	}
+
+	h3 {
+	  font-size: 1.25rem;
+	  font-weight: 600;
+	  letter-spacing: -0.01em;
+	  margin-top: 2rem;
+	  margin-bottom: 0.25rem;
+	}
+
+	/* Body text */
+	p {
+	  font-size: 1rem;
+	  line-height: 1.65;
+	  color: var(--text-primary, #1f2937);
+	}
+
+	/* Lists */
+	ul {
+	  margin: 0.5rem 0 0.5rem 1.25rem;
+	  display: flex;
+	  flex-direction: column;
+	  gap: 0.5rem;
+	}
+
+	li {
+	  list-style: disc;
+	  line-height: 1.6;
+	}
+
+	/* Emphasis */
+	strong {
+	  font-weight: 600;
+	}
+
+	/* Optional subtle section separation */
+	h2::before {
+	  content: "";
+	  display: block;
+	  width: 3rem;
+	  height: 2px;
+	  background: var(--great-color, #2FA4A9);
+	  margin-bottom: 0.75rem;
+	  opacity: 0.6;
+	}
+
+	/* Responsive tweaks */
+	@media (max-width: 640px) {
+		padding: 2rem 1rem 3rem;
+
+	  h2 {
+		font-size: 1.75rem;
+	  }
+	}
+}

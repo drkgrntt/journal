@@ -1,0 +1,74 @@
+package landings
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"go-starter/cmd/web"
+)
+
+templ AboutPage(c *fiber.Ctx) {
+	@web.Base(c) {
+		<section class="landing" id="about-page">
+			<h2>About This Journal</h2>
+			<p>
+				This journal was built to be simple, private, and actually useful.
+			</p>
+			<p>
+				A lot of journaling tools fall into one of two camps: either they’re so minimal
+				they don’t help you see patterns, or they’re so complex they feel like another
+				thing to manage. This app is an attempt to sit comfortably in the middle.
+			</p>
+			<h3>What it’s for</h3>
+			<p>
+				At its core, this is a mindfulness journal. Each entry is a snapshot of a day
+				(or a moment): how things felt, what mattered, and what you want to carry forward.
+			</p>
+			<p>
+				Alongside free-form writing, the journal supports:
+			</p>
+			<ul>
+				<li>
+					<strong>Ratings</strong> — a quick way to capture how a day felt overall
+				</li>
+				<li>
+					<strong>Action items</strong> — small, concrete steps that come out of reflection
+				</li>
+				<li>
+					<strong>Thankfuls</strong> — short reminders of what’s worth noticing
+				</li>
+			</ul>
+			<p>
+				Over time, those pieces make it easier to see trends: which days feel better,
+				what habits help, and how reflection turns into action.
+			</p>
+			<h3>Privacy first</h3>
+			<p>
+				Journaling only works if you can be honest. That means your entries should feel
+				like they belong to you — not to a platform.
+			</p>
+			<p>
+				Your journal entries, action items, and thankfuls are encrypted and treated as private by design. There are
+				no feeds, no sharing prompts, and no attempts to turn your reflections into
+				“content”.
+			</p>
+			<h3>Built to stay out of the way</h3>
+			<p>
+				This app isn’t here to tell you how to feel, optimize your emotions, or gamify
+				your inner life. It’s meant to be a quiet tool you can come back to regularly,
+				whether that’s once a day or once in a while.
+			</p>
+			<p>
+				Some days you’ll write a lot. Some days you’ll just leave a rating and move on.
+				Both count.
+			</p>
+			<h3>An ongoing project</h3>
+			<p>
+				This journal is actively evolving. New views, summaries, and visualizations
+				may be added over time — but always in service of clarity, not noise.
+			</p>
+			<p>
+				If using this journal helps you slow down, notice patterns, or make one small
+				positive change, then it’s doing its job.
+			</p>
+		</section>
+	}
+}

@@ -1,0 +1,87 @@
+package landings
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"go-starter/cmd/web"
+)
+
+templ PrivacyPage(c *fiber.Ctx) {
+	@web.Base(c) {
+		<section class="landing" id="privacy-page">
+			<h2>Privacy Policy</h2>
+			<p>
+				Your privacy matters. This journal is designed to be a personal tool, not a data
+				collection platform. This policy explains what data is collected, how it’s used,
+				and what control you have over it.
+			</p>
+			<h3>What information is collected</h3>
+			<p>
+				To use the journal, you provide basic account information such as your name,
+				email address, and a password.
+			</p>
+			<p>
+				When you write journal entries, action items, or thankfuls, that content is stored
+				so it can be shown back to you later. Each of those are encrypted before being
+				saved.
+			</p>
+			<h3>How your information is used</h3>
+			<p>
+				Your information is used only to operate the journal:
+			</p>
+			<ul>
+				<li>To authenticate you and keep your account secure</li>
+				<li>To store and display your journal entries</li>
+				<li>To generate summaries, charts, or views you explicitly use</li>
+			</ul>
+			<p>
+				Your data is not sold, rented, or shared with third parties for advertising or
+				marketing purposes.
+			</p>
+			<h3>Encryption and security</h3>
+			<p>
+				Journal entries, action items, and thankfuls are encrypted at rest. This is intended to protect your writing
+				from casual access and reduce risk if data were ever exposed.
+			</p>
+			<p>
+				No system is perfect, but reasonable steps are taken to protect your information
+				and limit access to it.
+			</p>
+			<h3>Cookies and authentication</h3>
+			<p>
+				This app uses cookies strictly for authentication and session management.
+				These cookies are not used for tracking or analytics.
+			</p>
+			<h3>Analytics and tracking</h3>
+			<p>
+				This app does not use third-party tracking cookies, advertising pixels, or
+				behavioral analytics.
+			</p>
+			<p>
+				Any usage metrics that exist are minimal and focused on keeping the app reliable,
+				not on profiling users.
+			</p>
+			<h3>Your control</h3>
+			<p>
+				You can update your account information at any time.
+			</p>
+			<p>
+				You can delete journal entries you no longer want to keep. If you choose to stop
+				using the app, you may request that your account and associated data be deleted.
+			</p>
+			<h3>Changes to this policy</h3>
+			<p>
+				This privacy policy may be updated over time as the app evolves. Any changes will
+				be made with the same guiding principle: respect for your privacy.
+			</p>
+			<p>
+				Continued use of the app after changes are made means you accept the updated
+				policy.
+			</p>
+			<h3>Contact</h3>
+			<p>
+				If you have questions or concerns about privacy, you can reach out through the
+				contact information provided in the app.
+			</p>
+		</section>
+	}
+}

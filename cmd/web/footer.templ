@@ -1,0 +1,15 @@
+package web
+
+import "github.com/gofiber/fiber/v2"
+
+templ Footer(c *fiber.Ctx) {
+	<footer id="footer">
+		<nav>
+			<ul class="links">
+				<li><a href="/about">About</a></li>
+				<li>●</li>
+				<li><a href="/privacy">Privacy</a></li>
+			</ul>
+		</nav>
+	</footer>
+}
