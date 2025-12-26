@@ -32,4 +32,9 @@ func Seed() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = seedJouranls()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
