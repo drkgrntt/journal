@@ -25,7 +25,7 @@ func weeksInMonth(month time.Month, year int) [][]int {
 	for t.Month() == month {
 		week := make([]int, 7)
 		for i := range week {
-			if t.Month() == month && (monthStarted || i == weekdays[t.Weekday()]) {
+			if t.Month() == month && (monthStarted || i+1 == weekdays[t.Weekday()]) {
 				week[i] = t.Day()
 				monthStarted = true
 			}
@@ -41,6 +41,14 @@ func weeksInMonth(month time.Month, year int) [][]int {
 
 templ RatingCalendar(c *fiber.Ctx) {
 	<div class="rating-calendar">
+		<div class="legend">
+			<span><span class="dot awful">●</span> Awful</span>
+			<span><span class="dot bad">●</span> Bad</span>
+			<span><span class="dot fine">●</span> Fine</span>
+			<span><span class="dot good">●</span> Good</span>
+			<span><span class="dot great">●</span> Great</span>
+			<span><span class="dot no-journals">●</span> No Journals</span>
+		</div>
 		<table>
 			<caption>{ time.Now().Format("January 2006") }</caption>
 			<thead>
@@ -151,7 +159,8 @@ templ ratingCalendarJs() {
 		const calendarDates = calendar.querySelectorAll("[data-calendar-date]");
 
 		calendarDates.forEach(function(td) {
-			const date = new Date(td.dataset.calendarDate);
+			const [year, month, day] = td.dataset.calendarDate?.split('-').map(Number)
+			const date = new Date(year, month - 1, day)
 			const filtered = journals.filter(function(journal) {
 				const journalDate = new Date(journal.date);	
 				return journalDate.getDate() === date.getDate()
@@ -166,7 +175,7 @@ templ ratingCalendarJs() {
 				return total + journal.rating.value
 			}, 0) / filtered.length
 
-			td.innerHTML = `<span title='${ averageRating.toFixed(2) }' style="color: ${ colorForRating(averageRating) }">●</span>`;
+			td.innerHTML = `<span title='${ averageRating.toFixed(1) } / 5\nFrom ${filtered.length} journal(s)' style="color: ${ colorForRating(averageRating) }">●</span>`;
 		})
 	})();
 	</script>

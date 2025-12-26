@@ -4,6 +4,33 @@
 	background-color: var(--secondary-color-lightest);
 	box-shadow: 0 0 .5rem rgba(0, 0, 0, .1);
 
+	.legend {
+		display: flex;
+		justify-content: space-between;
+		margin-bottom: .5rem;
+		flex-wrap: wrap;
+		gap: .5rem;
+	}
+
+	.dot {
+		font-size: 1.5rem;
+		&.awful {
+			color: var(--awful-color);
+		}
+		&.bad {
+			color: var(--bad-color);
+		}
+		&.fine {
+			color: var(--fine-color);
+		}
+		&.good {
+			color: var(--good-color);
+		}
+		&.great {
+			color: var(--great-color);
+		}
+	}
+
 	table {
 		width: 100%;
 	}
