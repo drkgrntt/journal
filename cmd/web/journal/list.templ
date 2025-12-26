@@ -17,7 +17,7 @@ func getJournals(c *fiber.Ctx) []*models.Journal {
 templ loadMore(c *fiber.Ctx) {
 	<button
 		class="button"
-		hx-get={ fmt.Sprintf("/journal/list?sort=%s&page=%d", c.Query("sort"), web.NextPage(c)) }
+		hx-get={ fmt.Sprintf("/journal/list?topic=%s&sort=%s&page=%d", c.Query("topic"), c.Query("sort"), web.NextPage(c)) }
 		hx-target="[journal-list]"
 		hx-swap="beforeend"
 		hx-swap-oob="true"

@@ -112,6 +112,7 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		Preload("JournalType").
 		Preload("Rating").
 		Preload("Thankfuls").
+		Preload("ActionItems").
 		Order("date desc").
 		Order("created_at desc")
 
