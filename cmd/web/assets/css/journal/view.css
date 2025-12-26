@@ -57,6 +57,34 @@
 	.info {
 		display: flex;
 		justify-content: space-between;
+		font-size: .8rem;
+		font-style: italic;
+	}
+
+	.topic {
+		color: var(--text-secondary-color);
+	}
+
+	.rating {
+		color: var(--text-secondary-color);
+		.color {
+			font-size: 1.2rem;
+			&.awful {
+				color: var(--awful-color);
+			}
+			&.bad {
+				color: var(--bad-color);
+			}
+			&.fine {
+				color: var(--fine-color);
+			}
+			&.good {
+				color: var(--good-color);
+			}
+			&.great {
+				color: var(--great-color);
+			}
+		}
 	}
 
 	.entry {

@@ -18,11 +18,11 @@
 	--background-color: #fafafa;
 	--border-color: #ccc;
 
-	--awful-color: #B55A4A;
-	--bad-color: #C97A5D;
-	--fine-color: #9CA3AF;
-	--good-color: #7FAF9B;
-	--great-color: #5FA3A2;
+	--awful-color: #C44536;   /* deep red */
+	--bad-color:   #E27A3F;   /* orange */
+	--fine-color:  #E0B84C;   /* warm amber */
+	--good-color:  #6FBF8F;   /* green */
+	--great-color: #2FA4A9;   /* teal */
 }
 
 * {

@@ -49,10 +49,10 @@ templ View(c *fiber.Ctx, journal *models.Journal) {
 		</div>
 		<div class="info">
 			if journal.JournalType != nil {
-				<p>Topic: { journal.JournalType.Name }</p>
+				<p class="topic">{ journal.JournalType.Name }</p>
 			}
 			if journal.Rating != nil {
-				<p>Rating: { journal.Rating.Name }</p>
+				<p class="rating"><span class={ "color", journal.Rating.Code }>●</span> { journal.Rating.Name }</p>
 			}
 		</div>
 		<p class="entry">{ journal.Entry }</p>
