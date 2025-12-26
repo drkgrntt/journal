@@ -124,13 +124,13 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 			return err
 		}
 
-		tz, err := time.LoadLocation(tz)
-		if err != nil {
-			return err
-		}
+		// tz, err := time.LoadLocation(tz)
+		// if err != nil {
+		// 	return err
+		// }
 
-		t = t.In(tz)
-		tx = tx.Where("date >= ? AND date < ?", t.Format("2006-01-02 15:04:05 -0700"), t.AddDate(0, 0, 1).Format("2006-01-02 15:04:05 -0700"))
+		// t = t.In(tz)
+		tx = tx.Where("date >= ? AND date < ?", t, t.AddDate(0, 0, 1))
 	}
 
 	topic := ctx.Query("topic")
