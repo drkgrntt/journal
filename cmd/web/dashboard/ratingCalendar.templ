@@ -166,8 +166,15 @@ templ ratingCalendarJs() {
 				return journalDate.getDate() === date.getDate()
 			})
 
+			const dateString = date.toLocaleDateString(undefined, {
+			  weekday: 'short',
+			  year: 'numeric',
+			  month: 'short',
+			  day: 'numeric'
+			})
+
 			if (filtered.length === 0) {
-				td.innerHTML = "<span title='No Journals'>●</span>";
+				td.innerHTML = `<span title='${dateString}\nNo Journals'>●</span>`;
 				return;
 			}
 
@@ -175,7 +182,7 @@ templ ratingCalendarJs() {
 				return total + journal.rating.value
 			}, 0) / filtered.length
 
-			td.innerHTML = `<span title='${ averageRating.toFixed(1) } / 5\nFrom ${filtered.length} journal(s)' style="color: ${ colorForRating(averageRating) }">●</span>`;
+			td.innerHTML = `<span title='${dateString}\nRating: ${ averageRating.toFixed(1) } / 5\nFrom ${filtered.length} journal(s)' style="color: ${ colorForRating(averageRating) }">●</span>`;
 		})
 	})();
 	</script>
