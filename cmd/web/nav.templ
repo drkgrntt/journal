@@ -3,10 +3,17 @@ package web
 import "github.com/gofiber/fiber/v2"
 
 templ Nav(c *fiber.Ctx) {
-	<button
-		id="app-nav-toggle"
-		onclick="document.getElementById('app-nav').classList.toggle('open')"
-	>☰</button>
+	<input
+		onchange="document.getElementById('app-nav').classList.toggle('open')"
+		id="nav-toggle"
+		class="toggle"
+		type="checkbox"
+	/>
+	<div class="toggle-button-border">
+		<label class="toggle-button" for="nav-toggle">
+			<span>Toggle nav menu</span>
+		</label>
+	</div>
 	<nav id="app-nav">
 		<ul class="list">
 			if CurrentUser(c) != nil {
