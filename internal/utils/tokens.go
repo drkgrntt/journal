@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"go-starter/internal/logger"
+	"journal/internal/logger"
 	"os"
 	"strings"
 	"time"

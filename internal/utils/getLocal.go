@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"go-starter/internal/logger"
+	"journal/internal/logger"
 
 	"github.com/gofiber/fiber/v2"
 )

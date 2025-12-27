@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"go-starter/cmd/web/auth"
-	"go-starter/internal/logger"
-	"go-starter/internal/models"
-	"go-starter/internal/utils"
+	"journal/cmd/web/auth"
+	"journal/internal/logger"
+	"journal/internal/models"
+	"journal/internal/utils"
 	"net/http"
 	"os"
 	"strings"

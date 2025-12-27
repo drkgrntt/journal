@@ -1,7 +1,7 @@
 package seeders
 
 import (
-	"go-starter/internal/models"
+	"journal/internal/models"
 	"math/rand"
 	"strings"
 	"time"

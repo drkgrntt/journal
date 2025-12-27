@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"go-starter/internal/models"
-	"go-starter/internal/utils"
+	"journal/internal/models"
+	"journal/internal/utils"
 	"sync"
 
 	"github.com/gofiber/fiber/v2"

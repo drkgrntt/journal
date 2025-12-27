@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
-	"go-starter/internal/models"
+	"journal/internal/models"
 	"log"
 	"os"
 	"strconv"

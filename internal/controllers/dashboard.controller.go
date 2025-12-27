@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"go-starter/cmd/web/dashboard"
-	"go-starter/internal/middleware"
-	"go-starter/internal/models"
-	"go-starter/internal/utils"
+	"journal/cmd/web/dashboard"
+	"journal/internal/middleware"
+	"journal/internal/models"
+	"journal/internal/utils"
 	"time"
 
 	"github.com/gofiber/fiber/v2"

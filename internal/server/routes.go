@@ -1,10 +1,10 @@
 package server
 
 import (
-	"go-starter/cmd/web"
-	"go-starter/internal/controllers"
-	"go-starter/internal/logger"
-	"go-starter/internal/middleware"
+	"journal/cmd/web"
+	"journal/internal/controllers"
+	"journal/internal/logger"
+	"journal/internal/middleware"
 	"net/http"
 	"runtime/debug"
 

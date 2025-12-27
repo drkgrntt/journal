@@ -2,11 +2,11 @@ package journal
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"go-starter/cmd/web"
-	"go-starter/cmd/web/actionItems"
-	"go-starter/cmd/web/thankful"
-	"go-starter/internal/models"
-	"go-starter/internal/utils"
+	"journal/cmd/web"
+	"journal/cmd/web/actionItems"
+	"journal/cmd/web/thankful"
+	"journal/internal/models"
+	"journal/internal/utils"
 )
 
 func getOutstandingActionItems(c *fiber.Ctx) []*models.ActionItem {

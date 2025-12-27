@@ -1,8 +1,8 @@
 package models
 
 import (
-	"go-starter/internal/logger"
-	"go-starter/internal/utils"
+	"journal/internal/logger"
+	"journal/internal/utils"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"go-starter/internal/database"
-	"go-starter/internal/logger"
-	"go-starter/internal/seed/seeders"
+	"journal/internal/database"
+	"journal/internal/logger"
+	"journal/internal/seed/seeders"
 )
 
 func init() {

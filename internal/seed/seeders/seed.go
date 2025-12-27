@@ -1,8 +1,8 @@
 package seeders
 
 import (
-	"go-starter/internal/database"
-	"go-starter/internal/models"
+	"journal/internal/database"
+	"journal/internal/models"
 	"log"
 
 	"gorm.io/gorm"

@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	_ "go-starter/internal/jobs"
-	"go-starter/internal/logger"
-	"go-starter/internal/server"
+	_ "journal/internal/jobs"
+	"journal/internal/logger"
+	"journal/internal/server"
 	"os"
 	"os/signal"
 	"strconv"

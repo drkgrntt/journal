@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"go-starter/internal/logger"
-	"go-starter/internal/models"
-	"go-starter/internal/utils"
+	"journal/internal/logger"
+	"journal/internal/models"
+	"journal/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 )

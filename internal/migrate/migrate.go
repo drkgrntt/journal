@@ -1,8 +1,8 @@
 package main
 
 import (
-	"go-starter/internal/database"
-	"go-starter/internal/logger"
+	"journal/internal/database"
+	"journal/internal/logger"
 )
 
 func main() {

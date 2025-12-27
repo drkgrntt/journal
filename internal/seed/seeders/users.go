@@ -1,6 +1,6 @@
 package seeders
 
-import "go-starter/internal/models"
+import "journal/internal/models"
 
 func seedUsers() error {
 	admin = &models.User{

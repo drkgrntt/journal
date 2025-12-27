@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"go-starter/cmd/web/landings"
-	"go-starter/internal/utils"
+	"journal/cmd/web/landings"
+	"journal/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"

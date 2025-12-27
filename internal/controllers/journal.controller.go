@@ -2,11 +2,11 @@ package controllers
 
 import (
 	"fmt"
-	"go-starter/cmd/web/journal"
-	"go-starter/internal/logger"
-	"go-starter/internal/middleware"
-	"go-starter/internal/models"
-	"go-starter/internal/utils"
+	"journal/cmd/web/journal"
+	"journal/internal/logger"
+	"journal/internal/middleware"
+	"journal/internal/models"
+	"journal/internal/utils"
 	"net/http"
 	"time"
 

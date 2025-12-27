@@ -1,9 +1,9 @@
 package jobs
 
 import (
-	"go-starter/internal/database"
-	"go-starter/internal/logger"
-	"go-starter/internal/models"
+	"journal/internal/database"
+	"journal/internal/logger"
+	"journal/internal/models"
 	"strings"
 	"time"
 

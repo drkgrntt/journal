@@ -1,8 +1,8 @@
 package journal
 
 import (
-	"go-starter/internal/models"
-	"go-starter/internal/utils"
+	"journal/internal/models"
+	"journal/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 )

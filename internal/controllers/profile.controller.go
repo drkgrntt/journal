@@ -1,11 +1,11 @@
 package controllers
 
 import (
-	"go-starter/cmd/web/profile"
-	"go-starter/internal/logger"
-	"go-starter/internal/middleware"
-	"go-starter/internal/models"
-	"go-starter/internal/utils"
+	"journal/cmd/web/profile"
+	"journal/internal/logger"
+	"journal/internal/middleware"
+	"journal/internal/models"
+	"journal/internal/utils"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
