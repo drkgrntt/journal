@@ -117,8 +117,14 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		Order("created_at desc")
 
 	date := ctx.Query("date")
-	tz := ctx.Query("tz")
-	if date != "" && tz != "" {
+	tz := ctx.Cookies("tz", "UTC")
+	_, err := time.LoadLocation(tz)
+	if err != nil {
+		tz = "UTC"
+	}
+	err = nil
+
+	if date != "" {
 		loc, err := time.LoadLocation(tz)
 		if err != nil {
 			return err
@@ -149,22 +155,28 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 	isSortByDate := ctx.Query("sort") == "date"
 
 	if isSortByDate {
+		dayExpr := fmt.Sprintf("date_trunc('day', date AT TIME ZONE '%s')", tz)
+
 		daySubquery := c.db.
 			Table("journals").
-			Select("date_trunc('day', date)").
+			Select(dayExpr).
 			Where("creator_id = ?", currentUser.ID)
 
 		if topic != "" {
-			daySubquery = daySubquery.Where("journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)", topic)
+			daySubquery = daySubquery.Where(
+				"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
+				topic,
+			)
 		}
 
-		daySubquery.Group("date_trunc('day', date)").
-			Order("date_trunc('day', date) DESC").
+		daySubquery = daySubquery.
+			Group(dayExpr).
+			Order(dayExpr + " DESC").
 			Offset(page).
 			Limit(1)
 
-		tx.Where(
-			"date >= (?) AND date < (?) + INTERVAL '1 day'",
+		tx = tx.Where(
+			"date >= (?) AND date < ((?) + INTERVAL '1 day')",
 			daySubquery,
 			daySubquery,
 		)
@@ -173,7 +185,7 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 			Offset(page * pageSize)
 	}
 
-	err := tx.Find(&journals).Error
+	err = tx.Find(&journals).Error
 
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "No journals found"})
@@ -181,17 +193,24 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 
 	if isSortByDate {
 		nextPage := page + 1
+
 		nextDaySubquery := c.db.
 			Table("journals").
 			Select("1").
 			Where("creator_id = ?", currentUser.ID)
 
 		if topic != "" {
-			nextDaySubquery = nextDaySubquery.Where("journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)", topic)
+			nextDaySubquery = nextDaySubquery.Where(
+				"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
+				topic,
+			)
 		}
 
-		nextDaySubquery.Group("date_trunc('day', date)").
-			Order("date_trunc('day', date) DESC").
+		dayExpr := fmt.Sprintf("date_trunc('day', date AT TIME ZONE '%s')", tz)
+
+		nextDaySubquery = nextDaySubquery.
+			Group(dayExpr).
+			Order(dayExpr + " DESC").
 			Offset(nextPage).
 			Limit(1)
 

@@ -39,5 +39,10 @@ export function setUnixValue(dateString, element) {
 	const date = new Date(dateString)
 	element.value = date.getTime()
 }
-setToWindow("setUnixValue", setUnixValue)
+setToWindow("setUnixValue", setUnixValue);
+
+(function() {
+	const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+	document.cookie = `tz=${tz}; Path=/; Max-Age=31536000`
+})()
 

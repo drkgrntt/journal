@@ -183,7 +183,7 @@ templ ratingCalendarJs() {
 			}, 0) / filtered.length
 
 			const link = document.createElement('a');
-			link.href = `/journal?date=${td.dataset.calendarDate}&tz=${Intl.DateTimeFormat().resolvedOptions().timeZone}`
+			link.href = `/journal?date=${td.dataset.calendarDate}`
 			link.title = `${dateString}\nRating: ${ averageRating.toFixed(1) } / 5\nFrom ${filtered.length} journal(s)`;
 			link.style.color = colorForRating(averageRating);
 			link.style.textDecoration = 'none';
