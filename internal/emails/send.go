@@ -14,7 +14,7 @@ import (
 	"github.com/mailgun/mailgun-go/v4"
 )
 
-var defaultSender = "Journal <test@mg.derekgarnett.com>"
+var defaultSender = "Contour Journal <noreply@contourjournal.com>"
 
 type EmailRecipient struct {
 	Email string `json:"email"`
@@ -83,7 +83,7 @@ func SendEmail(emailConfig *EmailConfig) (mes string, id string, err error) {
 		emailConfig.Content.Render(context.Background(), &buffer)
 	} else {
 		renderContext := templ.WithChildren(context.Background(), emailConfig.Content)
-		layout().Render(renderContext, &buffer)
+		Layout().Render(renderContext, &buffer)
 	}
 
 	html := buffer.String()

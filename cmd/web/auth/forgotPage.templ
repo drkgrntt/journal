@@ -1,0 +1,24 @@
+package auth
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"journal/cmd/web"
+)
+
+templ ForgotPage(c *fiber.Ctx) {
+	@web.Base(c) {
+		<div id="forgot-page">
+			<h1 class="heading">Forgot Password</h1>
+			<form
+				hx-post="/api/auth/forgot"
+				class="form"
+			>
+				<div class="field">
+					<label class="label" for="email">Email</label>
+					<input class="input" id="email" name="email" type="text"/>
+				</div>
+				<button class="button" type="submit">Submit</button>
+			</form>
+		</div>
+	}
+}

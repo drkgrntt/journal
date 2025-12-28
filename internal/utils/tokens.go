@@ -19,7 +19,7 @@ var (
 	accessTokenExpiresIn  = os.Getenv("ACCESS_TOKEN_EXPIRES_IN")
 )
 
-func CreateToken(userId uuid.UUID) (string, error) {
+func CreateToken(expiresIn time.Duration, additionalClaims map[string]any) (string, error) {
 	decodedPrivateKey, err := base64.StdEncoding.DecodeString(accessTokenPrivateKey)
 
 	if err != nil {
@@ -30,20 +30,36 @@ func CreateToken(userId uuid.UUID) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("create: parse key: %w", err)
 	}
+
+	now := time.Now().UTC()
+
+	claims := make(jwt.MapClaims)
+	claims["exp"] = now.Add(expiresIn).Unix()
+	claims["iat"] = now.Unix()
+	claims["nbf"] = now.Unix()
+	for k, v := range additionalClaims {
+		claims[k] = v
+	}
+
+	token, err := jwt.NewWithClaims(jwt.SigningMethodRS256, claims).SignedString(key)
+
+	if err != nil {
+		return "", fmt.Errorf("create: sign token: %w", err)
+	}
+
+	return token, nil
+}
+
+func CreateAccessToken(userId uuid.UUID) (string, error) {
 	expiresIn, err := time.ParseDuration(accessTokenExpiresIn)
 	if err != nil {
 		return "", fmt.Errorf("invalid expiry duration: %w", err)
 	}
 
-	now := time.Now().UTC()
-
-	claims := make(jwt.MapClaims)
+	claims := make(map[string]any)
 	claims["sub"] = userId
-	claims["exp"] = now.Add(expiresIn).Unix()
-	claims["iat"] = now.Unix()
-	claims["nbf"] = now.Unix()
 
-	token, err := jwt.NewWithClaims(jwt.SigningMethodRS256, claims).SignedString(key)
+	token, err := CreateToken(expiresIn, claims)
 
 	if err != nil {
 		return "", fmt.Errorf("create: sign token: %w", err)

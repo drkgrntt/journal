@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	gormlogger "gorm.io/gorm/logger"
 	"journal/internal/database"
 	"journal/internal/logger"
 	"journal/internal/models"
@@ -36,7 +37,7 @@ func init() {
 		logger.Error("Error starting scheduler", "error", err.Error())
 	}
 
-	// s.Start()
+	s.Start()
 }
 
 var (
@@ -46,11 +47,12 @@ var (
 )
 
 func runJobs() {
-	logger.Info("Running jobs")
+	// logger.Info("Running jobs")
 
 	var jobs []*models.Job
 	now := time.Now()
 	err := db.
+		Session(&gorm.Session{Logger: gormlogger.Default.LogMode(gormlogger.Error)}).
 		Where("processed_at IS NULL").
 		Where("scheduled_at <= ?", now).
 		Where("retries <= ? OR retries IS NULL", maxRetries).
@@ -108,5 +110,5 @@ func runJobs() {
 		}
 	}
 
-	logger.Info("Finished running jobs")
+	// logger.Info("Finished running jobs")
 }

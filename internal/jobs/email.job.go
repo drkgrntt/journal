@@ -92,7 +92,20 @@ func sendEmail(job *models.Job) error {
 
 func (data *EmailData) getContentAndSubject(config *emails.EmailConfig) error {
 	switch data.Name {
+	case emails.FORGOT_PASSWORD:
+		err, vars := utils.CastToType[emails.ForgotPasswordVariables](data.Variables)
+		if err != nil {
+			return err
+		}
+		config.Content = emails.ForgotPassword(&vars)
+		config.Subject = "Forgot Password"
 	case emails.GENERAL:
+		err, vars := utils.CastToType[emails.GeneralVariables](data.Variables)
+		if err != nil {
+			return err
+		}
+		config.Content = emails.General(&vars)
+		config.Subject = vars.Subject
 	default:
 		return errors.New("invalid email name")
 	}

@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"journal/cmd/web/auth"
+	"journal/internal/emails"
+	"journal/internal/jobs"
 	"journal/internal/logger"
 	"journal/internal/models"
 	"journal/internal/utils"
@@ -11,7 +13,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
+	_ "github.com/joho/godotenv/autoload"
 	"gorm.io/gorm"
 )
 
@@ -34,6 +36,8 @@ func (c *AuthController) Init(db *gorm.DB, app *fiber.App) {
 func (c *AuthController) RegisterViewRoutes() {
 	c.views.Get("/register", utils.RenderPage(auth.RegisterPage))
 	c.views.Get("/login", utils.RenderPage(auth.LoginPage))
+	c.views.Get("/forgot", utils.RenderPage(auth.ForgotPage))
+	c.views.Get("/reset", utils.RenderPage(auth.ResetPage))
 }
 
 func (c *AuthController) RegisterApiRoutes() {
@@ -41,8 +45,7 @@ func (c *AuthController) RegisterApiRoutes() {
 	c.api.Post("/login", c.login)
 	c.api.Post("/logout", c.logout)
 	c.api.Post("/forgot", c.forgot)
-	c.api.Put("/updatePassword", c.updatePassword)
-	c.api.Put("/resetPassword", c.resetPassword)
+	c.api.Put("/reset", c.resetPassword)
 }
 
 type AuthFormData struct {
@@ -85,7 +88,7 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 
 	// utils.SendVerificationEmail(body.Email, userStatus.ID.String())
 
-	token, err := utils.CreateToken(user.ID)
+	token, err := utils.CreateAccessToken(user.ID)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).SendString("Error creating token" + err.Error())
 	}
@@ -124,7 +127,7 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).SendString("Email or password incorrect")
 	}
 
-	token, err := utils.CreateToken(user.ID)
+	token, err := utils.CreateAccessToken(user.ID)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).SendString("Error creating token" + err.Error())
 	}
@@ -154,7 +157,7 @@ func (c *AuthController) logout(ctx *fiber.Ctx) error {
 
 func (c *AuthController) forgot(ctx *fiber.Ctx) error {
 	type Forgot struct {
-		Email string `json:"email"`
+		Email string `form:"email"`
 	}
 
 	var body Forgot
@@ -163,32 +166,43 @@ func (c *AuthController) forgot(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	var email models.User
-	err = c.db.Where("lower(email) = ?", strings.ToLower(body.Email)).First(&email).Error
+	var user models.User
+	err = c.db.Where("lower(email) = ?", strings.ToLower(body.Email)).First(&user).Error
 	if err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Email not found"})
+		return ctx.Status(http.StatusBadRequest).SendString("Email not found")
 	}
 
-	// utils.SendResetEmail(body.Email, userStatus.ID.String())
+	claims := map[string]any{
+		"sub": user.ID,
+	}
+	resetToken, err := utils.CreateToken(time.Minute*5, claims)
+	if err != nil {
+		return ctx.Status(http.StatusInternalServerError).SendString("Error creating reset token")
+	}
 
-	response := fiber.Map{
-		"data": fiber.Map{
-			"line1": "Verification email sent",
-			"line2": "Please check your email at " + body.Email + " for a verification link",
+	data := &jobs.EmailData{
+		Name: emails.FORGOT_PASSWORD,
+		Recipients: []*emails.EmailRecipient{
+			{
+				Email: user.Email,
+				Name:  user.FullName(),
+			},
+		},
+		Variables: &emails.ForgotPasswordVariables{
+			ResetToken: resetToken,
+			RootUrl:    os.Getenv("ROOT_URL"),
 		},
 	}
+	jobs.ScheduleEmailJob(user.ID, data, time.Now())
 
-	return ctx.Status(http.StatusCreated).JSON(response)
-}
-
-func (c *AuthController) updatePassword(ctx *fiber.Ctx) error {
-	return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "Change password"})
+	return ctx.Status(http.StatusAccepted).SendString("Check your email to reset your password.")
 }
 
 func (c *AuthController) resetPassword(ctx *fiber.Ctx) error {
 	type UpdatePassword struct {
-		UserId   uuid.UUID `json:"userId"`
-		Password string    `json:"password"`
+		Token           string `form:"token"`
+		Password        string `form:"password"`
+		ConfirmPassword string `form:"confirmPassword"`
 	}
 
 	var body UpdatePassword
@@ -197,18 +211,19 @@ func (c *AuthController) resetPassword(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	err = c.db.Model(&models.User{}).Where("id = ?", body.UserId).Updates(models.User{Password: body.Password}).Error
+	tokenData, err := utils.ValidateToken(body.Token)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).SendString(err.Error())
+	}
+
+	if body.Password != body.ConfirmPassword {
+		return ctx.Status(http.StatusBadRequest).SendString("Passwords do not match")
+	}
+
+	err = c.db.Model(&models.User{}).Where("id = ?", tokenData.UserID).Updates(&models.User{Password: body.Password}).Error
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error updating password"})
 	}
 
-	response := fiber.Map{
-		"status": "success",
-		"data": fiber.Map{
-			"line1": "Password updated",
-			"line2": "Please login with your new password",
-		},
-	}
-
-	return ctx.Status(http.StatusOK).JSON(response)
+	return ctx.Status(http.StatusOK).SendString("Password updated, <a href='/auth/login'>login</a> to continue.")
 }

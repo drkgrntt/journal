@@ -11,6 +11,7 @@ templ LoginPage(c *fiber.Ctx) {
 			<h1 class="heading">Login</h1>
 			@AuthForm("/api/auth/login")
 			<a href="/auth/register">Sign Up</a>
+			<a href="/auth/forgot">Forgot Password</a>
 		</div>
 	}
 }
