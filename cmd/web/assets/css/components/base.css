@@ -7,23 +7,5 @@ body {
 	max-width: 80rem;
 	margin: 0 auto;
 	padding: 1.5rem;
-	min-height: calc(100vh - 3.5rem - 3.5rem);
-}
-
-.top-bar {
-	background-color: var(--primary-color-light);
-	height: 3.5rem;
-	width: 100%;
-	display: flex;
-	align-items: center;
-	padding: 0 .5rem;
-}
-
-.title {
-	font-size: 1.5rem;
-	font-weight: 300;
-	letter-spacing: .1rem;
-	margin-left: 1rem;
-	font-style: italic;
-	color: var(--text-color);
+	min-height: var(--main-height);
 }

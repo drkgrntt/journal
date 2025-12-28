@@ -1,0 +1,14 @@
+package emails
+
+const (
+	GENERAL = "general"
+)
+
+type GeneralVariables struct {
+	Message string
+	Subject string
+}
+
+templ General(vars *GeneralVariables) {
+	{ vars.Message }
+}

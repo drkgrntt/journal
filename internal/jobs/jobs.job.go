@@ -84,6 +84,8 @@ func runJobs() {
 		job.AttemptedAt = &now
 
 		switch strings.ToLower(job.Type) {
+		case EMAIL_JOB_TYPE:
+			err = sendEmail(job)
 		default:
 			logger.Warn("No job process found with the corresponding type", "type", job.Type)
 			continue

@@ -1,0 +1,5 @@
+:root {
+	--header-height: 3.5rem;
+	--footer-height: 3.5rem;
+	--main-height: calc(100vh - var(--header-height) - var(--footer-height));
+}

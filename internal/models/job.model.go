@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 func init() {
@@ -19,5 +17,4 @@ type Job struct {
 	AttemptedAt *time.Time `gorm:"type:time"`
 	Retries     int        `gorm:"type:int; default:0;"`
 	Priority    int        `gorm:"type:int; default:10;"`
-	AccountID   *uuid.UUID `gorm:"type:uuid;not null;"`
 }

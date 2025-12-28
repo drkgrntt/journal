@@ -42,6 +42,16 @@ func CastMetadata[T any](metadata datatypes.JSON) (error, T) {
 	return err, value
 }
 
+func EncodeMetadata(value any) (data datatypes.JSON, err error) {
+	data = datatypes.JSON{}
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return data, err
+	}
+	data.Scan(encoded)
+	return data, nil
+}
+
 // Base model for types. This includes an auto increment ID, a code and a name, as well as all the base type fields.
 type BaseType struct {
 	*Base
