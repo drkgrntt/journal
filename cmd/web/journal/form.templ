@@ -42,45 +42,47 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 			<label class="label" for="date">Date</label>
 			@components.DateTimeInput("date", journalDate(journal))
 		</div>
-		<div class="field">
-			<label class="label" for="journalType">Topic</label>
-			<select
-				name="journalType"
-				class="select"
-			>
-				for _, journalType := range getJournalTypes(c) {
-					<option
-						value={ fmt.Sprint(journalType.ID) }
-						if journal != nil && journal.JournalTypeID == journalType.ID {
-							selected
-						}
-						else
-						if journal == nil && journalType.IsDefault() {
-							selected
-						}
-					>
-						{ journalType.Name }
-					</option>
+		<div class="row">
+			<fieldset class="field">
+				<legend class="label legend">Rating</legend>
+				for _, rating := range getRatings(c) {
+					<div class="check-field">
+						<input
+							id={ fmt.Sprint(rating.ID) }
+							type="radio"
+							name="rating"
+							value={ fmt.Sprint(rating.ID) }
+							if journal != nil && journal.RatingID == rating.ID {
+								checked
+							}
+						/>
+						<label class="label" for={ fmt.Sprint(rating.ID) }>{ rating.Name }</label>
+					</div>
 				}
-			</select>
+			</fieldset>
+			<div class="field">
+				<label class="label" for="journalType">Topic</label>
+				<select
+					name="journalType"
+					class="select"
+				>
+					for _, journalType := range getJournalTypes(c) {
+						<option
+							value={ fmt.Sprint(journalType.ID) }
+							if journal != nil && journal.JournalTypeID == journalType.ID {
+								selected
+							}
+							else
+							if journal == nil && journalType.IsDefault() {
+								selected
+							}
+						>
+							{ journalType.Name }
+						</option>
+					}
+				</select>
+			</div>
 		</div>
-		<fieldset class="field">
-			<legend class="label legend">Rating</legend>
-			for _, rating := range getRatings(c) {
-				<div class="check-field">
-					<input
-						id={ fmt.Sprint(rating.ID) }
-						type="radio"
-						name="rating"
-						value={ fmt.Sprint(rating.ID) }
-						if journal != nil && journal.RatingID == rating.ID {
-							checked
-						}
-					/>
-					<label class="label" for={ fmt.Sprint(rating.ID) }>{ rating.Name }</label>
-				</div>
-			}
-		</fieldset>
 		<div class="field">
 			<span class="label-container">
 				<label class="label" for="entry">Entry</label>
