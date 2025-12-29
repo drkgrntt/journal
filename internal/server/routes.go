@@ -30,6 +30,7 @@ func (s *FiberServer) RegisterFiberRoutes() {
 		return c.Next()
 	})
 
+	s.App.Use(middleware.FilterBots)
 	s.App.Use(middleware.DeserializeToken)
 
 	for _, controller := range controllers.GetControllers() {

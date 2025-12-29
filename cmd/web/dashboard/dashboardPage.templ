@@ -25,6 +25,7 @@ templ DashboardPage(c *fiber.Ctx) {
 			<br/>
 			<h3 class="heading">Here's what's left</h3>
 			@actionItems.Form(c, nil, nil)
+			<br/>
 			@actionItems.List(c, getOutstandingActionItems(c))
 			<br/>
 			@RatingCalendar(c)

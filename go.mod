@@ -19,6 +19,7 @@ require (
 	gorm.io/datatypes v1.2.4
 	gorm.io/driver/postgres v1.5.9
 	gorm.io/gorm v1.25.12
+	zgo.at/isbot v1.0.0
 )
 
 require (
