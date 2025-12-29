@@ -27,7 +27,7 @@ func (c *DashboardController) Init(db *gorm.DB, app *fiber.App) {
 	c.api = app.Group("api/dashboard")
 }
 
-func (c *DashboardController) getJournals(ctx *fiber.Ctx) error {
+func (c *DashboardController) setJournals(ctx *fiber.Ctx) error {
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	var journals []*models.Journal
 
@@ -44,9 +44,31 @@ func (c *DashboardController) getJournals(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
+func (c *DashboardController) setOutstandingActionItems(ctx *fiber.Ctx) error {
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+
+	var actionItems []*models.ActionItem
+	c.db.
+		// Created by me
+		Where("creator_id = ?", currentUser.ID).
+		// Incomplete
+		Where("completed_at IS NULL").
+		Order("created_at desc").
+		Find(&actionItems)
+
+	ctx.Locals("outstandingActionItems", &actionItems)
+	return ctx.Next()
+}
+
 func (c *DashboardController) RegisterViewRoutes() {
 	c.views.Use(middleware.RequireAuth)
-	c.views.Get("/", middleware.SetRatings, middleware.SetJournalTypes, c.getJournals, utils.RenderPage(dashboard.DashboardPage))
+	c.views.Get("/",
+		middleware.SetRatings,
+		middleware.SetJournalTypes,
+		c.setJournals,
+		c.setOutstandingActionItems,
+		utils.RenderPage(dashboard.DashboardPage),
+	)
 }
 
 func (c *DashboardController) RegisterApiRoutes() {

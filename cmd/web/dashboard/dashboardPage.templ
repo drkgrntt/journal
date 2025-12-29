@@ -3,14 +3,29 @@ package dashboard
 import (
 	"github.com/gofiber/fiber/v2"
 	"journal/cmd/web"
+	"journal/cmd/web/actionItems"
 	"journal/cmd/web/journal"
+	"journal/internal/models"
+	"journal/internal/utils"
 )
+
+func getOutstandingActionItems(c *fiber.Ctx) []*models.ActionItem {
+	actionItems := utils.GetLocal[[]*models.ActionItem](c, "outstandingActionItems")
+	if actionItems != nil {
+		return *actionItems
+	}
+	return []*models.ActionItem{}
+}
 
 templ DashboardPage(c *fiber.Ctx) {
 	@web.Base(c) {
 		<div id="dashboard-page">
-			<h1 class="heading">How are you today?</h1>
+			<h2 class="heading">How are you today?</h2>
 			@journal.Form(c, nil)
+			<br/>
+			<h3 class="heading">Here's what's left</h3>
+			@actionItems.Form(c, nil, nil)
+			@actionItems.List(c, getOutstandingActionItems(c))
 			<br/>
 			@RatingCalendar(c)
 		</div>
