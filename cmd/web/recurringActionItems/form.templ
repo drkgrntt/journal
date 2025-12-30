@@ -1,0 +1,90 @@
+package recurringActionItems
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"journal/cmd/web/components"
+	"journal/internal/models"
+	"time"
+)
+
+func recurringActionItemDefaultStartsAt(recurringActionItem *models.RecurringActionItem) *time.Time {
+	if recurringActionItem != nil {
+		return recurringActionItem.StartsAt
+	}
+
+	t := time.Now()
+	return &t
+}
+
+templ Form(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) {
+	<form
+		id="recurring-action-item-form"
+		class="form"
+		if recurringActionItem != nil {
+			hx-put={ fmt.Sprintf("/api/recurring-action-items/%s", recurringActionItem.ID.String()) }
+		} else {
+			hx-post="/api/recurring-action-items"
+		}
+		hx-swap="beforeend"
+		hx-target="[recurring-action-item-list]"
+		hx-trigger="submit"
+		hx-swap-oob="outerHTML"
+	>
+		<div class="field">
+			<input
+				placeholder="Add a recurring action item"
+				class="input"
+				type="text"
+				name="text"
+				id="text"
+				if recurringActionItem != nil {
+					value={ recurringActionItem.Text }
+				}
+			/>
+		</div>
+		<div class="row">
+			<div class="field">
+				<label class="label" for="frequency">Frequency</label>
+				<select
+					class="select"
+					name="frequency"
+					id="frequency"
+					if recurringActionItem != nil {
+						value={ recurringActionItem.Frequency.Milliseconds() }
+					}
+				>
+					<option
+						value={ time.Duration(24 * time.Hour).Milliseconds() }
+						if recurringActionItem != nil && recurringActionItem.Frequency == time.Duration(24*time.Hour) {
+							selected
+						}
+					>
+						Daily
+					</option>
+					<option
+						value={ time.Duration(7 * 24 * time.Hour).Milliseconds() }
+						if recurringActionItem != nil && recurringActionItem.Frequency == time.Duration(7*24*time.Hour) {
+							selected
+						}
+					>
+						Weekly
+					</option>
+					<option
+						value={ time.Duration(30 * 24 * time.Hour).Milliseconds() }
+						if recurringActionItem != nil && recurringActionItem.Frequency == time.Duration(30*24*time.Hour) {
+							selected
+						}
+					>
+						Monthly
+					</option>
+				</select>
+			</div>
+			<div class="field">
+				<label class="label" for="startsAt">Starting Date</label>
+				@components.DateTimeInput("startsAt", recurringActionItemDefaultStartsAt(recurringActionItem))
+			</div>
+		</div>
+		<button class="button" type="submit">Submit</button>
+	</form>
+}

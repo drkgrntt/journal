@@ -118,18 +118,13 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 
 	date := ctx.Query("date")
 	tz := ctx.Cookies("tz", "UTC")
-	_, err := time.LoadLocation(tz)
+	loc, err := time.LoadLocation(tz)
 	if err != nil {
 		tz = "UTC"
 	}
 	err = nil
 
 	if date != "" {
-		loc, err := time.LoadLocation(tz)
-		if err != nil {
-			return err
-		}
-
 		parsed, err := time.Parse("2006-01-02", date)
 		if err != nil {
 			return err

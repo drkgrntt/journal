@@ -193,13 +193,3 @@ templ listPageFilters(c *fiber.Ctx) {
 		</div>
 	</div>
 }
-
-templ ListPage(c *fiber.Ctx) {
-	@web.Base(c) {
-		<div id="action-item-list-page">
-			<h1 class="heading">Action Items</h1>
-			@listPageFilters(c)
-			@List(c, getActionItems(c))
-		</div>
-	}
-}

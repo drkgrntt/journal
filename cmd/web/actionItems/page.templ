@@ -1,0 +1,31 @@
+package actionItems
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"journal/cmd/web"
+	"journal/cmd/web/recurringActionItems"
+	"journal/internal/models"
+	"journal/internal/utils"
+)
+
+func getRecurringActionItems(c *fiber.Ctx) []*models.RecurringActionItem {
+	recurringActionItems := utils.GetLocal[[]*models.RecurringActionItem](c, "recurringActionItems")
+	if recurringActionItems == nil {
+		return []*models.RecurringActionItem{}
+	}
+	return *recurringActionItems
+}
+
+templ Page(c *fiber.Ctx) {
+	@web.Base(c) {
+		<div id="action-item-list-page">
+			<h2 class="heading">Recurring Action Items</h2>
+			@recurringActionItems.List(c, getRecurringActionItems(c))
+			@recurringActionItems.Form(c, nil)
+			<h2 class="heading">Action Items</h2>
+			@listPageFilters(c)
+			@Form(c, nil, nil)
+			@List(c, getActionItems(c))
+		</div>
+	}
+}

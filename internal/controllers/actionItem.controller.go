@@ -50,6 +50,20 @@ func (c *ActionItemController) getActionItem(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
+func (c *ActionItemController) getRecurringActionItems(ctx *fiber.Ctx) error {
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+
+	var recurringActionItems []*models.RecurringActionItem
+	tx := c.db.
+		Where("creator_id = ?", currentUser.ID).
+		Order("created_at desc")
+
+	tx.Find(&recurringActionItems)
+	ctx.Locals("recurringActionItems", &recurringActionItems)
+
+	return ctx.Next()
+}
+
 func (c *ActionItemController) getActionItems(ctx *fiber.Ctx) error {
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 
@@ -95,7 +109,13 @@ func (c *ActionItemController) getActionItems(ctx *fiber.Ctx) error {
 func (c *ActionItemController) RegisterViewRoutes() {
 	c.views.Use(middleware.RequireAuth)
 
-	c.views.Get("/", middleware.SetJournalTypes, c.getActionItems, utils.RenderPage(actionItems.ListPage))
+	c.views.Get(
+		"/",
+		middleware.SetJournalTypes,
+		c.getActionItems,
+		c.getRecurringActionItems,
+		utils.RenderPage(actionItems.Page),
+	)
 	c.views.Get("/list", c.getActionItems, utils.RenderPage(actionItems.ListItems))
 	c.views.Get("/:id/form", c.getActionItem, c.getActionItemForm)
 }

@@ -1,0 +1,105 @@
+package recurringActionItems
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"journal/cmd/web"
+	"journal/internal/models"
+	"journal/internal/utils"
+)
+
+templ ListItem(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) {
+	<li
+		recurring-action-item
+		id={ fmt.Sprintf("recurring-action-item-%s", recurringActionItem.ID.String()) }
+		if c.Method() != "POST" && c.Method() != "GET" {
+			hx-swap-oob={ fmt.Sprintf("outerHTML:#recurring-action-item-%s", recurringActionItem.ID.String()) }
+		}
+		class="item"
+	>
+		<div class="created">
+			<i class="fa fa-calendar"></i>
+			<span>At</span>
+			<span data-time={ recurringActionItem.StartsAt.Format("2006-01-02 15:04 -0700") }>
+				{ recurringActionItem.StartsAt.Format("2006-01-02 15:04") }
+			</span>
+			<span class="duration">
+				if recurringActionItem.Frequency.Hours() <= 48 {
+					every { recurringActionItem.Frequency.Hours() } hours
+				} else {
+					every { recurringActionItem.Frequency.Hours() / 24 } days	
+				}
+			</span>
+		</div>
+		<div class="info">
+			<p class="text">
+				{ recurringActionItem.Text }
+			</p>
+			<button
+				class="button"
+				hx-get={ fmt.Sprintf("/recurring-action-items/%s/form", recurringActionItem.ID.String()) }
+				hx-swap="none"
+			>
+				<i class="fa fa-pen"></i>
+			</button>
+			<button
+				class="button"
+				hx-delete={ fmt.Sprintf("/api/recurring-action-items/%s", recurringActionItem.ID.String()) }
+				hx-swap="delete"
+				hx-confirm="Are you sure?"
+				hx-target="closest [recurring-action-item]"
+			>
+				<i class="fa fa-trash"></i>
+			</button>
+		</div>
+	</li>
+	<div
+		hx-swap-oob="beforeend:#recurring-action-item-ids"
+	>
+		<input
+			type="hidden"
+			name="recurringActionItemIds[]"
+			value={ recurringActionItem.ID.String() }
+		/>
+	</div>
+}
+
+templ loadMore(c *fiber.Ctx) {
+	<button
+		class="button"
+		hx-get={ fmt.Sprintf("/recurring-action-items/list?page=%d", web.NextPage(c)) }
+		hx-target="[recurring-action-item-list]"
+		hx-swap="beforeend"
+		hx-swap-oob="true"
+		id="recurring-action-items-next-page"
+		if !web.HasMore(c) {
+			style="display: none;"
+		}
+	>
+		Load more
+	</button>
+}
+
+templ List(c *fiber.Ctx, recurringActionItems []*models.RecurringActionItem) {
+	<ul id="recurring-action-item-list" recurring-action-item-list>
+		for _, recurringActionItem := range recurringActionItems {
+			@ListItem(c, recurringActionItem)
+		}
+	</ul>
+	@loadMore(c)
+}
+
+func getRecurringActionItems(c *fiber.Ctx) []*models.RecurringActionItem {
+	recurringActionItems := utils.GetLocal[[]*models.RecurringActionItem](c, "recurringActionItems")
+	if recurringActionItems == nil {
+		return []*models.RecurringActionItem{}
+	}
+	return *recurringActionItems
+}
+
+templ ListItems(c *fiber.Ctx) {
+	for _, recurringActionItems := range getRecurringActionItems(c) {
+		@ListItem(c, recurringActionItems)
+	}
+	@loadMore(c)
+}

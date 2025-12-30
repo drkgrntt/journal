@@ -19,7 +19,10 @@ type ActionItem struct {
 	CompletedAt *time.Time `gorm:"type:timestamptz" json:"completedAt,omitempty"`
 
 	Journal   *Journal  `json:"journal,omitempty"`
-	JournalID uuid.UUID `gorm:"type:int" json:"journalId,omitempty"`
+	JournalID uuid.UUID `gorm:"type:uuid" json:"journalId,omitempty"`
+
+	RecurringActionItem   *RecurringActionItem `json:"recurringActionItem,omitempty"`
+	RecurringActionItemID uuid.UUID            `gorm:"type:uuid" json:"recurringActionItemId,omitempty"`
 
 	IsEncrypted bool `gorm:"type:bool;not null" json:"isEncrypted"`
 }
