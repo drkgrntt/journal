@@ -86,7 +86,7 @@ templ List(c *fiber.Ctx, recurringActionItems []*models.RecurringActionItem) {
 			@ListItem(c, recurringActionItem)
 		}
 	</ul>
-	@loadMore(c)
+	// @loadMore(c)
 }
 
 func getRecurringActionItems(c *fiber.Ctx) []*models.RecurringActionItem {
@@ -101,5 +101,5 @@ templ ListItems(c *fiber.Ctx) {
 	for _, recurringActionItems := range getRecurringActionItems(c) {
 		@ListItem(c, recurringActionItems)
 	}
-	@loadMore(c)
+	// @loadMore(c)
 }
