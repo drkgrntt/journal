@@ -65,9 +65,9 @@ func (c *RecurringActionItemController) createActionItems() {
 		}).
 		Preload(
 			"ActionItems",
-			c.db.
-				Order("created_at DESC").
-				Limit(1),
+			func(tx *gorm.DB) *gorm.DB {
+				return tx.Order("created_at DESC").Limit(1)
+			},
 		).
 		Where("starts_at <= ?", now).
 		Find(&recurringActionItems)
