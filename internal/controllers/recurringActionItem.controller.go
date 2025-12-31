@@ -91,11 +91,13 @@ func (c *RecurringActionItemController) createActionItems() {
 
 			startsAtUnix := recurringActionItem.StartsAt.Unix()
 			nowUnix := now.Unix()
-			frequency := int64(recurringActionItem.Frequency)
+			frequency := int64(recurringActionItem.Frequency.Seconds())
 
 			periodsSinceStart := (nowUnix - startsAtUnix) / frequency
 
 			previousScheduled := recurringActionItem.StartsAt.Add(time.Duration(periodsSinceStart) * recurringActionItem.Frequency)
+
+			// logger.Info("period info", "started", recurringActionItem.StartsAt, "periods", periodsSinceStart, "previous scheduled", previousScheduled, "created", recentActionItem.CreatedAt, "completed", recentActionItem.CompletedAt)
 
 			// Exit if it has been created in this period
 			if recentActionItem.CreatedAt.After(previousScheduled) {
