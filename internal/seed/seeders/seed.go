@@ -33,7 +33,17 @@ func Seed() {
 		log.Fatal(err)
 	}
 
-	err = seedJouranls()
+	err = seedJournals()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = seedActionItems()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = seedThankfuls()
 	if err != nil {
 		log.Fatal(err)
 	}
