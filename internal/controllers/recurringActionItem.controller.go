@@ -51,7 +51,7 @@ func (c *RecurringActionItemController) registerCrons() {
 		logger.Error("Error starting scheduler", "error", err.Error())
 	}
 
-	// s.Start()
+	s.Start()
 }
 
 func (c *RecurringActionItemController) createActionItems() {
@@ -66,7 +66,7 @@ func (c *RecurringActionItemController) createActionItems() {
 		Preload(
 			"ActionItems",
 			func(tx *gorm.DB) *gorm.DB {
-				return tx.Order("created_at DESC").Limit(1)
+				return tx.Order("created_at DESC")
 			},
 		).
 		Where("starts_at <= ?", now).
