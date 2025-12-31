@@ -51,7 +51,7 @@ func (c *RecurringActionItemController) registerCrons() {
 		logger.Error("Error starting scheduler", "error", err.Error())
 	}
 
-	s.Start()
+	// s.Start()
 }
 
 func (c *RecurringActionItemController) createActionItems() {
@@ -92,7 +92,6 @@ func (c *RecurringActionItemController) createActionItems() {
 			startsAtUnix := recurringActionItem.StartsAt.Unix()
 			nowUnix := now.Unix()
 			frequency := int64(recurringActionItem.Frequency.Seconds())
-
 			periodsSinceStart := (nowUnix - startsAtUnix) / frequency
 
 			previousScheduled := recurringActionItem.StartsAt.Add(time.Duration(periodsSinceStart) * recurringActionItem.Frequency)
