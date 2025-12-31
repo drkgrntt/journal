@@ -36,7 +36,7 @@ func pickThankfuls() []string {
 	return out
 }
 
-func seedThankfuls() error {
+func SeedThankfuls() error {
 	var user *models.User
 	err := db.First(&user, "email = ?", "test@example.com").Error
 	if err != nil {

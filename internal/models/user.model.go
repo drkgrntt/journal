@@ -16,7 +16,10 @@ type User struct {
 	LastName  string `gorm:"not null" json:"lastName,omitempty"`
 	Password  string `gorm:"not null" json:"-"`
 
-	Journals []*Journal `gorm:"foreignKey:CreatorID" json:"journals,omitempty"`
+	Journals             []*Journal             `gorm:"foreignKey:CreatorID" json:"journals,omitempty"`
+	ActionItems          []*ActionItem          `gorm:"foreignKey:CreatorID" json:"actionItems,omitempty"`
+	RecurringActionItems []*RecurringActionItem `gorm:"foreignKey:CreatorID" json:"recurringActionItems,omitempty"`
+	Thankfuls            []*Thankful            `gorm:"foreignKey:CreatorID" json:"thankfuls,omitempty"`
 }
 
 func (u *User) FullName() string {

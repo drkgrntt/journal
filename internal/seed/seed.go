@@ -10,13 +10,20 @@ func init() {
 	database.New()
 }
 
+var (
+	Full        bool
+	dropTables  bool
+	autoMigrage bool
+	testUser    bool
+)
+
 func main() {
 	database.DropTables()
-	logger.Info("? Dropped Tables Successfully")
+	logger.Info("Dropped Tables Successfully")
 
 	database.AutoMigrate()
-	logger.Info("? AutoMigrated Successfully")
+	logger.Info("AutoMigrated Successfully")
 
 	seeders.Seed()
-	logger.Info("? Seeded Successfully")
+	logger.Info("Seeded Successfully")
 }

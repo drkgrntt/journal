@@ -28,7 +28,7 @@ func maybeCompleted(createdAt time.Time) *time.Time {
 	return nil
 }
 
-func seedActionItems() error {
+func SeedActionItems() error {
 	var user *models.User
 	err := db.First(&user, "email = ?", "test@example.com").Error
 	if err != nil {

@@ -13,37 +13,40 @@ var (
 	admin *models.User
 )
 
-func Seed() {
+func init() {
 	db = database.New().DB
+}
+
+func Seed() {
 
 	var err error
 
-	err = seedUsers()
+	err = SeedUsers()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = seedRatings()
+	err = SeedRatings()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = seedJournalTypes()
+	err = SeedJournalTypes()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = seedJournals()
+	err = SeedJournals()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = seedActionItems()
+	err = SeedActionItems()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = seedThankfuls()
+	err = SeedThankfuls()
 	if err != nil {
 		log.Fatal(err)
 	}

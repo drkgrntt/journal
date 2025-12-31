@@ -4,7 +4,7 @@ import (
 	"journal/internal/models"
 )
 
-func seedRatings() error {
+func SeedRatings() error {
 	ratings := []*models.Rating{
 		{BaseType: &models.BaseType{Name: "Awful", Code: "awful"}, Value: 1},
 		{BaseType: &models.BaseType{Name: "Bad", Code: "bad"}, Value: 2},

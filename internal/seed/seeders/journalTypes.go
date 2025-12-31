@@ -4,7 +4,7 @@ import (
 	"journal/internal/models"
 )
 
-func seedJournalTypes() error {
+func SeedJournalTypes() error {
 	types := []*models.JournalType{
 		{BaseType: &models.BaseType{Name: "General", Code: "general"}},
 		{BaseType: &models.BaseType{Name: "Short Term Goals", Code: "short-term-goals"}},

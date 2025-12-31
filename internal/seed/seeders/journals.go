@@ -74,7 +74,7 @@ func normalizeMood(mood int) int {
 	return mood
 }
 
-func seedJournals() error {
+func SeedJournals() error {
 	var user *models.User
 	var journalTypes []*models.JournalType
 	var ratings []*models.Rating

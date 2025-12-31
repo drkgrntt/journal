@@ -2,13 +2,13 @@ package seeders
 
 import "journal/internal/models"
 
-func seedUsers() error {
+func SeedUsers() error {
 	admin = &models.User{
 		FirstName: "Admin",
 		LastName:  "Test",
 		Email:     "test@example.com",
 		Password:  "test",
 	}
-	err := db.Create(&admin).Error
+	err := db.FirstOrCreate(&admin, "email = ?", "test@example.com").Error
 	return err
 }
