@@ -14,8 +14,9 @@ func init() {
 
 type Journal struct {
 	*Base
-	Date  *time.Time `gorm:"type:timestamptz;not null" json:"date,omitempty"`
-	Entry string     `gorm:"type:text;not null" json:"entry"`
+	Date         *time.Time `gorm:"type:timestamptz;not null" json:"date,omitempty"`
+	Entry        string     `gorm:"type:text;not null" json:"entry"`
+	BookmarkedAt *time.Time `gorm:"type:timestamptz" json:"bookmarkedAt,omitempty"`
 
 	JournalType   *JournalType `gorm:"not null" json:"journalType,omitempty"`
 	JournalTypeID int          `gorm:"type:int;not null" json:"journalTypeId,omitempty"`

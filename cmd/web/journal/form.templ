@@ -28,6 +28,29 @@ func getRatings(c *fiber.Ctx) []*models.Rating {
 	return *ratings
 }
 
+func bookmarkedAtLocalized(c *fiber.Ctx, journal *models.Journal) string {
+	if journal != nil && journal.BookmarkedAt != nil {
+		tz := c.Cookies("timezone", "UTC")
+		loc, err := time.LoadLocation(tz)
+		if err != nil {
+			loc = time.UTC
+		}
+		localized := time.Date(
+			journal.BookmarkedAt.Year(),
+			journal.BookmarkedAt.Month(),
+			journal.BookmarkedAt.Day(),
+			journal.BookmarkedAt.Hour(),
+			journal.BookmarkedAt.Minute(),
+			journal.BookmarkedAt.Second(),
+			journal.BookmarkedAt.Nanosecond(),
+			loc,
+		)
+		return fmt.Sprintf("Bookmarked at %s", localized.Format("01/02/2006 3:04 PM"))
+	} else {
+		return "Bookmark this journal entry"
+	}
+}
+
 templ Form(c *fiber.Ctx, journal *models.Journal) {
 	<form
 		id="journal-form"
@@ -115,7 +138,7 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 			/>
 			<label class="label" for="addAnotherEntry">Add another entry</label>
 		</div>
-		<div class="bottom">
+		<div>
 			<div id="action-item-ids">
 				if journal != nil {
 					for _, actionItem := range journal.ActionItems {
@@ -130,7 +153,34 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 					}
 				}
 			</div>
-			<input class="button" type="submit"/>
+			<div class="bottom">
+				<input class="button" type="submit"/>
+				<label
+					for="isBookmarked"
+					class="button bookmark-label"
+					title={ bookmarkedAtLocalized(c, journal) }
+				>
+					<i
+						class={
+							templ.KV("fa-solid", journal != nil && journal.BookmarkedAt != nil),
+							templ.KV("fa-regular", journal == nil || journal.BookmarkedAt == nil),
+							"fa-bookmark",
+						}
+					></i>
+					<input
+						onchange="
+						this.previousElementSibling.classList.toggle('fa-regular', !this.checked);
+						this.previousElementSibling.classList.toggle('fa-solid', this.checked);
+						"
+						type="checkbox"
+						id="isBookmarked"
+						name="isBookmarked"
+						if journal != nil && journal.BookmarkedAt != nil {
+							checked
+						}
+					/>
+				</label>
+			</div>
 		</div>
 	</form>
 }

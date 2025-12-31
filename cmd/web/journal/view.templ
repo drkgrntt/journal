@@ -43,8 +43,16 @@ templ View(c *fiber.Ctx, journal *models.Journal) {
 			>
 				{ journal.Date.Format("2006-01-02 15:04pm") }
 			</h2>
+			if journal.BookmarkedAt != nil {
+				<i
+					title={ bookmarkedAtLocalized(c, journal) }
+					class="bookmark fa-solid fa-bookmark"
+				></i>
+			}
 			if journal.IsEncrypted {
-				@components.Lock()
+				<span class="encrypted">
+					@components.Lock()
+				</span>
 			}
 		</div>
 		<div class="info">

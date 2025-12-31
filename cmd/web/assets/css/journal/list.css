@@ -7,7 +7,17 @@
 
 	.link {
 		display: inline-flex;
-		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.bookmark {
+		font-size: .9rem;
+	}
+
+	.lock {
+		display: inline-block;
+		margin-left: auto;
 	}
 
 	.top {

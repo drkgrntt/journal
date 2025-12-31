@@ -11,7 +11,7 @@ import (
 
 templ editContent(c *fiber.Ctx, journal *models.Journal) {
 	<a class="back" href={ templ.SafeURL(fmt.Sprintf("/journal/%s", journal.ID.String())) }>
-		<i class="far fa-chevron-left"></i>
+		<i class="fa fa-chevron-left"></i>
 		Back
 	</a>
 	<h1 class="heading">Edit Journal Entry</h1>

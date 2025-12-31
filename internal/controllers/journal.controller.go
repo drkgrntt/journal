@@ -236,6 +236,7 @@ type JournalBody struct {
 	JournalTypeID int      `form:"journalType"`
 	RatingID      int      `form:"rating"`
 	Entry         string   `form:"entry"`
+	IsBookmarked  bool     `form:"isBookmarked"`
 	ActionItemIDs []string `form:"actionItemIds"`
 	ThankfulIDs   []string `form:"thankfulIds"`
 }
@@ -258,6 +259,13 @@ func (c *JournalController) parseJournalFromBody(ctx *fiber.Ctx, journal *models
 
 	journal.Rating = nil
 	journal.JournalType = nil
+
+	if body.IsBookmarked {
+		now := time.Now()
+		journal.BookmarkedAt = &now
+	} else if journal.BookmarkedAt != nil {
+		journal.BookmarkedAt = nil
+	}
 
 	if len(body.ActionItemIDs) > 0 {
 		actionItems := []*models.ActionItem{}

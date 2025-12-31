@@ -22,12 +22,21 @@
 
 	.top {
 		display: flex;
-		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
 	}
 
 	.heading {
 		font-size: 1.5rem;
 		font-weight: 600;
+	}
+
+	.bookmark {
+	}
+
+	.encrypted {
+		display: inline-block;
+		margin-left: auto;
 	}
 
 	.actions {
