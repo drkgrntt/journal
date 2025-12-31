@@ -61,6 +61,11 @@ func (c *DevController) renderTestEmail(ctx *fiber.Ctx) error {
 			ResetToken: "token",
 			RootUrl:    "",
 		})
+	case emails.FEEDBACK:
+		component = emails.Feedback(&emails.FeedbackVariables{
+			Email:   "test@example.com",
+			Message: "This is some test feedback.\n\nThat was a line break.",
+		})
 	default:
 		return ctx.SendStatus(http.StatusBadRequest)
 	}

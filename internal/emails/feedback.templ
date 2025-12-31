@@ -1,0 +1,22 @@
+package emails
+
+const (
+	FEEDBACK = "feedback"
+)
+
+type FeedbackVariables struct {
+	Email   string
+	Message string
+}
+
+templ Feedback(vars *FeedbackVariables) {
+	<div style="font-family: sans-serif;">
+		<h2>Feedback from the Journal!</h2>
+		<p>
+			Email: { vars.Email }
+		</p>
+		<p style="white-space: pre-wrap">
+			Message: { vars.Message }
+		</p>
+	</div>
+}

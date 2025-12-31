@@ -106,6 +106,13 @@ func (data *EmailData) getContentAndSubject(config *emails.EmailConfig) error {
 		}
 		config.Content = emails.General(&vars)
 		config.Subject = vars.Subject
+	case emails.FEEDBACK:
+		err, vars := utils.CastToType[emails.FeedbackVariables](data.Variables)
+		if err != nil {
+			return err
+		}
+		config.Content = emails.Feedback(&vars)
+		config.Subject = "Journal Feedback"
 	default:
 		return errors.New("invalid email name")
 	}

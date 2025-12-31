@@ -1,0 +1,40 @@
+package landings
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"journal/cmd/web"
+)
+
+templ FeedbackPage(c *fiber.Ctx) {
+	@web.Base(c) {
+		<div id="feedback-page" class="landing">
+			<h2 class="heading">Feedback</h2>
+			<form
+				class="form"
+				hx-post="/api/feedback"
+			>
+				<div class="field">
+					<input
+						class="input"
+						type="email"
+						name="email"
+						id="email"
+					/>
+					<label class="label" for="email">
+						Email (only if you'd like a reply)
+					</label>
+				</div>
+				<div class="field">
+					<textarea
+						class="textarea"
+						name="message"
+						id="message"
+						rows="10"
+					></textarea>
+					<label class="label" for="message">Message</label>
+				</div>
+				<input class="button" type="submit" value="Submit"/>
+			</form>
+		</div>
+	}
+}
