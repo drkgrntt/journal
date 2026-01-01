@@ -163,7 +163,11 @@ templ ratingCalendarJs() {
 			const date = new Date(year, month - 1, day)
 			const filtered = journals.filter(function(journal) {
 				const journalDate = new Date(journal.date);	
-				return journalDate.getDate() === date.getDate()
+				return (
+					journalDate.getDate() === date.getDate() &&
+					journalDate.getMonth() === date.getMonth() &&
+					journalDate.getFullYear() === date.getFullYear()
+				)
 			})
 
 			const dateString = date.toLocaleDateString(undefined, {
