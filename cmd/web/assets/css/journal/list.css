@@ -124,5 +124,15 @@
 			color: var(--text-secondary-color);
 		}
 	}
+
+	.prev-next {
+		display: flex;
+		.button {
+			color: var(--text-secondary-color);
+		}
+		.next {
+			margin-left: auto;
+		}
+	}
 }
 

@@ -113,14 +113,14 @@ templ ListPage(c *fiber.Ctx) {
 			<h4 class="filter-heading">Topics</h4>
 			<div class="sorts">
 				<a
-					href={ templ.SafeURL(fmt.Sprintf("/journal?sort=%s", c.Query("sort"))) }
+					href={ templ.SafeURL(fmt.Sprintf("/journal?sort=%s&date=%s", c.Query("sort"), c.Query("date"))) }
 					class={ "sort", templ.KV("active", c.Query("topic") == "") }
 				>
 					All
 				</a>
 				for _, journalType := range getJournalTypes(c) {
 					<a
-						href={ templ.SafeURL(fmt.Sprintf("/journal?topic=%s&sort=%s", journalType.Code, c.Query("sort"))) }
+						href={ templ.SafeURL(fmt.Sprintf("/journal?topic=%s&sort=%s&date=%s", journalType.Code, c.Query("sort"), c.Query("date"))) }
 						class={ "sort", templ.KV("active", c.Query("topic") == journalType.Code) }
 					>
 						{ journalType.Name }
@@ -131,6 +131,26 @@ templ ListPage(c *fiber.Ctx) {
 				@listItemsWithButton(c, false)
 			</ul>
 			@loadMore(c)
+			<div class="prev-next">
+				if web.PrevDate(c) != "" {
+					<a
+						class="prev"
+						href={ templ.SafeURL(fmt.Sprintf("/journal?topic=%s&date=%s", c.Query("topic"), web.PrevDate(c))) }
+					>
+						<i class="fa fa-chevron-left"></i>
+						Previous
+					</a>
+				}
+				if web.NextDate(c) != "" {
+					<a
+						class="next"
+						href={ templ.SafeURL(fmt.Sprintf("/journal?topic=%s&date=%s", c.Query("topic"), web.NextDate(c))) }
+					>
+						Next
+						<i class="fa fa-chevron-right"></i>
+					</a>
+				}
+			</div>
 		</div>
 	}
 }

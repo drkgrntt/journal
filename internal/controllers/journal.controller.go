@@ -116,7 +116,11 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		Order("date desc").
 		Order("created_at desc")
 
-	date := ctx.Query("date")
+	topic := ctx.Query("topic")
+	if topic != "" {
+		tx = tx.Where("journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)", topic)
+	}
+
 	tz := ctx.Cookies("tz", "UTC")
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
@@ -124,6 +128,7 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 	}
 	err = nil
 
+	date := ctx.Query("date")
 	if date != "" {
 		parsed, err := time.Parse("2006-01-02", date)
 		if err != nil {
@@ -142,13 +147,7 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		tx = tx.Where("date >= ? AND date < ?", start, end)
 	}
 
-	topic := ctx.Query("topic")
-	if topic != "" {
-		tx = tx.Where("journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)", topic)
-	}
-
 	isSortByDate := ctx.Query("sort") == "date"
-
 	if isSortByDate {
 		dayExpr := fmt.Sprintf("date_trunc('day', date AT TIME ZONE '%s')", tz)
 
@@ -184,6 +183,80 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "No journals found"})
+	}
+
+	if date != "" || isSortByDate {
+
+		var pageDate time.Time
+		if len(journals) > 0 {
+			pageDate = *journals[0].Date
+		} else {
+			pageDate, _ = time.ParseInLocation("2006-01-02", date, loc)
+			if err != nil {
+				return err
+			}
+		}
+
+		startLocal := time.Date(
+			pageDate.Year(),
+			pageDate.Month(),
+			pageDate.Day(),
+			0, 0, 0, 0,
+			loc,
+		)
+		endLocal := startLocal.AddDate(0, 0, 1)
+
+		var prev time.Time
+		prevTx := c.db.
+			Model(&models.Journal{}).
+			Select("date(date)").
+			Where("date < ?", startLocal.UTC())
+		if topic != "" {
+			prevTx = prevTx.
+				Where("journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)", topic)
+		}
+		err = prevTx.
+			Order("date DESC").
+			Limit(1).
+			Scan(&prev).Error
+
+		if !prev.IsZero() {
+			t := time.Date(
+				prev.Year(),
+				prev.Month(),
+				prev.Day(),
+				0, 0, 0, 0,
+				loc,
+			)
+			prevDate := t.Format("2006-01-02")
+			ctx.Locals("prevDate", &prevDate)
+		}
+
+		var next time.Time
+		nextTx := c.db.
+			Model(&models.Journal{}).
+			Select("date(date)").
+			Where("date >= ?", endLocal.UTC())
+		if topic != "" {
+			nextTx = nextTx.
+				Where("journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)", topic)
+		}
+		err = nextTx.
+			Order("date ASC").
+			Limit(1).
+			Scan(&next).Error
+
+		if !next.IsZero() {
+			t := time.Date(
+				next.Year(),
+				next.Month(),
+				next.Day(),
+				0, 0, 0, 0,
+				loc,
+			)
+			nextDate := t.Format("2006-01-02")
+			ctx.Locals("nextDate", &nextDate)
+		}
 	}
 
 	if isSortByDate {

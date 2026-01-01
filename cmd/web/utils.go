@@ -23,6 +23,22 @@ func NextPage(c *fiber.Ctx) int {
 	return *nextPage
 }
 
+func NextDate(c *fiber.Ctx) string {
+	nextDate := utils.GetLocal[string](c, "nextDate")
+	if nextDate == nil {
+		return ""
+	}
+	return *nextDate
+}
+
+func PrevDate(c *fiber.Ctx) string {
+	prevDate := utils.GetLocal[string](c, "prevDate")
+	if prevDate == nil {
+		return ""
+	}
+	return *prevDate
+}
+
 func CurrentUser(c *fiber.Ctx) *models.User {
 	return utils.GetLocal[models.User](c, "currentUser")
 }
