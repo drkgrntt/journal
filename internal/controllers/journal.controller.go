@@ -144,7 +144,7 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		)
 
 		end := start.AddDate(0, 0, 1)
-		tx = tx.Where("date >= ? AND date < ?", start, end)
+		tx = tx.Where("date >= ? AND date < ?", start.UTC(), end.UTC())
 	}
 
 	isSortByDate := ctx.Query("sort") == "date"
@@ -174,7 +174,7 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 			daySubquery,
 			daySubquery,
 		)
-	} else {
+	} else if date == "" {
 		tx.Limit(pageSize + 1).
 			Offset(page * pageSize)
 	}
@@ -209,7 +209,8 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		var prev time.Time
 		prevTx := c.db.
 			Model(&models.Journal{}).
-			Select("date(date)").
+			Select("date(date) AT TIME ZONE ?", tz).
+			Where("creator_id = ?", currentUser.ID).
 			Where("date < ?", startLocal.UTC())
 		if topic != "" {
 			prevTx = prevTx.
@@ -235,7 +236,8 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		var next time.Time
 		nextTx := c.db.
 			Model(&models.Journal{}).
-			Select("date(date)").
+			Select("date(date AT TIME ZONE ?)", tz).
+			Where("creator_id = ?", currentUser.ID).
 			Where("date >= ?", endLocal.UTC())
 		if topic != "" {
 			nextTx = nextTx.

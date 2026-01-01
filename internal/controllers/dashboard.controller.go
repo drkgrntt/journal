@@ -33,7 +33,7 @@ func (c *DashboardController) setJournals(ctx *fiber.Ctx) error {
 
 	c.db.
 		Where("creator_id = ?", currentUser.ID).
-		Where("date >= ?", time.Now().AddDate(0, -1, 0)).
+		Where("date >= ?", time.Now().AddDate(0, -1, -1)).
 		Preload("Rating").
 		Preload("JournalType").
 		Order("created_at desc").
