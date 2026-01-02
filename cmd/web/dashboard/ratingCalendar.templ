@@ -39,6 +39,36 @@ func weeksInMonth(month time.Month, year int) [][]int {
 	return weeks
 }
 
+func month(ctx *fiber.Ctx) string {
+	month := ctx.QueryInt("month")
+	if month == 0 {
+		return time.Now().Format("January")
+	}
+	return time.Month(month).String()
+}
+
+func year(ctx *fiber.Ctx) string {
+	year := ctx.Query("year")
+	if year == "" {
+		year = time.Now().Format("2006")
+	}
+	return year
+}
+
+func current(ctx *fiber.Ctx) time.Time {
+	month := ctx.QueryInt("month")
+	year := ctx.QueryInt("year")
+	tz := ctx.Cookies("tz")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+	if month == 0 || year == 0 {
+		return time.Now()
+	}
+	return time.Date(year, time.Month(month), 1, 0, 0, 0, 0, loc)
+}
+
 templ RatingCalendar(c *fiber.Ctx) {
 	<div class="rating-calendar">
 		<div class="legend">
@@ -50,7 +80,27 @@ templ RatingCalendar(c *fiber.Ctx) {
 			<span><span class="dot no-journals">●</span> No Journals</span>
 		</div>
 		<table>
-			<caption>{ time.Now().Format("January 2006") }</caption>
+			<caption>
+				<a
+					href="#"
+					class="button"
+					hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/calendar?month=%d&year=%d", int(current(c).AddDate(0, -1, 0).Month()), current(c).AddDate(0, -1, 0).Year())) }
+					hx-target=".rating-calendar"
+					hx-swap="outerHTML"
+				>
+					<i class="fa-solid fa-chevron-left"></i>
+				</a>
+				{ month(c) } { year(c) }
+				<a
+					href="#"
+					class="button"
+					hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/calendar?month=%d&year=%d", int(current(c).AddDate(0, 1, 0).Month()), current(c).AddDate(0, 1, 0).Year())) }
+					hx-target=".rating-calendar"
+					hx-swap="outerHTML"
+				>
+					<i class="fa-solid fa-chevron-right"></i>
+				</a>
+			</caption>
 			<thead>
 				<tr>
 					<th>Su</th>
@@ -63,12 +113,12 @@ templ RatingCalendar(c *fiber.Ctx) {
 				</tr>
 			</thead>
 			<tbody>
-				for _, week := range weeksInMonth(time.Now().Month(), time.Now().Year()) {
+				for _, week := range weeksInMonth(current(c).Month(), current(c).Year()) {
 					<tr>
 						for _, day := range week {
 							<td
 								if day != 0 {
-									data-calendar-date={ time.Date(time.Now().Year(), time.Now().Month(), day, 0, 0, 0, 0, time.UTC).Format("2006-01-02") }
+									data-calendar-date={ time.Date(current(c).Year(), current(c).Month(), day, 0, 0, 0, 0, time.UTC).Format("2006-01-02") }
 								}
 							>
 								if day != 0 {
@@ -88,12 +138,14 @@ templ RatingCalendar(c *fiber.Ctx) {
 templ ratingCalendarJs() {
 	<script>
 	(function() {
+		var style = window.getComputedStyle(document.body)
+		
 		const ratingColors = [
-		  { value: 1, color: '#C44536' }, // awful
-		  { value: 2, color: '#E27A3F' }, // bad
-		  { value: 3, color: '#E0B84C' }, // fine
-		  { value: 4, color: '#6FBF8F' }, // good
-		  { value: 5, color: '#2FA4A9' }, // great
+		  { value: 1, color: style.getPropertyValue('--awful-color') }, // awful
+		  { value: 2, color: style.getPropertyValue('--bad-color') }, // bad
+		  { value: 3, color: style.getPropertyValue('--fine-color') }, // fine
+		  { value: 4, color: style.getPropertyValue('--good-color') }, // good
+		  { value: 5, color: style.getPropertyValue('--great-color') }, // great
 		];
 		function hexToHsl(hex) {
 		  hex = hex.replace('#', '');

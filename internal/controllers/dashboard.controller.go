@@ -69,7 +69,43 @@ func (c *DashboardController) RegisterViewRoutes() {
 		c.setOutstandingActionItems,
 		utils.RenderPage(dashboard.DashboardPage),
 	)
+	c.views.Get("/calendar", c.getCalendar)
 }
 
 func (c *DashboardController) RegisterApiRoutes() {
+}
+
+func (c *DashboardController) getCalendar(ctx *fiber.Ctx) error {
+	month := ctx.QueryInt("month")
+	year := ctx.QueryInt("year")
+	tz := ctx.Cookies("tz", "UTC")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+
+	date := time.Date(
+		year,
+		time.Month(month),
+		1,
+		0,
+		0,
+		0,
+		0,
+		loc,
+	)
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	var journals []*models.Journal
+
+	c.db.
+		Where("creator_id = ?", currentUser.ID).
+		Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC()).
+		Preload("Rating").
+		Preload("JournalType").
+		Order("created_at desc").
+		Find(&journals)
+
+	ctx.Locals("journals", &journals)
+
+	return utils.RenderComponent(dashboard.RatingCalendar(ctx), ctx)
 }
