@@ -46,3 +46,10 @@ setToWindow("setUnixValue", setUnixValue);
 	document.cookie = `tz=${tz}; Path=/; Max-Age=31536000`
 })()
 
+
+export function getCssValue(variable) {
+	const style = window.getComputedStyle(document.body)
+	return style.getPropertyValue(variable)
+}
+setToWindow("getCssValue", getCssValue)
+
