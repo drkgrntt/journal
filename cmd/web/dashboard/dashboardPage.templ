@@ -29,6 +29,8 @@ templ DashboardPage(c *fiber.Ctx) {
 			@actionItems.List(c, getOutstandingActionItems(c))
 			<br/>
 			@RatingCalendar(c)
+			<br/>
+			@MoodChart(c)
 		</div>
 	}
 }
