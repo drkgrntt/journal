@@ -28,6 +28,9 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 			<span data-datetime={ actionItem.CreatedAt.Format("2006-01-02 15:04 -0700") }>
 				{ actionItem.CreatedAt.Format("2006-01-02 15:04") }
 			</span>
+			if actionItem.IsRecurring() {
+			<i class="fa fa-sync"></i>
+			}
 		</div>
 		<div class="info">
 			<form

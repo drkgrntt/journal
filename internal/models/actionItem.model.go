@@ -27,6 +27,10 @@ type ActionItem struct {
 	IsEncrypted bool `gorm:"type:bool;not null" json:"isEncrypted"`
 }
 
+func (a *ActionItem) IsRecurring() bool {
+	return a.RecurringActionItemID != uuid.Nil
+}
+
 func (a *ActionItem) HasJournal() bool {
 	return a.JournalID != uuid.Nil
 }
