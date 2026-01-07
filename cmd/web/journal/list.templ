@@ -109,6 +109,12 @@ templ ListPage(c *fiber.Ctx) {
 				>
 					By Date
 				</a>
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("/journal?sort=bookmark&topic=%s", c.Query("topic"))) }
+					class={ "sort", templ.KV("active", c.Query("bookmark") == "bookmark") }
+				>
+					Bookmarked
+				</a>
 			</div>
 			<h4 class="filter-heading">Topics</h4>
 			<div class="sorts">

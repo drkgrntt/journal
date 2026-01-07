@@ -147,6 +147,11 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		tx = tx.Where("date >= ? AND date < ?", start.UTC(), end.UTC())
 	}
 
+	isSortByBookmark := ctx.Query("sort") == "bookmark"
+	if isSortByBookmark {
+		tx = tx.Where("bookmarked_at IS NOT NULL")
+	}
+
 	isSortByDate := ctx.Query("sort") == "date"
 	if isSortByDate {
 		dayExpr := fmt.Sprintf("date_trunc('day', date AT TIME ZONE '%s')", tz)
