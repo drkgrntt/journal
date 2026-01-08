@@ -1,4 +1,4 @@
-(function() {
+function initRatingCalendar() {
   const ratingColors = [
     { value: 1, color: getCssValue('--awful-color') }, // awful
     { value: 2, color: getCssValue('--bad-color') }, // bad
@@ -107,4 +107,5 @@
     td.innerHTML = '';
     td.appendChild(link);
   })
-})();
+}
+document.addEventListener("load-rating-calendar", initRatingCalendar)
