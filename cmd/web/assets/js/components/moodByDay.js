@@ -41,8 +41,8 @@
         {
           label: "Average By Day",
           data: ratingData,
-          borderColor: getCssValue("--primary-color-dark"),
-          backgroundColor: getCssValue("--primary-color"),
+          borderColor: getCssValue("--secondary-color-dark"),
+          backgroundColor: getCssValue("--secondary-color"),
         },
       ],
     },
