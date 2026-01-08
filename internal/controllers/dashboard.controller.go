@@ -72,6 +72,7 @@ func (c *DashboardController) RegisterViewRoutes() {
 	c.views.Get("/calendar", c.getCalendar)
 	c.views.Get("/mood-chart", c.getMoodChart)
 	c.views.Get("/mood-by-day", c.getMoodByDay)
+	c.views.Get("/mood-vs-action-completion", c.getMoodVsActionCompletion)
 }
 
 func (c *DashboardController) RegisterApiRoutes() {
@@ -134,17 +135,23 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	var journals []*models.Journal
 
-	c.db.
+	tx := c.db.
 		Where("creator_id = ?", currentUser.ID).
-		Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC()).
 		Preload("Rating").
 		Preload("JournalType").
-		Order("created_at desc").
-		Find(&journals)
+		Order("created_at desc")
+
+	if month != 0 && year != 0 {
+		tx = tx.Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC())
+	} else {
+		tx = tx.Where("date >= ?", time.Now().AddDate(0, -1, -1))
+	}
+
+	tx.Find(&journals)
 
 	ctx.Locals("journals", &journals)
 
-	return utils.RenderComponent(dashboard.MoodChart(ctx), ctx)
+	return utils.RenderComponent(dashboard.MoodChartContent(ctx), ctx)
 }
 
 func (c *DashboardController) getMoodByDay(ctx *fiber.Ctx) error {
@@ -169,15 +176,75 @@ func (c *DashboardController) getMoodByDay(ctx *fiber.Ctx) error {
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	var journals []*models.Journal
 
-	c.db.
+	tx := c.db.
 		Where("creator_id = ?", currentUser.ID).
-		Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC()).
 		Preload("Rating").
 		Preload("JournalType").
-		Order("created_at desc").
-		Find(&journals)
+		Order("created_at desc")
+
+	if month != 0 && year != 0 {
+		tx = tx.Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC())
+	} else {
+		tx = tx.Where("date >= ?", time.Now().AddDate(0, -1, -1))
+	}
+
+	tx.Find(&journals)
 
 	ctx.Locals("journals", &journals)
 
-	return utils.RenderComponent(dashboard.MoodChart(ctx), ctx)
+	return utils.RenderComponent(dashboard.MoodByDayContent(ctx), ctx)
+}
+
+func (c *DashboardController) getMoodVsActionCompletion(ctx *fiber.Ctx) error {
+	month := ctx.QueryInt("month")
+	year := ctx.QueryInt("year")
+	tz := ctx.Cookies("tz", "UTC")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+
+	date := time.Date(
+		year,
+		time.Month(month),
+		1,
+		0,
+		0,
+		0,
+		0,
+		loc,
+	)
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	var journals []*models.Journal
+
+	tx := c.db.
+		Where("creator_id = ?", currentUser.ID).
+		Preload("Rating").
+		Preload("JournalType").
+		Order("created_at desc")
+
+	if month != 0 && year != 0 {
+		tx = tx.Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC())
+	} else {
+		tx = tx.Where("date >= ?", time.Now().AddDate(0, -1, -1))
+	}
+
+	tx.Find(&journals)
+	ctx.Locals("journals", &journals)
+
+	var actionItems []*models.ActionItem
+	tx = c.db.
+		Where("creator_id = ?", currentUser.ID).
+		Order("created_at desc")
+
+	if month != 0 && year != 0 {
+		tx = tx.Where("completed_at BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC())
+	} else {
+		tx = tx.Where("completed_at >= ?", time.Now().AddDate(0, -1, -1))
+	}
+
+	tx.Find(&actionItems)
+	ctx.Locals("actionItems", &actionItems)
+
+	return utils.RenderComponent(dashboard.MoodVsActionCompletionContent(ctx), ctx)
 }

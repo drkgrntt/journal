@@ -6,9 +6,17 @@ import (
 	"journal/internal/utils"
 )
 
+templ MoodByDayContent(c *fiber.Ctx) {
+	@templ.JSONScript("mood-by-day-journals", utils.GetLocal[[]*models.Journal](c, "journals"))
+	<script src="/assets/js/components/moodByDay.js" type="module"></script>
+}
+
 templ MoodByDay(c *fiber.Ctx) {
-	<div id="mood-by-day">
-		@templ.JSONScript("mood-by-day-journals", utils.GetLocal[[]*models.Journal](c, "journals"))
-		<script src="/assets/js/components/moodByDay.js" type="module"></script>
-	</div>
+	<div
+		id="mood-by-day"
+		hx-get="/dashboard/mood-by-day"
+		hx-trigger="load"
+		hx-target="#mood-by-day"
+		hx-swap="innerHTML"
+	></div>
 }

@@ -6,9 +6,17 @@ import (
 	"journal/internal/utils"
 )
 
+templ MoodChartContent(c *fiber.Ctx) {
+	@templ.JSONScript("mood-chart-journals", utils.GetLocal[[]*models.Journal](c, "journals"))
+	<script src="/assets/js/components/moodChart.js" type="module"></script>
+}
+
 templ MoodChart(c *fiber.Ctx) {
-	<div id="mood-chart">
-		@templ.JSONScript("mood-chart-journals", utils.GetLocal[[]*models.Journal](c, "journals"))
-		<script src="/assets/js/components/moodChart.js" type="module"></script>
-	</div>
+	<div
+		id="mood-chart"
+		hx-get="/dashboard/mood-chart"
+		hx-trigger="load"
+		hx-target="#mood-chart"
+		hx-swap="innerHTML"
+	></div>
 }
