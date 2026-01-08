@@ -53,3 +53,12 @@ export function getCssValue(variable) {
 }
 setToWindow("getCssValue", getCssValue)
 
+htmx.onLoad(function(_e) {
+	const blurText = localStorage.getItem(`blur-text-${document.body.id}`) === "true"
+
+	if (!blurText) return
+
+	document.querySelectorAll("[can-blur]").forEach(function(element) {
+		element.style.filter = "blur(3px)"
+	})
+})

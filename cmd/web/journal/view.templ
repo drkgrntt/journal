@@ -63,7 +63,7 @@ templ View(c *fiber.Ctx, journal *models.Journal) {
 				<p class="rating"><span class={ "color", journal.Rating.Code }>●</span> { journal.Rating.Name }</p>
 			}
 		</div>
-		<p class="entry">{ journal.Entry }</p>
+		<p can-blur class="entry">{ journal.Entry }</p>
 		<div class="pagination">
 			if journal.PreviousJournal != nil {
 				<a

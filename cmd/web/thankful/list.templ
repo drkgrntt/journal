@@ -23,7 +23,7 @@ templ ListItem(c *fiber.Ctx, thankful *models.Thankful) {
 			</span>
 		</div>
 		<div class="info">
-			<p class="text">
+			<p can-blur class="text">
 				{ thankful.Text }
 				if thankful.HasJournalType() {
 					<span class="journal-type">({ thankful.Journal.JournalType.Name })</span>

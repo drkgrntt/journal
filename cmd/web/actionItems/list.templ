@@ -29,7 +29,7 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 				{ actionItem.CreatedAt.Format("2006-01-02 15:04") }
 			</span>
 			if actionItem.IsRecurring() {
-			<i class="fa fa-sync"></i>
+				<i class="fa fa-sync"></i>
 			}
 		</div>
 		<div class="info">
@@ -60,7 +60,7 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 					<i class="fa fa-check"></i>
 				</button>
 			</form>
-			<p class={ fmt.Sprintf("text %s", completedClass(actionItem)) }>
+			<p can-blur class={ fmt.Sprintf("text %s", completedClass(actionItem)) }>
 				{ actionItem.Text }
 				if actionItem.HasJournalType() {
 					<span class="journal-type">({ actionItem.Journal.JournalType.Name })</span>

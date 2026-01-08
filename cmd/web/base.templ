@@ -2,6 +2,14 @@ package web
 
 import "github.com/gofiber/fiber/v2"
 
+func id(c *fiber.Ctx) string {
+	user := CurrentUser(c)
+	if user == nil {
+		return ""
+	}
+	return user.ID.String()
+}
+
 templ Base(c *fiber.Ctx) {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -20,7 +28,7 @@ templ Base(c *fiber.Ctx) {
 			<!-- TODO: use this locally -->
 			<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 		</head>
-		<body>
+		<body id={ id(c) }>
 			@Header(c)
 			<main
 				class="main"

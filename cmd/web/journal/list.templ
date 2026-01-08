@@ -63,7 +63,7 @@ templ listItemsWithButton(c *fiber.Ctx, includeButton bool) {
 					<p class="rating"><span class={ "color", journal.Rating.Code }>●</span> { journal.Rating.Name }</p>
 				}
 			</div>
-			<p class="entry">{ utils.SubstringToFullWords(journal.Entry, 130) }</p>
+			<p can-blur class="entry">{ utils.SubstringToFullWords(journal.Entry, 130) }</p>
 			<div class="actions">
 				<span>
 					<i class="fa fa-check"></i>
