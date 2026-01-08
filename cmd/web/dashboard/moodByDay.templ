@@ -1,0 +1,14 @@
+package dashboard
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/models"
+	"journal/internal/utils"
+)
+
+templ MoodByDay(c *fiber.Ctx) {
+	<div id="mood-by-day">
+		@templ.JSONScript("mood-by-day-journals", utils.GetLocal[[]*models.Journal](c, "journals"))
+		<script src="/assets/js/components/moodByDay.js" type="module"></script>
+	</div>
+}

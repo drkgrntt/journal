@@ -7,7 +7,8 @@ import (
 )
 
 templ MoodChart(c *fiber.Ctx) {
-	<div id="mood-chart"></div>
-	@templ.JSONScript("mood-chart-journals", utils.GetLocal[[]*models.Journal](c, "journals"))
-	<script src="/assets/js/components/moodChart.js" type="module"></script>
+	<div id="mood-chart">
+		@templ.JSONScript("mood-chart-journals", utils.GetLocal[[]*models.Journal](c, "journals"))
+		<script src="/assets/js/components/moodChart.js" type="module"></script>
+	</div>
 }

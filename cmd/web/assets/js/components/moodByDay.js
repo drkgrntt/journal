@@ -1,6 +1,6 @@
 (function() {
-  const journals = JSON.parse(document.getElementById("mood-chart-journals").textContent);
-  const element = document.getElementById("mood-chart");
+  const journals = JSON.parse(document.getElementById("mood-by-day-journals").textContent);
+  const element = document.getElementById("mood-by-day");
 
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -8,33 +8,38 @@
     throw new Error("Canvas not supported");
   }
 
-  const sortedJournals = journals
-    .sort(function(a, b) { return new Date(a.date) - new Date(b.date) })
-
+  const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ]
   const mapping = {}
-  const dates = Array.from(new Set(sortedJournals.map(function(journal) {
-    const date = new Date(journal.date).toLocaleDateString();
-    mapping[date] ||= [];
-    mapping[date].push({
+  journals.forEach(function(journal) {
+    const key = days[new Date(journal.date).getDay()];
+    mapping[key] ||= [];
+    mapping[key].push({
       rating: journal.rating.value,
     });
-    return date;
-  })))
+  });
 
-  const ratingData = dates.map(function(date) {
-    const rate = mapping[date].reduce(function(acc, { rating }) {
+  const ratingData = days.map(function(day) {
+    const rate = mapping[day].reduce(function(acc, { rating }) {
       return acc + rating;
     }, 0);
-    return rate / mapping[date].length;
+    return rate / mapping[day].length;
   });
 
   const chart = new Chart(ctx, {
-    type: "line",
+    type: "bar",
     data: {
-      labels: dates,
+      labels: days,
       datasets: [
         {
-          label: "Rating Flow",
+          label: "Average By Day",
           data: ratingData,
           borderColor: getCssValue("--primary-color-dark"),
           backgroundColor: getCssValue("--primary-color"),
@@ -42,7 +47,6 @@
       ],
     },
     options: {
-      tension: .4,
       responsive: true,
       maintainAspectRatio: false,
       scales: {
