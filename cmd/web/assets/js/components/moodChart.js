@@ -11,24 +11,22 @@
   const sortedJournals = journals
     .sort(function(a, b) { return new Date(a.date) - new Date(b.date) })
 
-  const dateRateMapping = {}
+  const mapping = {}
   const dates = Array.from(new Set(sortedJournals.map(function(journal) {
     const date = new Date(journal.date).toLocaleDateString();
-    dateRateMapping[date] ||= [];
-    dateRateMapping[date].push(journal.rating.value);
+    mapping[date] ||= [];
+    mapping[date].push({
+      rating: journal.rating.value,
+    });
     return date;
   })))
 
-  const chartData = dates.map(function(date) {
-    const rate = dateRateMapping[date].reduce(function(acc, rating) {
+  const ratingData = dates.map(function(date) {
+    const rate = mapping[date].reduce(function(acc, { rating }) {
       return acc + rating;
     }, 0);
-    return rate / dateRateMapping[date].length;
+    return rate / mapping[date].length;
   });
-
-  console.log({ dates, chartData })
-
-  var style = window.getComputedStyle(document.body)
 
   const chart = new Chart(ctx, {
     type: "line",
@@ -36,15 +34,15 @@
       labels: dates,
       datasets: [
         {
-          tension: .4,
           label: "Rating",
-          data: chartData,
-          borderColor: style.getPropertyValue("--primary-color-dark"),
-          backgroundColor: style.getPropertyValue("--primary-color"),
+          data: ratingData,
+          borderColor: getCssValue("--primary-color-dark"),
+          backgroundColor: getCssValue("--primary-color"),
         },
       ],
     },
     options: {
+      tension: .4,
       responsive: true,
       maintainAspectRatio: false,
       scales: {
@@ -57,10 +55,11 @@
           grid: {
             display: false,
           },
-          beginAtZero: true,
+          // beginAtZero: true,
           ticks: {
             callback: function(value) {
               if (value % 1 !== 0) return;
+              if (value > 5) return value;
               return [
                 "Awful",
                 "Bad",
