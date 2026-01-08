@@ -73,6 +73,7 @@ func (c *DashboardController) RegisterViewRoutes() {
 	c.views.Get("/mood-chart", c.getMoodChart)
 	c.views.Get("/mood-by-day", c.getMoodByDay)
 	c.views.Get("/mood-vs-action-completion", c.getMoodVsActionCompletion)
+	c.views.Get("/mood-vs-thankfulness", c.getMoodVsThankfulness)
 }
 
 func (c *DashboardController) RegisterApiRoutes() {
@@ -247,4 +248,46 @@ func (c *DashboardController) getMoodVsActionCompletion(ctx *fiber.Ctx) error {
 	ctx.Locals("actionItems", &actionItems)
 
 	return utils.RenderComponent(dashboard.MoodVsActionCompletionContent(ctx), ctx)
+}
+
+func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
+	month := ctx.QueryInt("month")
+	year := ctx.QueryInt("year")
+	tz := ctx.Cookies("tz", "UTC")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+
+	date := time.Date(
+		year,
+		time.Month(month),
+		1,
+		0,
+		0,
+		0,
+		0,
+		loc,
+	)
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	var journals []*models.Journal
+
+	tx := c.db.
+		Where("creator_id = ?", currentUser.ID).
+		Preload("Rating").
+		Preload("Thankfuls").
+		Preload("JournalType").
+		Order("created_at desc")
+
+	if month != 0 && year != 0 {
+		tx = tx.Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC())
+	} else {
+		tx = tx.Where("date >= ?", time.Now().AddDate(0, -1, -1))
+	}
+
+	tx.Find(&journals)
+
+	ctx.Locals("journals", &journals)
+
+	return utils.RenderComponent(dashboard.MoodVsThankfulnessContent(ctx), ctx)
 }

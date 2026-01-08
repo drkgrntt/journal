@@ -1,0 +1,22 @@
+package dashboard
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/models"
+	"journal/internal/utils"
+)
+
+templ MoodVsThankfulnessContent(c *fiber.Ctx) {
+	@templ.JSONScript("mood-vs-thankfulness-journals", utils.GetLocal[[]*models.Journal](c, "journals"))
+	<script src="/assets/js/components/moodVsThankfulness.js" type="module"></script>
+}
+
+templ MoodVsThankfulness(c *fiber.Ctx) {
+	<div
+		id="mood-vs-thankfulness"
+		hx-get="/dashboard/mood-vs-thankfulness"
+		hx-trigger="load"
+		hx-target="#mood-vs-thankfulness"
+		hx-swap="innerHTML"
+	></div>
+}
