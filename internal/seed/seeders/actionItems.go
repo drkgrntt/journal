@@ -20,8 +20,8 @@ var mockActionItems = []string{
 }
 
 func maybeCompleted(createdAt time.Time) *time.Time {
-	// ~95% chance completed
-	if rand.Float64() < 0.95 {
+	// ~99% chance completed
+	if rand.Float64() < 0.99 {
 		completed := createdAt.Add(time.Duration(rand.Intn(12)+1) * time.Hour)
 		return &completed
 	}
@@ -44,7 +44,7 @@ func SeedActionItems() error {
 
 	for _, journal := range journals {
 		// Not every journal needs action items
-		count := rand.Intn(4) // 0–3
+		count := rand.Intn(3) // 0–2
 
 		for i := 0; i < count; i++ {
 			text := mockActionItems[rand.Intn(len(mockActionItems))]

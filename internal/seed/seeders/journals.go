@@ -99,7 +99,7 @@ func SeedJournals() error {
 
 	currentMood := 3 // start “Fine”
 
-	for i := 0; i < 45; i++ {
+	for i := 0; i < 400; i++ {
 		entriesOnDay := rand.Intn(4) + 1 // always at least 1
 
 		// Evolve mood once per day

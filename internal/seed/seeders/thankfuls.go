@@ -21,7 +21,7 @@ var mockThankfuls = []string{
 }
 
 func pickThankfuls() []string {
-	count := rand.Intn(3) + 1 // 1–3
+	count := rand.Intn(4) // 0–3
 	used := map[int]bool{}
 	out := []string{}
 
