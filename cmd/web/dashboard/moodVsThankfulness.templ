@@ -1,13 +1,9 @@
 package dashboard
 
-import (
-	"github.com/gofiber/fiber/v2"
-	"journal/internal/models"
-	"journal/internal/utils"
-)
+import "github.com/gofiber/fiber/v2"
 
 templ MoodVsThankfulnessContent(c *fiber.Ctx) {
-	@templ.JSONScript("mood-vs-thankfulness-journals", utils.GetLocal[[]*models.Journal](c, "journals"))
+	@templ.JSONScript("mood-vs-thankfulness-data", c.Locals("moodVsThankfulData"))
 	<script src="/assets/js/components/moodVsThankfulness.js" type="module"></script>
 }
 

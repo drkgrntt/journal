@@ -1,5 +1,5 @@
 (function() {
-  const journals = JSON.parse(document.getElementById("mood-chart-journals").textContent);
+  const data = JSON.parse(document.getElementById("mood-chart-data").textContent);
   const element = document.getElementById("mood-chart");
 
   const canvas = document.createElement("canvas");
@@ -8,34 +8,14 @@
     throw new Error("Canvas not supported");
   }
 
-  const sortedJournals = journals
-    .sort(function(a, b) { return new Date(a.date) - new Date(b.date) })
-
-  const mapping = {}
-  const dates = Array.from(new Set(sortedJournals.map(function(journal) {
-    const date = new Date(journal.date).toLocaleDateString();
-    mapping[date] ||= [];
-    mapping[date].push({
-      rating: journal.rating.value,
-    });
-    return date;
-  })))
-
-  const ratingData = dates.map(function(date) {
-    const rate = mapping[date].reduce(function(acc, { rating }) {
-      return acc + rating;
-    }, 0);
-    return rate / mapping[date].length;
-  });
-
   const chart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: dates,
+      labels: data.map(item => new Date(item.date).toLocaleDateString()),
       datasets: [
         {
           label: "Rating Flow",
-          data: ratingData,
+          data: data.map(item => item.value),
           borderColor: getCssValue("--primary-color-dark"),
           backgroundColor: getCssValue("--primary-color"),
         },

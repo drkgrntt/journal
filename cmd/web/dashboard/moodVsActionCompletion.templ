@@ -1,14 +1,9 @@
 package dashboard
 
-import (
-	"github.com/gofiber/fiber/v2"
-	"journal/internal/models"
-	"journal/internal/utils"
-)
+import "github.com/gofiber/fiber/v2"
 
 templ MoodVsActionCompletionContent(c *fiber.Ctx) {
-	@templ.JSONScript("mood-vs-action-completion-journals", utils.GetLocal[[]*models.Journal](c, "journals"))
-	@templ.JSONScript("mood-vs-action-completion-action-items", utils.GetLocal[[]*models.ActionItem](c, "actionItems"))
+	@templ.JSONScript("mood-vs-action-completion-data", c.Locals("moodVsActionCompletionData"))
 	<script src="/assets/js/components/moodVsActionCompletion.js" type="module"></script>
 }
 

@@ -5,6 +5,8 @@ import (
 	"journal/internal/middleware"
 	"journal/internal/models"
 	"journal/internal/utils"
+	"math"
+	"sort"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -36,7 +38,7 @@ func (c *DashboardController) setJournals(ctx *fiber.Ctx) error {
 		Where("date >= ?", time.Now().AddDate(0, -1, -1)).
 		Preload("Rating").
 		Preload("JournalType").
-		Order("created_at desc").
+		Order("created_at DESC").
 		Find(&journals)
 
 	ctx.Locals("journals", &journals)
@@ -53,7 +55,7 @@ func (c *DashboardController) setOutstandingActionItems(ctx *fiber.Ctx) error {
 		Where("creator_id = ?", currentUser.ID).
 		// Incomplete
 		Where("completed_at IS NULL").
-		Order("created_at desc").
+		Order("created_at DESC").
 		Find(&actionItems)
 
 	ctx.Locals("outstandingActionItems", &actionItems)
@@ -106,7 +108,7 @@ func (c *DashboardController) getCalendar(ctx *fiber.Ctx) error {
 		Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC()).
 		Preload("Rating").
 		Preload("JournalType").
-		Order("created_at desc").
+		Order("created_at DESC").
 		Find(&journals)
 
 	ctx.Locals("journals", &journals)
@@ -140,154 +142,275 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 		Where("creator_id = ?", currentUser.ID).
 		Preload("Rating").
 		Preload("JournalType").
-		Order("created_at desc")
+		Order("created_at DESC")
 
 	if month != 0 && year != 0 {
 		tx = tx.Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC())
 	} else {
 		tx = tx.Where("date >= ?", time.Now().AddDate(0, -1, -1))
 	}
-
 	tx.Find(&journals)
 
-	ctx.Locals("journals", &journals)
+	moodChartTmp := map[string][]int{}
+	for _, journal := range journals {
+		localizedDate := journal.Date.In(loc).Format("2006-01-02")
+		if _, ok := moodChartTmp[localizedDate]; !ok {
+			moodChartTmp[localizedDate] = []int{}
+		}
+		moodChartTmp[localizedDate] = append(moodChartTmp[localizedDate], journal.Rating.Value)
+	}
+
+	type MoodChartData struct {
+		Value float64 `json:"value"`
+		Date  string  `json:"date"`
+	}
+	moodChartData := []MoodChartData{}
+	for date, values := range moodChartTmp {
+		total := 0
+		for _, value := range values {
+			total += value
+		}
+		moodChartData = append(moodChartData, MoodChartData{
+			Value: float64(total) / float64(len(values)),
+			Date:  date,
+		})
+	}
+
+	sort.Slice(moodChartData, func(i, j int) bool {
+		return moodChartData[i].Date < moodChartData[j].Date
+	})
+	ctx.Locals("moodChartData", &moodChartData)
 
 	return utils.RenderComponent(dashboard.MoodChartContent(ctx), ctx)
 }
 
 func (c *DashboardController) getMoodByDay(ctx *fiber.Ctx) error {
-	month := ctx.QueryInt("month")
-	year := ctx.QueryInt("year")
 	tz := ctx.Cookies("tz", "UTC")
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
 		loc = time.UTC
 	}
-
-	date := time.Date(
-		year,
-		time.Month(month),
-		1,
-		0,
-		0,
-		0,
-		0,
-		loc,
-	)
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	var journals []*models.Journal
 
-	tx := c.db.
-		Where("creator_id = ?", currentUser.ID).
+	c.db.Where("creator_id = ?", currentUser.ID).
 		Preload("Rating").
-		Preload("JournalType").
-		Order("created_at desc")
+		Find(&journals)
 
-	if month != 0 && year != 0 {
-		tx = tx.Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC())
-	} else {
-		tx = tx.Where("date >= ?", time.Now().AddDate(0, -1, -1))
+	moodByDayTmp := map[time.Weekday][]int{}
+	for _, journal := range journals {
+		localizedDate := journal.Date.In(loc).Weekday()
+		if _, ok := moodByDayTmp[localizedDate]; !ok {
+			moodByDayTmp[localizedDate] = []int{}
+		}
+		moodByDayTmp[localizedDate] = append(moodByDayTmp[localizedDate], journal.Rating.Value)
 	}
 
-	tx.Find(&journals)
-
-	ctx.Locals("journals", &journals)
+	type MoodByDayData struct {
+		Value   float64      `json:"value"`
+		Day     string       `json:"day"`
+		Weekday time.Weekday `json:"-"`
+	}
+	moodByDayData := []MoodByDayData{}
+	for day, values := range moodByDayTmp {
+		total := 0
+		for _, value := range values {
+			total += value
+		}
+		moodByDayData = append(moodByDayData, MoodByDayData{
+			Value:   float64(total) / float64(len(values)),
+			Day:     day.String(),
+			Weekday: day,
+		})
+	}
+	sort.Slice(moodByDayData, func(i, j int) bool {
+		return moodByDayData[i].Weekday < moodByDayData[j].Weekday
+	})
+	ctx.Locals("moodByDayData", &moodByDayData)
 
 	return utils.RenderComponent(dashboard.MoodByDayContent(ctx), ctx)
 }
 
 func (c *DashboardController) getMoodVsActionCompletion(ctx *fiber.Ctx) error {
-	month := ctx.QueryInt("month")
-	year := ctx.QueryInt("year")
 	tz := ctx.Cookies("tz", "UTC")
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
 		loc = time.UTC
 	}
-
-	date := time.Date(
-		year,
-		time.Month(month),
-		1,
-		0,
-		0,
-		0,
-		0,
-		loc,
-	)
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	var journals []*models.Journal
 
-	tx := c.db.
-		Where("creator_id = ?", currentUser.ID).
+	c.db.Where("creator_id = ?", currentUser.ID).
 		Preload("Rating").
-		Preload("JournalType").
-		Order("created_at desc")
-
-	if month != 0 && year != 0 {
-		tx = tx.Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC())
-	} else {
-		tx = tx.Where("date >= ?", time.Now().AddDate(0, -1, -1))
-	}
-
-	tx.Find(&journals)
-	ctx.Locals("journals", &journals)
+		Find(&journals)
 
 	var actionItems []*models.ActionItem
-	tx = c.db.
-		Where("creator_id = ?", currentUser.ID).
-		Order("created_at desc")
+	c.db.Where("creator_id = ?", currentUser.ID).
+		Where("completed_at IS NOT NULL").
+		Find(&actionItems)
 
-	if month != 0 && year != 0 {
-		tx = tx.Where("completed_at BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC())
-	} else {
-		tx = tx.Where("completed_at >= ?", time.Now().AddDate(0, -1, -1))
+	var ratings []*models.Rating
+	c.db.Order("value DESC").
+		Find(&ratings)
+
+	daysWithCompletedActionItems := make(map[string][]int)
+	for _, actionItem := range actionItems {
+		localizedDate := actionItem.CompletedAt.In(loc).Format("2006-01-02")
+		if _, ok := daysWithCompletedActionItems[localizedDate]; !ok {
+			daysWithCompletedActionItems[localizedDate] = []int{}
+		}
 	}
 
-	tx.Find(&actionItems)
-	ctx.Locals("actionItems", &actionItems)
+	daysWithoutCompletedActionItems := make(map[string][]int)
+	for _, journal := range journals {
+		localizedDate := journal.Date.In(loc).Format("2006-01-02")
+		_, ok := daysWithCompletedActionItems[localizedDate]
+		if ok {
+			daysWithCompletedActionItems[localizedDate] = append(daysWithCompletedActionItems[localizedDate], journal.Rating.Value)
+		} else {
+			if _, ok := daysWithoutCompletedActionItems[localizedDate]; !ok {
+				daysWithoutCompletedActionItems[localizedDate] = []int{}
+			}
+			daysWithoutCompletedActionItems[localizedDate] = append(daysWithoutCompletedActionItems[localizedDate], journal.Rating.Value)
+		}
+	}
+
+	type MoodVsActionCompletionData struct {
+		RatingValue        int    `json:"-"`
+		Rating             string `json:"rating"`
+		WithCompletions    int    `json:"withCompletions"`
+		WithoutCompletions int    `json:"withoutCompletions"`
+	}
+	moodVsActionCompletionData := []MoodVsActionCompletionData{}
+
+	for _, rating := range ratings {
+		var withCompletions int
+		var withoutCompletions int
+
+		for _, values := range daysWithCompletedActionItems {
+			var total int
+			for _, value := range values {
+				total += value
+			}
+			average := float64(total) / float64(len(values))
+			if math.Round(average) == float64(rating.Value) {
+				withCompletions++
+			}
+
+		}
+		for _, values := range daysWithoutCompletedActionItems {
+			var total int
+			for _, value := range values {
+				total += value
+			}
+			average := float64(total) / float64(len(values))
+			if math.Round(average) == float64(rating.Value) {
+				withoutCompletions++
+			}
+		}
+
+		moodVsActionCompletionData = append(moodVsActionCompletionData, MoodVsActionCompletionData{
+			RatingValue:        rating.Value,
+			Rating:             rating.Name,
+			WithCompletions:    withCompletions,
+			WithoutCompletions: withoutCompletions,
+		})
+	}
+	ctx.Locals("moodVsActionCompletionData", &moodVsActionCompletionData)
 
 	return utils.RenderComponent(dashboard.MoodVsActionCompletionContent(ctx), ctx)
 }
 
 func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
-	month := ctx.QueryInt("month")
-	year := ctx.QueryInt("year")
 	tz := ctx.Cookies("tz", "UTC")
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
 		loc = time.UTC
 	}
 
-	date := time.Date(
-		year,
-		time.Month(month),
-		1,
-		0,
-		0,
-		0,
-		0,
-		loc,
-	)
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	var journals []*models.Journal
 
-	tx := c.db.
-		Where("creator_id = ?", currentUser.ID).
+	c.db.Where("creator_id = ?", currentUser.ID).
 		Preload("Rating").
 		Preload("Thankfuls").
-		Preload("JournalType").
-		Order("created_at desc")
-
-	if month != 0 && year != 0 {
-		tx = tx.Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC())
-	} else {
-		tx = tx.Where("date >= ?", time.Now().AddDate(0, -1, -1))
-	}
-
-	tx.Find(&journals)
+		Find(&journals)
 
 	ctx.Locals("journals", &journals)
+
+	var ratings []*models.Rating
+	c.db.Order("value DESC").
+		Find(&ratings)
+
+	journalsByDay := make(map[string][]*models.Journal)
+	for _, journal := range journals {
+		localizedDate := journal.Date.In(loc).Format("2006-01-02")
+		if _, ok := journalsByDay[localizedDate]; !ok {
+			journalsByDay[localizedDate] = []*models.Journal{}
+		}
+		journalsByDay[localizedDate] = append(journalsByDay[localizedDate], journal)
+	}
+
+	daysWithThankfuls := make(map[string][]int)
+	daysWithoutThankfuls := make(map[string][]int)
+	for date, js := range journalsByDay {
+		jRatings := []int{}
+		withThankfuls := false
+		for _, journal := range js {
+			if len(journal.Thankfuls) > 0 {
+				withThankfuls = true
+			}
+			jRatings = append(jRatings, journal.Rating.Value)
+		}
+		if withThankfuls {
+			daysWithThankfuls[date] = jRatings
+		} else {
+			daysWithoutThankfuls[date] = jRatings
+		}
+	}
+
+	type MoodVsThankfulData struct {
+		RatingValue      int    `json:"-"`
+		Rating           string `json:"rating"`
+		WithThankfuls    int    `json:"withThankfuls"`
+		WithoutThankfuls int    `json:"withoutThankfuls"`
+	}
+	moodVsThankfulData := []MoodVsThankfulData{}
+
+	for _, rating := range ratings {
+		var withThankfuls int
+		var withoutThankfuls int
+
+		for _, values := range daysWithThankfuls {
+			var total int
+			for _, value := range values {
+				total += value
+			}
+			average := float64(total) / float64(len(values))
+			if math.Round(average) == float64(rating.Value) {
+				withThankfuls++
+			}
+		}
+		for _, values := range daysWithoutThankfuls {
+			var total int
+			for _, value := range values {
+				total += value
+			}
+			average := float64(total) / float64(len(values))
+			if math.Round(average) == float64(rating.Value) {
+				withoutThankfuls++
+			}
+		}
+
+		moodVsThankfulData = append(moodVsThankfulData, MoodVsThankfulData{
+			RatingValue:      rating.Value,
+			Rating:           rating.Name,
+			WithThankfuls:    withThankfuls,
+			WithoutThankfuls: withoutThankfuls,
+		})
+	}
+
+	ctx.Locals("moodVsThankfulData", &moodVsThankfulData)
 
 	return utils.RenderComponent(dashboard.MoodVsThankfulnessContent(ctx), ctx)
 }
