@@ -31,7 +31,7 @@ templ NewPage(c *fiber.Ctx) {
 				</div>
 				<div class="right-margin">
 					<div class="action-items">
-						<h3 class="heading">Action Items</h3>
+						<h3 class="heading">Take Action</h3>
 						@actionItems.Form(c, nil, nil)
 						@actionItems.List(c, []*models.ActionItem{})
 						<br/>

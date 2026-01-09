@@ -19,10 +19,10 @@ func getRecurringActionItems(c *fiber.Ctx) []*models.RecurringActionItem {
 templ Page(c *fiber.Ctx) {
 	@web.Base(c) {
 		<div id="action-item-list-page">
-			<h2 class="heading">Recurring Action Items</h2>
+			<h2 class="heading">Routines</h2>
 			@recurringActionItems.List(c, getRecurringActionItems(c))
 			@recurringActionItems.Form(c, nil)
-			<h2 class="heading">Action Items</h2>
+			<h2 class="heading">Actions</h2>
 			@listPageFilters(c)
 			@Form(c, nil, nil)
 			@List(c, getActionItems(c))

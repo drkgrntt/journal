@@ -14,7 +14,7 @@ func getActionItemsFromJournal(journal *models.Journal) []*models.ActionItem {
 
 templ Combined(c *fiber.Ctx, journal *models.Journal) {
 	<div id="action-items-combined">
-		<h3 class="heading">Action Items</h3>
+		<h3 class="heading">Actions</h3>
 		@Form(c, journal, nil)
 		@List(c, getActionItemsFromJournal(journal))
 		if journal != nil && len(journal.OutstandingActionItems) > 0 {

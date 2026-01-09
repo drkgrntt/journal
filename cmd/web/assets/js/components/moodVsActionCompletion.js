@@ -63,14 +63,14 @@
       labels: ["Awful", "Bad", "Fine", "Good", "Great"],
       datasets: [
         {
-          label: "Completed Action Item",
+          label: "Completed Action",
           data: completedData,
           borderColor: getCssValue("--primary-color-dark"),
           backgroundColor: getCssValue("--primary-color-light"),
           borderWidth: 2,
         },
         {
-          label: "No Completed Action Item",
+          label: "No Completed Action",
           data: notCompletedData,
           borderColor: getCssValue("--secondary-color-dark"),
           backgroundColor: getCssValue("--secondary-color-light"),
@@ -85,7 +85,7 @@
       plugins: {
         title: {
           display: true,
-          text: "Average Rating vs Action Item Completion",
+          text: "Average Rating vs Action Completion",
           position: "bottom",
         },
       },
