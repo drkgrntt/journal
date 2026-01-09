@@ -162,8 +162,9 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 	}
 
 	type MoodChartData struct {
-		Value float64 `json:"value"`
-		Date  string  `json:"date"`
+		Value    float64   `json:"value"`
+		Date     string    `json:"date"`
+		DateTime time.Time `json:"-"`
 	}
 	moodChartData := []MoodChartData{}
 	for date, values := range moodChartTmp {
@@ -171,14 +172,16 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 		for _, value := range values {
 			total += value
 		}
+		dateTime, _ := time.Parse("01-02-2006", date)
 		moodChartData = append(moodChartData, MoodChartData{
-			Value: float64(total) / float64(len(values)),
-			Date:  date,
+			Value:    float64(total) / float64(len(values)),
+			Date:     date,
+			DateTime: dateTime,
 		})
 	}
 
 	sort.Slice(moodChartData, func(i, j int) bool {
-		return moodChartData[i].Date < moodChartData[j].Date
+		return moodChartData[i].DateTime.Before(moodChartData[j].DateTime)
 	})
 	ctx.Locals("moodChartData", &moodChartData)
 
