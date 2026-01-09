@@ -11,7 +11,7 @@
   const chart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: data.map(item => new Date(item.date).toLocaleDateString()),
+      labels: data.map(item => item.date),
       datasets: [
         {
           label: "Rating Flow",

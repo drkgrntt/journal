@@ -154,6 +154,7 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 	moodChartTmp := map[string][]int{}
 	for _, journal := range journals {
 		localizedDate := journal.Date.In(loc).Format("2006-01-02")
+
 		if _, ok := moodChartTmp[localizedDate]; !ok {
 			moodChartTmp[localizedDate] = []int{}
 		}
