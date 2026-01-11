@@ -1,9 +1,9 @@
 package main
 
 import (
+	"journal/cmd/seed/seeders"
 	"journal/internal/database"
 	"journal/internal/models"
-	"journal/internal/seed/seeders"
 	"log"
 
 	"gorm.io/gorm"

@@ -1,9 +1,9 @@
 package main
 
 import (
+	"journal/cmd/seed/seeders"
 	"journal/internal/database"
 	"journal/internal/logger"
-	"journal/internal/seed/seeders"
 )
 
 func init() {
