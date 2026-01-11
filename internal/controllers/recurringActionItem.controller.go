@@ -115,7 +115,7 @@ func (c *RecurringActionItemController) createActionItems() {
 			Text: recurringActionItem.Text,
 			// Since we're skipping the encryption step, we can just set this to true
 			IsEncrypted:           true,
-			RecurringActionItemID: recurringActionItem.ID,
+			RecurringActionItemID: &recurringActionItem.ID,
 			Base: &models.Base{
 				CreatorID:     recurringActionItem.CreatorID,
 				LastUpdaterID: recurringActionItem.LastUpdaterID,
@@ -261,7 +261,7 @@ func (c *RecurringActionItemController) createRecurringActionItem(ctx *fiber.Ctx
 	}
 
 	user := utils.GetLocal[models.User](ctx, "currentUser")
-	recurringActionItem.Base = &models.Base{CreatorID: user.ID, LastUpdaterID: user.ID}
+	recurringActionItem.Base = &models.Base{CreatorID: &user.ID, LastUpdaterID: &user.ID}
 
 	err = c.db.Create(&recurringActionItem).Error
 	if err != nil {
@@ -286,7 +286,7 @@ func (c *RecurringActionItemController) updateRecurringActionItem(ctx *fiber.Ctx
 	}
 
 	user := utils.GetLocal[models.User](ctx, "currentUser")
-	recurringActionItem.Base.LastUpdaterID = user.ID
+	recurringActionItem.Base.LastUpdaterID = &user.ID
 
 	err = c.db.Save(recurringActionItem).Error
 	if err != nil {

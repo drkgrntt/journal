@@ -119,7 +119,7 @@ func (c *ThankfulController) parseThankfulFromBody(ctx *fiber.Ctx, thankful *mod
 		if err != nil {
 			return err
 		}
-		thankful.JournalID = journalUuid
+		thankful.JournalID = &journalUuid
 	}
 
 	return nil
@@ -140,7 +140,7 @@ func (c *ThankfulController) createThankful(ctx *fiber.Ctx) error {
 	}
 
 	user := utils.GetLocal[models.User](ctx, "currentUser")
-	thankful.Base = &models.Base{CreatorID: user.ID, LastUpdaterID: user.ID}
+	thankful.Base = &models.Base{CreatorID: &user.ID, LastUpdaterID: &user.ID}
 
 	err = c.db.Create(&thankful).Error
 	if err != nil {
@@ -169,7 +169,7 @@ func (c *ThankfulController) updateThankful(ctx *fiber.Ctx) error {
 	}
 
 	user := utils.GetLocal[models.User](ctx, "currentUser")
-	thankful.Base.LastUpdaterID = user.ID
+	thankful.Base.LastUpdaterID = &user.ID
 
 	err = c.db.Save(thankful).Error
 	if err != nil {

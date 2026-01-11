@@ -34,8 +34,8 @@ func ScheduleEmailJob(
 
 	job := models.Job{
 		Base: &models.Base{
-			CreatorID:     userId,
-			LastUpdaterID: userId,
+			CreatorID:     &userId,
+			LastUpdaterID: &userId,
 			Metadata:      jobData,
 		},
 		Type:        EMAIL_JOB_TYPE,

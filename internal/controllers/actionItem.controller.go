@@ -166,7 +166,7 @@ func (c *ActionItemController) parseActionItemFromBody(ctx *fiber.Ctx, actionIte
 		if err != nil {
 			return err
 		}
-		actionItem.JournalID = journalUuid
+		actionItem.JournalID = &journalUuid
 	}
 
 	return nil
@@ -187,7 +187,7 @@ func (c *ActionItemController) createActionItem(ctx *fiber.Ctx) error {
 	}
 
 	user := utils.GetLocal[models.User](ctx, "currentUser")
-	actionItem.Base = &models.Base{CreatorID: user.ID, LastUpdaterID: user.ID}
+	actionItem.Base = &models.Base{CreatorID: &user.ID, LastUpdaterID: &user.ID}
 
 	err = c.db.Create(&actionItem).Error
 	if err != nil {
@@ -216,7 +216,7 @@ func (c *ActionItemController) updateActionItem(ctx *fiber.Ctx) error {
 	}
 
 	user := utils.GetLocal[models.User](ctx, "currentUser")
-	actionItem.Base.LastUpdaterID = user.ID
+	actionItem.Base.LastUpdaterID = &user.ID
 
 	err = c.db.Save(actionItem).Error
 	if err != nil {

@@ -16,14 +16,14 @@ type Thankful struct {
 	*Base
 	Text string `gorm:"type:text;not null" json:"text"`
 
-	Journal   *Journal  `json:"journal,omitempty"`
-	JournalID uuid.UUID `gorm:"type:int" json:"journalId,omitempty"`
+	Journal   *Journal   `json:"journal,omitempty"`
+	JournalID *uuid.UUID `gorm:"type:int" json:"journalId,omitempty"`
 
 	IsEncrypted bool `gorm:"type:bool;not null" json:"isEncrypted"`
 }
 
 func (t *Thankful) HasJournal() bool {
-	return t.JournalID != uuid.Nil
+	return t.JournalID != nil
 }
 
 func (t *Thankful) HasJournalType() bool {

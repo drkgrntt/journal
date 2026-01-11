@@ -58,7 +58,7 @@ func SeedActionItems() error {
 
 			actionItem := &models.ActionItem{
 				Text:      text,
-				JournalID: journal.ID,
+				JournalID: &journal.ID,
 				Base:      base,
 			}
 

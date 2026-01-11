@@ -18,21 +18,21 @@ type ActionItem struct {
 	Text        string     `gorm:"type:text;not null" json:"text"`
 	CompletedAt *time.Time `gorm:"type:timestamptz" json:"completedAt,omitempty"`
 
-	Journal   *Journal  `json:"journal,omitempty"`
-	JournalID uuid.UUID `gorm:"type:uuid" json:"journalId,omitempty"`
+	Journal   *Journal   `json:"journal,omitempty"`
+	JournalID *uuid.UUID `gorm:"type:uuid" json:"journalId,omitempty"`
 
 	RecurringActionItem   *RecurringActionItem `json:"recurringActionItem,omitempty"`
-	RecurringActionItemID uuid.UUID            `gorm:"type:uuid" json:"recurringActionItemId,omitempty"`
+	RecurringActionItemID *uuid.UUID           `gorm:"type:uuid" json:"recurringActionItemId,omitempty"`
 
 	IsEncrypted bool `gorm:"type:bool;not null" json:"isEncrypted"`
 }
 
 func (a *ActionItem) IsRecurring() bool {
-	return a.RecurringActionItemID != uuid.Nil
+	return a.RecurringActionItemID != nil
 }
 
 func (a *ActionItem) HasJournal() bool {
-	return a.JournalID != uuid.Nil
+	return a.JournalID != nil
 }
 
 func (a *ActionItem) HasJournalType() bool {

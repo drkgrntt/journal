@@ -36,7 +36,7 @@ func New() *Service {
 	if dbInstance != nil {
 		return dbInstance
 	}
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s", username, password, host, port, database, schema)
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s&TimeZone=UTC", username, password, host, port, database, schema)
 
 	logMode := logger.Info
 	if os.Getenv("APP_ENV") == "production" {
@@ -45,6 +45,9 @@ func New() *Service {
 	db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{
 		Logger:                                   logger.Default.LogMode(logMode),
 		DisableForeignKeyConstraintWhenMigrating: true,
+		NowFunc: func() time.Time {
+			return time.Now().UTC()
+		},
 	})
 	if err != nil {
 		log.Fatal(err)

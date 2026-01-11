@@ -396,7 +396,7 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 	}
 
 	user := utils.GetLocal[models.User](ctx, "currentUser")
-	journal.Base = &models.Base{CreatorID: user.ID, LastUpdaterID: user.ID}
+	journal.Base = &models.Base{CreatorID: &user.ID, LastUpdaterID: &user.ID}
 
 	tx := c.db.Begin()
 	defer tx.Rollback()
@@ -421,7 +421,7 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 		if actionItem.HasJournal() {
 			continue
 		}
-		actionItem.JournalID = journal.ID
+		actionItem.JournalID = &journal.ID
 	}
 
 	if len(actionItems) > 0 {
@@ -435,7 +435,7 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 		if thankful.HasJournal() {
 			continue
 		}
-		thankful.JournalID = journal.ID
+		thankful.JournalID = &journal.ID
 	}
 
 	if len(thankfuls) > 0 {
@@ -469,7 +469,7 @@ func (c *JournalController) updateJournal(ctx *fiber.Ctx) error {
 	}
 
 	user := utils.GetLocal[models.User](ctx, "currentUser")
-	journal.Base.LastUpdaterID = user.ID
+	journal.Base.LastUpdaterID = &user.ID
 
 	err = c.db.Save(journal).Error
 	if err != nil {

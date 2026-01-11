@@ -61,7 +61,7 @@ func SeedThankfuls() error {
 
 			thankful := &models.Thankful{
 				Text:      text,
-				JournalID: journal.ID,
+				JournalID: &journal.ID,
 				Base:      base,
 			}
 

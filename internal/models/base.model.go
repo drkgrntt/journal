@@ -16,9 +16,9 @@ type Base struct {
 	CreatedAt     time.Time      `gorm:"autoCreateTime" json:"createdAt,omitempty"`
 	UpdatedAt     time.Time      `gorm:"autoUpdateTime" json:"updatedAt,omitempty"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
-	CreatorID     uuid.UUID      `gorm:"type:uuid;not null" json:"creatorId"`
+	CreatorID     *uuid.UUID     `gorm:"type:uuid;not null" json:"creatorId"`
 	Creator       *User          `gorm:"not null" json:"creator"`
-	LastUpdaterID uuid.UUID      `gorm:"type:uuid;not null" json:"lastUpdaterId"`
+	LastUpdaterID *uuid.UUID     `gorm:"type:uuid;not null" json:"lastUpdaterId"`
 	LastUpdater   *User          `gorm:"not null" json:"lastUpdater"`
 	Metadata      datatypes.JSON `gorm:"type:jsonb;default:'{}';" json:"metadata,omitempty"`
 }

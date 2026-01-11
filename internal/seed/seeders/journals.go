@@ -112,8 +112,8 @@ func SeedJournals() error {
 			date := time.Now().AddDate(0, 0, -i)
 
 			base := &models.Base{
-				CreatorID:     user.ID,
-				LastUpdaterID: user.ID,
+				CreatorID:     &user.ID,
+				LastUpdaterID: &user.ID,
 				CreatedAt:     date,
 				UpdatedAt:     date,
 			}
