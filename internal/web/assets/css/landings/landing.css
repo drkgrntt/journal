@@ -1,0 +1,115 @@
+#landing-page {
+    --bg: #fafafa;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --accent: var(--primary-color-darkest);
+    --border: #e5e7eb;
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 6rem;
+    }
+
+    header h1 {
+      font-size: 2.75rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+
+    header p {
+      font-size: 1.25rem;
+      color: var(--muted);
+      max-width: 700px;
+      margin: 0 auto 2rem;
+    }
+
+    .cta {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+
+    section {
+      margin-bottom: 5rem;
+    }
+
+    section h2 {
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+    }
+
+    section p {
+      max-width: 700px;
+      color: var(--muted);
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 2rem;
+      margin-top: 2.5rem;
+    }
+
+    .feature {
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: white;
+    }
+
+    .feature h3 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .feature p {
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
+    .philosophy {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+    }
+
+    .philosophy p {
+      margin-top: 0;
+    }
+
+    .for-who {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    ul {
+      padding-left: 1.2rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+}

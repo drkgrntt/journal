@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"journal/internal/web/landings"
 	"journal/internal/emails"
 	"journal/internal/jobs"
 	"journal/internal/utils"
+	"journal/internal/web/landings"
 	"net/http"
 	"os"
 	"time"
@@ -32,6 +32,7 @@ func (c *LandingController) Init(db *gorm.DB, app *fiber.App) {
 }
 
 func (c *LandingController) RegisterViewRoutes() {
+	c.views.Get("/", utils.RenderPage(landings.LandingPage))
 	c.views.Get("/about", utils.RenderPage(landings.AboutPage))
 	c.views.Get("/privacy", utils.RenderPage(landings.PrivacyPage))
 	c.views.Get("/feedback", utils.RenderPage(landings.FeedbackPage))
