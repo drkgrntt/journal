@@ -3,10 +3,10 @@ package journal
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"journal/cmd/web"
-	"journal/cmd/web/components"
 	"journal/internal/models"
 	"journal/internal/utils"
+	"journal/internal/web"
+	"journal/internal/web/components"
 )
 
 func getJournals(c *fiber.Ctx) []*models.Journal {

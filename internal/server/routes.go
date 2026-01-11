@@ -1,7 +1,7 @@
 package server
 
 import (
-	"journal/cmd/web"
+	"journal/internal/web"
 	"journal/internal/controllers"
 	"journal/internal/logger"
 	"journal/internal/middleware"

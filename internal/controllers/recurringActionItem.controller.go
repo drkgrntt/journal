@@ -3,7 +3,7 @@ package controllers
 import (
 	"errors"
 	gormlogger "gorm.io/gorm/logger"
-	"journal/cmd/web/recurringActionItems"
+	"journal/internal/web/recurringActionItems"
 	"journal/internal/logger"
 	"journal/internal/middleware"
 	"journal/internal/models"

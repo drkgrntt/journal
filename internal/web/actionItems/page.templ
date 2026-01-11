@@ -2,10 +2,10 @@ package actionItems
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"journal/cmd/web"
-	"journal/cmd/web/recurringActionItems"
 	"journal/internal/models"
 	"journal/internal/utils"
+	"journal/internal/web"
+	"journal/internal/web/recurringActionItems"
 )
 
 func getRecurringActionItems(c *fiber.Ctx) []*models.RecurringActionItem {

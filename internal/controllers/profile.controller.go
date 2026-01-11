@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"journal/cmd/web/profile"
+	"journal/internal/web/profile"
 	"journal/internal/logger"
 	"journal/internal/middleware"
 	"journal/internal/models"

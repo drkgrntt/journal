@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"errors"
-	"journal/cmd/web/actionItems"
+	"journal/internal/web/actionItems"
 	"journal/internal/logger"
 	"journal/internal/middleware"
 	"journal/internal/models"

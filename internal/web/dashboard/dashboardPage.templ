@@ -2,11 +2,11 @@ package dashboard
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"journal/cmd/web"
-	"journal/cmd/web/actionItems"
-	"journal/cmd/web/journal"
 	"journal/internal/models"
 	"journal/internal/utils"
+	"journal/internal/web"
+	"journal/internal/web/actionItems"
+	"journal/internal/web/journal"
 )
 
 func getOutstandingActionItems(c *fiber.Ctx) []*models.ActionItem {

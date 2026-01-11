@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"journal/cmd/web/landings"
+	"journal/internal/web/landings"
 	"journal/internal/emails"
 	"journal/internal/jobs"
 	"journal/internal/utils"

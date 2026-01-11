@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"errors"
-	thankfulViews "journal/cmd/web/thankful"
+	thankfulViews "journal/internal/web/thankful"
 	"journal/internal/logger"
 	"journal/internal/middleware"
 	"journal/internal/models"

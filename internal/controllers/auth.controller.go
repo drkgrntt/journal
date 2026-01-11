@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"journal/cmd/web/auth"
+	"journal/internal/web/auth"
 	"journal/internal/emails"
 	"journal/internal/jobs"
 	"journal/internal/logger"

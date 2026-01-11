@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"fmt"
-	"journal/cmd/web/journal"
+	"journal/internal/web/journal"
 	"journal/internal/logger"
 	"journal/internal/middleware"
 	"journal/internal/models"

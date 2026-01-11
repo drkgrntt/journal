@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"journal/cmd/web/dashboard"
+	"journal/internal/web/dashboard"
 	"journal/internal/middleware"
 	"journal/internal/models"
 	"journal/internal/utils"

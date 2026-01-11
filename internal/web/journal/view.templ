@@ -3,11 +3,11 @@ package journal
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"journal/cmd/web"
-	"journal/cmd/web/actionItems"
-	"journal/cmd/web/components"
-	"journal/cmd/web/thankful"
 	"journal/internal/models"
+	"journal/internal/web"
+	"journal/internal/web/actionItems"
+	"journal/internal/web/components"
+	"journal/internal/web/thankful"
 )
 
 templ View(c *fiber.Ctx, journal *models.Journal) {

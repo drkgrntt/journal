@@ -3,10 +3,10 @@ package journal
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"journal/cmd/web"
-	"journal/cmd/web/actionItems"
-	"journal/cmd/web/thankful"
 	"journal/internal/models"
+	"journal/internal/web"
+	"journal/internal/web/actionItems"
+	"journal/internal/web/thankful"
 )
 
 templ editContent(c *fiber.Ctx, journal *models.Journal) {
