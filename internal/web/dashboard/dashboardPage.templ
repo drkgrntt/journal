@@ -30,13 +30,13 @@ templ DashboardPage(c *fiber.Ctx) {
 			<br/>
 			@RatingCalendar(c)
 			<br/>
-			@MoodChart(c)
-			<br/>
 			@MoodByDay(c)
 			<br/>
-			@MoodVsActionCompletion(c)
+			@MoodChart(c)
 			<br/>
 			@MoodVsThankfulness(c)
+			<br/>
+			@MoodVsActionCompletion(c)
 		</div>
 	}
 }

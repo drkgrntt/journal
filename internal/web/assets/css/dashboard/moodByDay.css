@@ -4,6 +4,16 @@
 	background-color: var(--primary-color-lightest);
 	box-shadow: 0 0 .5rem rgba(0, 0, 0, .1);
 
+	.options {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+
+		legend {
+			display: none;
+		}
+	}
+
 	canvas {
 		min-height: 15rem;
 	}

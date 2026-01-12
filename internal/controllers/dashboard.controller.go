@@ -211,10 +211,21 @@ func (c *DashboardController) getMoodByDay(ctx *fiber.Ctx) error {
 	if err != nil {
 		loc = time.UTC
 	}
+	days := ctx.QueryInt("days", 30)
+	t := time.Now()
+	date := time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		0, 0, 0, 0,
+		loc,
+	).AddDate(0, 0, -days)
+
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	var journals []*models.Journal
 
 	c.db.Where("creator_id = ?", currentUser.ID).
+		Where("date >= ?", date.UTC()).
 		Preload("Rating").
 		Find(&journals)
 

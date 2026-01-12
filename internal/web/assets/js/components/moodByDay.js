@@ -1,6 +1,6 @@
-(function() {
+function initMoodByDay() {
   const data = JSON.parse(document.getElementById("mood-by-day-data").textContent);
-  const element = document.getElementById("mood-by-day");
+  const element = document.querySelector(".mood-by-day");
 
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -14,7 +14,7 @@
       labels: data.map(item => item.day),
       datasets: [
         {
-          label: "Average By Day",
+          label: "Average Rating",
           data: data.map(item => item.value),
           borderColor: getCssValue("--secondary-color-dark"),
           backgroundColor: getCssValue("--secondary-color-light"),
@@ -25,6 +25,13 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: "Average Rating By Day",
+          position: "bottom",
+        },
+      },
       scales: {
         x: {
           grid: {
@@ -57,4 +64,5 @@
   // Show the chart
   element.innerHTML = "";
   element.appendChild(canvas);
-})();
+}
+document.addEventListener("load-mood-by-day", initMoodByDay)
