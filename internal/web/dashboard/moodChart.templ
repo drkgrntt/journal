@@ -1,10 +1,38 @@
 package dashboard
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+)
 
 templ MoodChartContent(c *fiber.Ctx) {
-	@templ.JSONScript("mood-chart-data", c.Locals("moodChartData"))
-	<script src="/assets/js/components/moodChart.js" type="module"></script>
+	<a
+		href="#"
+		class="button"
+		hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/mood-chart?month=%d&year=%d", int(current(c).AddDate(0, -1, 0).Month()), current(c).AddDate(0, -1, 0).Year())) }
+		hx-target="#mood-chart"
+		hx-swap="innerHTML"
+	>
+		<i class="fa-solid fa-chevron-left"></i>
+	</a>
+	if c.Query("month") == "" && c.Query("year") == "" {
+		Current
+	} else {
+		{ month(c) } { year(c) }
+	}
+	<a
+		href="#"
+		class="button"
+		hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/mood-chart?month=%d&year=%d", int(current(c).AddDate(0, 1, 0).Month()), current(c).AddDate(0, 1, 0).Year())) }
+		hx-target="#mood-chart"
+		hx-swap="innerHTML"
+	>
+		<i class="fa-solid fa-chevron-right"></i>
+	</a>
+	<div class="mood-chart">
+		@templ.JSONScript("mood-chart-data", c.Locals("moodChartData"))
+		<script src="/assets/js/components/moodChart.js" type="module" onload="document.dispatchEvent(new Event('load-mood-chart'))"></script>
+	</div>
 }
 
 templ MoodChart(c *fiber.Ctx) {

@@ -132,8 +132,5 @@ templ RatingCalendar(c *fiber.Ctx) {
 		</table>
 		@templ.JSONScript("calendar-journals", utils.GetLocal[[]*models.Journal](c, "journals"))
 		<script src="/assets/js/components/ratingCalendar.js" type="module" onload="document.dispatchEvent(new Event('load-rating-calendar'))"></script>
-		<script>
-			document.dispatchEvent(new Event("load-rating-calendar"))
-		</script>
 	</div>
 }

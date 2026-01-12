@@ -1,6 +1,6 @@
-(function() {
+function initMoodChart() {
   const data = JSON.parse(document.getElementById("mood-chart-data").textContent);
-  const element = document.getElementById("mood-chart");
+  const element = document.querySelector(".mood-chart");
 
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -58,4 +58,5 @@
   // Show the chart
   element.innerHTML = "";
   element.appendChild(canvas);
-})();
+}
+document.addEventListener("load-mood-chart", initMoodChart)
