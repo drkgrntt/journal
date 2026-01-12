@@ -39,8 +39,8 @@ function initMoodByDay() {
           },
         },
         y: {
-          min: Math.min(...data.map(item => item.value)) - 1,
-          max: Math.ceil(Math.max(...data.map(item => item.value))) + .2,
+          min: Math.floor(Math.min(...data.map(item => item.value))) - .3,
+          max: Math.ceil(Math.max(...data.map(item => item.value))) + .3,
           grid: {
             display: false,
           },
