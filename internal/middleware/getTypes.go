@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"journal/internal/database"
 	"journal/internal/logger"
 	"journal/internal/models"
 
@@ -9,10 +8,8 @@ import (
 )
 
 func SetJournalTypes(ctx *fiber.Ctx) error {
-	db := database.New()
-
 	var types []*models.JournalType
-	err := db.DB.Order("name ASC").Find(&types).Error
+	err := db.Order("name ASC").Find(&types).Error
 	if err != nil {
 		logger.Error("Error getting journal types: ", "error message", err.Error())
 		return ctx.Next()
@@ -23,10 +20,8 @@ func SetJournalTypes(ctx *fiber.Ctx) error {
 }
 
 func SetRatings(ctx *fiber.Ctx) error {
-	db := database.New()
-
 	var ratings []*models.Rating
-	err := db.DB.Order("value DESC").Find(&ratings).Error
+	err := db.Order("value DESC").Find(&ratings).Error
 	if err != nil {
 		logger.Error("Error getting ratings: ", "error message", err.Error())
 		return ctx.Next()

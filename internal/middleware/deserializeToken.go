@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"journal/internal/database"
 	"journal/internal/logger"
 	"journal/internal/models"
 	"journal/internal/utils"
@@ -22,10 +21,8 @@ func DeserializeToken(ctx *fiber.Ctx) error {
 		return ctx.Next()
 	}
 
-	db := database.New()
-
 	var user models.User
-	err = db.DB.Where("id = ?", data.UserID).
+	err = db.Where("id = ?", data.UserID).
 		First(&user).Error
 	if err != nil {
 		logger.Error("Error getting user: ", err.Error())

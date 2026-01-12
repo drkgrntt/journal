@@ -1,10 +1,10 @@
 package server
 
 import (
-	"journal/internal/web"
 	"journal/internal/controllers"
 	"journal/internal/logger"
 	"journal/internal/middleware"
+	"journal/internal/web"
 	"net/http"
 	"runtime/debug"
 
@@ -30,8 +30,11 @@ func (s *FiberServer) RegisterFiberRoutes() {
 		return c.Next()
 	})
 
-	s.App.Use(middleware.FilterBots)
-	s.App.Use(middleware.DeserializeToken)
+	s.App.Use(
+		middleware.FilterBots,
+		middleware.DeserializeToken,
+		middleware.LogAccess,
+	)
 
 	for _, controller := range controllers.GetControllers() {
 		controller.Init(s.db.DB, s.App)
