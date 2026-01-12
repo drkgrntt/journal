@@ -134,7 +134,14 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 		Preload("JournalType").
 		Order("created_at DESC")
 
-	end := time.Now()
+	t := time.Now()
+	end := time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		0, 0, 0, 0,
+		loc,
+	)
 	start := end.AddDate(0, -1, -1).UTC()
 	if month != 0 && year != 0 {
 		date := time.Date(
