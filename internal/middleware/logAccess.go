@@ -11,6 +11,7 @@ import (
 func LogAccess(ctx *fiber.Ctx) error {
 	ip := ctx.IP()
 	userAgent := ctx.Context().UserAgent()
+	method := ctx.Method()
 
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	now := time.Now().UTC()
@@ -27,6 +28,7 @@ func LogAccess(ctx *fiber.Ctx) error {
 
 	analytic := models.Analytic{
 		Base:      &base,
+		Method:    method,
 		Page:      string(ctx.Request().URI().Path()),
 		Query:     string(ctx.Request().URI().QueryString()),
 		Useragent: string(userAgent),

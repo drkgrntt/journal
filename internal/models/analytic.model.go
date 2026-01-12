@@ -6,6 +6,7 @@ func init() {
 
 type Analytic struct {
 	*Base
+	Method    string `json:"method,omitempty"`
 	Domain    string `json:"domain,omitempty"`
 	Page      string `json:"page,omitempty"`
 	Query     string `json:"query,omitempty"`
