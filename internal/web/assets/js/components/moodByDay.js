@@ -39,6 +39,7 @@ function initMoodByDay() {
           },
         },
         y: {
+          min: Math.min(...data.map(item => item.value)) - 1,
           grid: {
             display: false,
           },
