@@ -20,10 +20,10 @@ func getOutstandingActionItems(c *fiber.Ctx) []*models.ActionItem {
 templ DashboardPage(c *fiber.Ctx) {
 	@web.Base(c) {
 		<div id="dashboard-page">
-			<h2 class="heading">How are you today?</h2>
+			<h2 class="heading">How are you feeling?</h2>
 			@journal.Form(c, nil)
 			<br/>
-			<h3 class="heading">Here's what's left</h3>
+			<h3 class="heading">Here's what's left.</h3>
 			@actionItems.Form(c, nil, nil)
 			<br/>
 			@actionItems.List(c, getOutstandingActionItems(c))

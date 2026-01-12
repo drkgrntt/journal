@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"journal/internal/web/dashboard"
 	"journal/internal/middleware"
 	"journal/internal/models"
 	"journal/internal/utils"
+	"journal/internal/web/dashboard"
 	"math"
 	"sort"
 	"time"
@@ -125,16 +125,6 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 		loc = time.UTC
 	}
 
-	date := time.Date(
-		year,
-		time.Month(month),
-		1,
-		0,
-		0,
-		0,
-		0,
-		loc,
-	)
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	var journals []*models.Journal
 
@@ -144,12 +134,20 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 		Preload("JournalType").
 		Order("created_at DESC")
 
+	end := time.Now()
+	start := end.AddDate(0, -1, -1).UTC()
 	if month != 0 && year != 0 {
-		tx = tx.Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC())
-	} else {
-		tx = tx.Where("date >= ?", time.Now().AddDate(0, -1, -1))
+		date := time.Date(
+			year,
+			time.Month(month),
+			1, 0, 0, 0, 0,
+			loc,
+		)
+		start = date.AddDate(0, 0, -1)
+		end = date.AddDate(0, 1, 1)
 	}
-	tx.Find(&journals)
+	tx = tx.Where("date BETWEEN ? AND ?", start.UTC(), end.UTC()).
+		Find(&journals)
 
 	moodChartTmp := map[string][]int{}
 	for _, journal := range journals {
@@ -162,7 +160,7 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 	}
 
 	type MoodChartData struct {
-		Value    float64   `json:"value"`
+		Value    *float64  `json:"value"`
 		Date     string    `json:"date"`
 		DateTime time.Time `json:"-"`
 	}
@@ -173,11 +171,23 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 			total += value
 		}
 		dateTime, _ := time.Parse("01-02-2006", date)
+		value := float64(total) / float64(len(values))
 		moodChartData = append(moodChartData, MoodChartData{
-			Value:    float64(total) / float64(len(values)),
+			Value:    &value,
 			Date:     date,
 			DateTime: dateTime,
 		})
+	}
+
+	for i := start; i.Before(end); i = i.AddDate(0, 0, 1) {
+		localizedDate := i.In(loc).Format("01-02-2006")
+		if _, ok := moodChartTmp[localizedDate]; !ok {
+			moodChartData = append(moodChartData, MoodChartData{
+				Value:    nil,
+				Date:     localizedDate,
+				DateTime: i,
+			})
+		}
 	}
 
 	sort.Slice(moodChartData, func(i, j int) bool {

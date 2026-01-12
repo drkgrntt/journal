@@ -22,6 +22,7 @@
       ],
     },
     options: {
+      spanGaps: true,
       tension: .4,
       responsive: true,
       maintainAspectRatio: false,
