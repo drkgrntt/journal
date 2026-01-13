@@ -33,8 +33,8 @@ function initMoodChart() {
           },
         },
         y: {
-          min: Math.floor(Math.min(...data.map(item => item.value))) - .3,
-          max: Math.ceil(Math.max(...data.map(item => item.value))) + .3,
+          min: Math.min(...data.filter(i => !!i.value).map(item => item.value)) - .3,
+          max: Math.max(...data.filter(i => !!i.value).map(item => item.value)) + .3,
           grid: {
             display: false,
           },
