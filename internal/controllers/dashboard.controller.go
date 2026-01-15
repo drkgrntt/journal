@@ -142,7 +142,7 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 		0, 0, 0, 0,
 		loc,
 	)
-	start := end.AddDate(0, -1, -1).UTC()
+	start := end.AddDate(0, -1, -1)
 	if month != 0 && year != 0 {
 		date := time.Date(
 			year,
