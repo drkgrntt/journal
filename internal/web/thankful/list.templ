@@ -98,14 +98,6 @@ templ ListItems(c *fiber.Ctx) {
 	@loadMore(c)
 }
 
-func getJournalTypes(c *fiber.Ctx) []*models.JournalType {
-	journalTypes := utils.GetLocal[[]*models.JournalType](c, "journalTypes")
-	if journalTypes == nil {
-		return []*models.JournalType{}
-	}
-	return *journalTypes
-}
-
 templ ListPage(c *fiber.Ctx) {
 	@web.Base(c) {
 		<div id="thankful-list-page">

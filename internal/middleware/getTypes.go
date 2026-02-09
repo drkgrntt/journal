@@ -9,7 +9,7 @@ import (
 
 func SetJournalTypes(ctx *fiber.Ctx) error {
 	var types []*models.JournalType
-	err := db.Order("name ASC").Find(&types).Error
+	err := db.Where("code != ?", "custom").Order("name ASC").Find(&types).Error
 	if err != nil {
 		logger.Error("Error getting journal types: ", "error message", err.Error())
 		return ctx.Next()

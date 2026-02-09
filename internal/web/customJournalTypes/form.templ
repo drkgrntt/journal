@@ -1,0 +1,38 @@
+package customJournalTypes
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/models"
+)
+
+templ Form(
+	c *fiber.Ctx,
+	customJournalType *models.CustomJournalType,
+) {
+	<form
+		id="custom-journal-type-form"
+		if customJournalType != nil {
+			hx-put={ fmt.Sprintf("/api/custom-journal-types/%s", customJournalType.ID.String()) }
+		} else {
+			hx-post="/api/custom-journal-types"
+		}
+		hx-swap="beforeend"
+		hx-target="[custom-journal-type-list]"
+		hx-trigger="submit"
+		hx-swap-oob="outerHTML"
+	>
+		<input
+			id="custom-journal-type-name"
+			name="name"
+			placeholder="Topic Name"
+			class="input"
+			if customJournalType != nil {
+				value={ customJournalType.Name }
+			}
+		/>
+		<button class="button" type="submit">
+			<i class="far fa-plus"></i>
+		</button>
+	</form>
+}

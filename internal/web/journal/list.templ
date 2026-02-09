@@ -56,8 +56,10 @@ templ listItemsWithButton(c *fiber.Ctx, includeButton bool) {
 				}
 			</a>
 			<div class="info">
-				if journal.JournalType != nil {
+				if journal.JournalType != nil && !journal.JournalType.IsCustom() {
 					<p class="topic">{ journal.JournalType.Name }</p>
+				} else if journal.JournalType.IsCustom() && journal.CustomJournalType != nil {
+					<p class="topic">{ journal.CustomJournalType.Name }</p>
 				}
 				if journal.Rating != nil {
 					<p class="rating"><span class={ "color", journal.Rating.Code }>●</span> { journal.Rating.Name }</p>

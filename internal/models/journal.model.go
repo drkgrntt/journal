@@ -5,6 +5,7 @@ import (
 	"journal/internal/utils"
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -20,6 +21,9 @@ type Journal struct {
 
 	JournalType   *JournalType `gorm:"not null" json:"journalType,omitempty"`
 	JournalTypeID int          `gorm:"type:int;not null" json:"journalTypeId,omitempty"`
+
+	CustomJournalType   *CustomJournalType `gorm:"not null" json:"customJournalType,omitempty"`
+	CustomJournalTypeID uuid.UUID          `gorm:"type:uuid" json:"customJournalTypeId,omitempty"`
 
 	Rating   *Rating `gorm:"not null" json:"rating,omitempty"`
 	RatingID int     `gorm:"type:int;not null" json:"ratingId,omitempty"`

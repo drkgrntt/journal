@@ -20,6 +20,7 @@ type User struct {
 	ActionItems          []*ActionItem          `gorm:"foreignKey:CreatorID" json:"actionItems,omitempty"`
 	RecurringActionItems []*RecurringActionItem `gorm:"foreignKey:CreatorID" json:"recurringActionItems,omitempty"`
 	Thankfuls            []*Thankful            `gorm:"foreignKey:CreatorID" json:"thankfuls,omitempty"`
+	CustomJournalTypes   []*CustomJournalType   `gorm:"foreignKey:CreatorID" json:"customJournalTypes,omitempty"`
 }
 
 func (u *User) FullName() string {

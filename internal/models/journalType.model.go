@@ -13,3 +13,7 @@ type JournalType struct {
 func (j *JournalType) IsDefault() bool {
 	return j.Code == "general"
 }
+
+func (j *JournalType) IsCustom() bool {
+	return j.Code == "custom"
+}

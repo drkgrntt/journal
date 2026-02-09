@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"journal/internal/web"
+	"journal/internal/web/customJournalTypes"
 )
 
 templ infoForm(c *fiber.Ctx) {
@@ -112,6 +113,14 @@ templ blurTextToggle(c *fiber.Ctx) {
 	</div>
 }
 
+templ customJournalTypeForm(c *fiber.Ctx) {
+	<div class="form">
+		<h4>Custom Topics</h4>
+		@customJournalTypes.Form(c, nil)
+		@customJournalTypes.List(c, web.CurrentUser(c).CustomJournalTypes)
+	</div>
+}
+
 templ ProfilePage(c *fiber.Ctx) {
 	@web.Base(c) {
 		<div id="profile-page">
@@ -120,6 +129,7 @@ templ ProfilePage(c *fiber.Ctx) {
 			<div class="forms">
 				@infoForm(c)
 				@passwordForm(c)
+				@customJournalTypeForm(c)
 			</div>
 		</div>
 	}

@@ -1,0 +1,79 @@
+package customJournalTypes
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/models"
+	"journal/internal/web"
+)
+
+templ ListItem(c *fiber.Ctx, customJournalType *models.CustomJournalType) {
+	<li
+		custom-journal-type
+		id={ fmt.Sprintf("custom-journal-type-%s", customJournalType.ID.String()) }
+		if c.Method() != "POST" && c.Method() != "GET" {
+			hx-swap-oob={ fmt.Sprintf("outerHTML:#custom-journal-type-%s", customJournalType.ID.String()) }
+		}
+		class="item"
+	>
+		<div class="info">
+			<p class="text">
+				{ customJournalType.Name }
+			</p>
+			<button
+				class="button"
+				hx-get={ fmt.Sprintf("/custom-journal-types/%s/form", customJournalType.ID.String()) }
+				hx-swap="none"
+			>
+				<i class="fa fa-pen"></i>
+			</button>
+			<button
+				class="button"
+				hx-delete={ fmt.Sprintf("/api/custom-journal-types/%s", customJournalType.ID.String()) }
+				hx-swap="delete"
+				hx-confirm="Are you sure?"
+				hx-target="closest [custom-journal-type]"
+			>
+				<i class="fa fa-trash"></i>
+			</button>
+		</div>
+	</li>
+	<div
+		hx-swap-oob="beforeend:#custom-journal-type-ids"
+	>
+		<input
+			type="hidden"
+			name="customJournalTypeIds[]"
+			value={ customJournalType.ID.String() }
+		/>
+	</div>
+}
+
+templ List(c *fiber.Ctx, customJournalType []*models.CustomJournalType) {
+	<ul id="custom-journal-type-list" custom-journal-type-list>
+		for _, customJournalType := range customJournalType {
+			@ListItem(c, customJournalType)
+		}
+	</ul>
+}
+
+func getCustomJournalTypes(c *fiber.Ctx) []*models.CustomJournalType {
+	currentUser := web.CurrentUser(c)
+	customJournalTypes := currentUser.CustomJournalTypes
+	return customJournalTypes
+}
+
+templ ListItems(c *fiber.Ctx) {
+	for _, customJournalType := range getCustomJournalTypes(c) {
+		@ListItem(c, customJournalType)
+	}
+}
+
+templ ListPage(c *fiber.Ctx) {
+	@web.Base(c) {
+		<div id="custom-journal-types-list-page">
+			<h1 class="heading">Custom Topics</h1>
+			@List(c, getCustomJournalTypes(c))
+		</div>
+	}
+}

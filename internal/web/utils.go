@@ -42,3 +42,8 @@ func PrevDate(c *fiber.Ctx) string {
 func CurrentUser(c *fiber.Ctx) *models.User {
 	return utils.GetLocal[models.User](c, "currentUser")
 }
+
+type LabelValue[T any] struct {
+	Label string
+	Value T
+}

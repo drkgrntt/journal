@@ -2,15 +2,17 @@ package controllers
 
 import (
 	"fmt"
-	"journal/internal/web/journal"
 	"journal/internal/logger"
 	"journal/internal/middleware"
 	"journal/internal/models"
 	"journal/internal/utils"
+	"journal/internal/web/journal"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -53,6 +55,7 @@ func (c *JournalController) getJournal(ctx *fiber.Ctx) error {
 	err := c.db.Where("id = ?", id).
 		Where("creator_id = ?", currentUser.ID).
 		Preload("JournalType").
+		Preload("CustomJournalType").
 		Preload("Rating").
 		Preload("ActionItems", c.db.Order("created_at desc")).
 		Preload("Thankfuls", c.db.Order("created_at desc")).
@@ -110,6 +113,7 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 	journals := []*models.Journal{}
 	tx := c.db.Where("creator_id = ?", currentUser.ID).
 		Preload("JournalType").
+		Preload("CustomJournalType").
 		Preload("Rating").
 		Preload("Thankfuls").
 		Preload("ActionItems").
@@ -312,8 +316,9 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 }
 
 type JournalBody struct {
-	Date          int      `form:"date"`
-	JournalTypeID int      `form:"journalType"`
+	Date int `form:"date"`
+	// JournalTypeID int      `form:"journalType"`
+	JournalTypeID string   `form:"journalType"`
 	RatingID      int      `form:"rating"`
 	Entry         string   `form:"entry"`
 	IsBookmarked  bool     `form:"isBookmarked"`
@@ -334,11 +339,26 @@ func (c *JournalController) parseJournalFromBody(ctx *fiber.Ctx, journal *models
 		journal.Date = &date
 	}
 	journal.Entry = body.Entry
-	journal.JournalTypeID = body.JournalTypeID
 	journal.RatingID = body.RatingID
+
+	journal.CustomJournalTypeID, err = uuid.Parse(body.JournalTypeID)
+	if err != nil {
+		journal.JournalTypeID, err = strconv.Atoi(body.JournalTypeID)
+		if err != nil {
+			return err
+		}
+	} else {
+		var customType *models.JournalType
+		err = c.db.Where("code = ?", "custom").Find(&customType).Error
+		if err != nil {
+			return err
+		}
+		journal.JournalTypeID = customType.ID
+	}
 
 	journal.Rating = nil
 	journal.JournalType = nil
+	journal.CustomJournalType = nil
 
 	if body.IsBookmarked {
 		now := time.Now()

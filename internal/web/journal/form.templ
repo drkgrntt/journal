@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"journal/internal/models"
 	"journal/internal/utils"
+	"journal/internal/web"
 	"journal/internal/web/components"
 	"time"
 )
@@ -88,6 +89,9 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 					class="select"
 				>
 					for _, journalType := range getJournalTypes(c) {
+						if journalType.IsCustom() {
+							continue
+						}
 						<option
 							value={ fmt.Sprint(journalType.ID) }
 							if journal != nil && journal.JournalTypeID == journalType.ID {
@@ -99,6 +103,16 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 							}
 						>
 							{ journalType.Name }
+						</option>
+					}
+					for _, customJournalType := range web.CurrentUser(c).CustomJournalTypes {
+						<option
+							value={ fmt.Sprint(customJournalType.ID) }
+							if journal != nil && journal.CustomJournalTypeID == customJournalType.ID {
+								selected
+							}
+						>
+							{ customJournalType.Name }
 						</option>
 					}
 				</select>
