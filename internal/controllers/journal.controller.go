@@ -122,7 +122,13 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 
 	topic := ctx.Query("topic")
 	if topic != "" {
-		tx = tx.Where("journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)", topic)
+		tx = tx.Where(
+			"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
+			topic,
+		).Or(
+			"custom_journal_type_id::text LIKE ?",
+			fmt.Sprintf("%%%s", topic),
+		)
 	}
 
 	tz := ctx.Cookies("tz", "UTC")
@@ -169,6 +175,9 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 			daySubquery = daySubquery.Where(
 				"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
 				topic,
+			).Or(
+				"custom_journal_type_id::text LIKE ?",
+				fmt.Sprintf("%%%s", topic),
 			)
 		}
 
@@ -200,7 +209,7 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		if len(journals) > 0 {
 			pageDate = *journals[0].Date
 		} else {
-			pageDate, _ = time.ParseInLocation("2006-01-02", date, loc)
+			pageDate, err = time.ParseInLocation("2006-01-02", date, loc)
 			if err != nil {
 				return err
 			}
@@ -223,7 +232,13 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 			Where("date < ?", startLocal.UTC())
 		if topic != "" {
 			prevTx = prevTx.
-				Where("journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)", topic)
+				Where(
+					"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
+					topic,
+				).Or(
+				"custom_journal_type_id::text LIKE ?",
+				fmt.Sprintf("%%%s", topic),
+			)
 		}
 		err = prevTx.
 			Order("date DESC").
@@ -250,7 +265,13 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 			Where("date >= ?", endLocal.UTC())
 		if topic != "" {
 			nextTx = nextTx.
-				Where("journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)", topic)
+				Where(
+					"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
+					topic,
+				).Or(
+				"custom_journal_type_id::text LIKE ?",
+				fmt.Sprintf("%%%s", topic),
+			)
 		}
 		err = nextTx.
 			Order("date ASC").

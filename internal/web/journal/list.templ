@@ -134,6 +134,14 @@ templ ListPage(c *fiber.Ctx) {
 						{ journalType.Name }
 					</a>
 				}
+				for _, customJournalType := range web.CurrentUser(c).CustomJournalTypes {
+					<a
+						href={ templ.SafeURL(fmt.Sprintf("/journal?topic=%s&sort=%s&date=%s", customJournalType.SubID(), c.Query("sort"), c.Query("date"))) }
+						class={ "sort", templ.KV("active", c.Query("topic") == customJournalType.SubID()) }
+					>
+						{ customJournalType.Name }
+					</a>
+				}
 			</div>
 			<ul class="list" journal-list>
 				@listItemsWithButton(c, false)
