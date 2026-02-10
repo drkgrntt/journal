@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 func LogAccess(ctx *fiber.Ctx) error {
@@ -17,8 +18,10 @@ func LogAccess(ctx *fiber.Ctx) error {
 	now := time.Now().UTC()
 
 	base := models.Base{
-		CreatedAt: now,
-		UpdatedAt: now,
+		CreatedAt:     now,
+		UpdatedAt:     now,
+		CreatorID:     &uuid.Nil,
+		LastUpdaterID: &uuid.Nil,
 	}
 
 	if currentUser != nil {

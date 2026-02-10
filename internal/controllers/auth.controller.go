@@ -1,18 +1,19 @@
 package controllers
 
 import (
-	"journal/internal/web/auth"
 	"journal/internal/emails"
 	"journal/internal/jobs"
 	"journal/internal/logger"
 	"journal/internal/models"
 	"journal/internal/utils"
+	"journal/internal/web/auth"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	_ "github.com/joho/godotenv/autoload"
 	"gorm.io/gorm"
 )
@@ -74,6 +75,10 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 	user = models.User{
 		Password: body.Password,
 		Email:    body.Email,
+		Base: &models.Base{
+			CreatorID:     &uuid.Nil,
+			LastUpdaterID: &uuid.Nil,
+		},
 	}
 	err = tx.Create(&user).Error
 
