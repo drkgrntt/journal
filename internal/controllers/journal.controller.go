@@ -68,13 +68,13 @@ func (c *JournalController) getJournal(ctx *fiber.Ctx) error {
 
 	c.db.
 		// None from this journal
-		Where("journal_id != ?", journal.ID).
+		Where("journal_id != ? OR journal_id IS NULL", journal.ID).
 		// Created by me
 		Where("creator_id = ?", currentUser.ID).
 		// Created before this journal
-		Where("created_at < ?", journal.CreatedAt).
+		Where("created_at < ?", journal.CreatedAt.UTC()).
 		// Incomplete or completed after this journal
-		Where("completed_at IS NULL OR completed_at > ?", journal.CreatedAt).
+		Where("completed_at IS NULL OR completed_at > ?", journal.CreatedAt.UTC()).
 		Order("created_at desc").
 		Find(&journal.OutstandingActionItems)
 
