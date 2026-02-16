@@ -3,11 +3,11 @@ package controllers
 import (
 	"errors"
 	gormlogger "gorm.io/gorm/logger"
-	"journal/internal/web/recurringActionItems"
 	"journal/internal/logger"
 	"journal/internal/middleware"
 	"journal/internal/models"
 	"journal/internal/utils"
+	"journal/internal/web/recurringActionItems"
 	"net/http"
 	"time"
 
@@ -216,9 +216,10 @@ func (c *RecurringActionItemController) RegisterApiRoutes() {
 }
 
 type RecurringActionItemBody struct {
-	Text      string `form:"text"`
-	StartsAt  int    `form:"startsAt"`
-	Frequency int    `form:"frequency"`
+	Text            string `form:"text"`
+	StartsAt        int    `form:"startsAt"`
+	Frequency       int    `form:"frequency"`
+	HourlyFrequency int    `form:"hourlyFrequency"`
 }
 
 func (c *RecurringActionItemController) parseRecurringActionItemFromBody(ctx *fiber.Ctx, recurringActionItem *models.RecurringActionItem) error {
@@ -240,7 +241,12 @@ func (c *RecurringActionItemController) parseRecurringActionItemFromBody(ctx *fi
 		recurringActionItem.StartsAt = nil
 	}
 
-	duration := time.Duration(body.Frequency) * time.Millisecond
+	var duration time.Duration
+	if body.Frequency == 0 {
+		duration = time.Duration(body.HourlyFrequency) * time.Hour
+	} else {
+		duration = time.Duration(body.Frequency) * time.Millisecond
+	}
 	recurringActionItem.Frequency = duration
 
 	return nil

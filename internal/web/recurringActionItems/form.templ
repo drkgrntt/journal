@@ -53,6 +53,13 @@ templ Form(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) {
 					if recurringActionItem != nil {
 						value={ recurringActionItem.Frequency.Milliseconds() }
 					}
+					onchange="
+						if (this.value === '0') {
+							document.getElementById('custom-options').style.display = 'block'
+						} else {
+							document.getElementById('custom-options').style.display = 'none'
+						}
+					"
 				>
 					<option
 						value={ time.Duration(24 * time.Hour).Milliseconds() }
@@ -78,7 +85,40 @@ templ Form(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) {
 					>
 						Monthly
 					</option>
+					<option
+						value={ 0 }
+						if recurringActionItem != nil && 
+							recurringActionItem.Frequency != time.Duration(24*time.Hour) && 
+							recurringActionItem.Frequency != time.Duration(7*24*time.Hour) &&
+							recurringActionItem.Frequency != time.Duration(30*24*time.Hour) {
+							selected
+						}
+					>
+						Other
+					</option>
 				</select>
+			</div>
+			<div
+				id="custom-options"
+				class="field"
+				if recurringActionItem == nil || 
+					recurringActionItem.Frequency == time.Duration(24*time.Hour) ||
+					recurringActionItem.Frequency == time.Duration(7*24*time.Hour) || 
+					recurringActionItem.Frequency == time.Duration(30*24*time.Hour) {
+					style="display: none"
+				}
+			>
+				<label class="label" for="hourlyFrequency">Every</label>
+				<input
+					class="input"
+					type="number"
+					name="hourlyFrequency"
+					id="hourlyFrequency"
+					if recurringActionItem != nil {
+						value={ recurringActionItem.Frequency.Hours() }
+					}
+				/>
+				<span>Hours</span>
 			</div>
 			<div class="field">
 				<label class="label" for="startsAt">Starting Date</label>
