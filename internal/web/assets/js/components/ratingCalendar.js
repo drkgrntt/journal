@@ -73,6 +73,9 @@ function initRatingCalendar() {
     const [year, month, day] = td.dataset.calendarDate?.split('-').map(Number)
     const date = new Date(year, month - 1, day)
     const filtered = journals.filter(function(journal) {
+      if (!journal.rating) {
+        return false;
+      }
       const journalDate = new Date(journal.date);
       return (
         journalDate.getDate() === date.getDate() &&

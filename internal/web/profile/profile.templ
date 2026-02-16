@@ -3,6 +3,9 @@ package profile
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"journal/internal/models"
+	"journal/internal/stripe"
+	"journal/internal/utils"
 	"journal/internal/web"
 	"journal/internal/web/customJournalTypes"
 )
@@ -99,6 +102,46 @@ templ passwordForm(c *fiber.Ctx) {
 	</form>
 }
 
+func getFeatures(c *fiber.Ctx) []*models.Feature {
+	features := utils.GetLocal[[]*models.Feature](c, "features")
+	return *features
+}
+
+templ featureForm(c *fiber.Ctx) {
+	<form
+		class="form"
+		hx-put="/api/profile/features"
+		hx-swap="none"
+		hx-on::after-request="handleHtmxSuccess(event, 'Saved!');window.location.reload()"
+	>
+		<fieldset class="field">
+			<legend class="label legend">Features</legend>
+			for _, userFeature := range web.CurrentUser(c).UserFeatures {
+				<div class="check-field">
+					<input
+						id={ fmt.Sprint(userFeature.FeatureID) }
+						type="checkbox"
+						name="features[]"
+						value={ fmt.Sprint(userFeature.FeatureID) }
+						if web.CurrentUser(c).HasFeature(userFeature.Feature.Code) {
+							checked
+						}
+					/>
+					<label class="label" for={ fmt.Sprint(userFeature.FeatureID) }>{ userFeature.Feature.Name }</label>
+				</div>
+			}
+		</fieldset>
+		<div class="field">
+			<button
+				type="submit"
+				class="button"
+			>
+				Save
+			</button>
+		</div>
+	</form>
+}
+
 templ blurTextToggle(c *fiber.Ctx) {
 	<div class="checkField">
 		<input
@@ -121,6 +164,48 @@ templ customJournalTypeForm(c *fiber.Ctx) {
 	</div>
 }
 
+templ featureList(c *fiber.Ctx) {
+	<div class="features">
+		for _, feature := range getFeatures(c) {
+			if !web.CurrentUser(c).HasFeature(feature.Code) {
+				<div class="feature">
+					<h4 class="feature-name">{ feature.Name }</h4>
+					<p class="feature-description">{ feature.Description }</p>
+					<div class="feature-images">
+						switch feature.Code {
+							case "custom-topics":
+								<div>
+									<img src="/assets/images/custom-topic-form.png" class="feature-image"/>
+								</div>
+								<div>
+									<img src="/assets/images/custom-topic-journal.png" class="feature-image"/>
+								</div>
+							case "routines":
+								<div>
+									<img src="/assets/images/routine-form.png" class="feature-image"/>
+								</div>
+								<div>
+									<img src="/assets/images/routine-in-list.png" class="feature-image"/>
+								</div>
+						}
+					</div>
+					<button
+						class="button"
+						hx-put={ fmt.Sprintf("/api/profile/features/%d", feature.ID) }
+						hx-swap="none"
+						hx-on::after-request="handleHtmxSuccess(event, 'Saved!');window.location.reload()"
+					>
+						Get this feature
+						if feature.StripePriceID != "" {
+							{ fmt.Sprintf("($%.2f)", stripe.GetPrice(feature.StripePriceID).UnitAmountDecimal / float64(100)) }
+						}
+					</button>
+				</div>
+			}
+		}
+	</div>
+}
+
 templ ProfilePage(c *fiber.Ctx) {
 	@web.Base(c) {
 		<div id="profile-page">
@@ -129,8 +214,17 @@ templ ProfilePage(c *fiber.Ctx) {
 			<div class="forms">
 				@infoForm(c)
 				@passwordForm(c)
-				@customJournalTypeForm(c)
+				if len(web.CurrentUser(c).UserFeatures) > 0 {
+					@featureForm(c)
+				}
+				if web.CurrentUser(c).HasFeature("custom-topics") {
+					@customJournalTypeForm(c)
+				}
 			</div>
+			if len(web.CurrentUser(c).UserFeatures) < len(getFeatures(c)) {
+				<h2 class="heading">Features</h2>
+				@featureList(c)
+			}
 		</div>
 	}
 }

@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"journal/internal/models"
+	"journal/internal/utils"
 	"journal/internal/web/components"
 	"time"
 )
 
-func recurringActionItemDefaultStartsAt(recurringActionItem *models.RecurringActionItem) *time.Time {
+func recurringActionItemDefaultStartsAt(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) *time.Time {
 	if recurringActionItem != nil {
-		return recurringActionItem.StartsAt
+		return utils.GetDateInLocal(c, recurringActionItem.StartsAt)
 	}
 
-	t := time.Now()
-	return &t
+	return utils.GetDateInLocal(c, nil)
 }
 
 templ Form(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) {
@@ -82,7 +82,7 @@ templ Form(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) {
 			</div>
 			<div class="field">
 				<label class="label" for="startsAt">Starting Date</label>
-				@components.DateTimeInput("startsAt", recurringActionItemDefaultStartsAt(recurringActionItem))
+				@components.DateTimeInput("startsAt", recurringActionItemDefaultStartsAt(c, recurringActionItem))
 			</div>
 		</div>
 		<button class="button" type="submit">Submit</button>

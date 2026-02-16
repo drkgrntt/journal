@@ -11,16 +11,19 @@ func init() {
 
 type User struct {
 	*Base
-	Email     string `gorm:"unique;not null" json:"email,omitempty"`
-	FirstName string `gorm:"not null" json:"firstName,omitempty"`
-	LastName  string `gorm:"not null" json:"lastName,omitempty"`
-	Password  string `gorm:"not null" json:"-"`
+	Email            string `gorm:"unique;not null" json:"email,omitempty"`
+	FirstName        string `gorm:"not null" json:"firstName,omitempty"`
+	LastName         string `gorm:"not null" json:"lastName,omitempty"`
+	Password         string `gorm:"not null" json:"-"`
+	StripeCustomerID string `gorm:"type:text" json:"stripeCustomerId,omitempty"`
 
 	Journals             []*Journal             `gorm:"foreignKey:CreatorID" json:"journals,omitempty"`
 	ActionItems          []*ActionItem          `gorm:"foreignKey:CreatorID" json:"actionItems,omitempty"`
 	RecurringActionItems []*RecurringActionItem `gorm:"foreignKey:CreatorID" json:"recurringActionItems,omitempty"`
 	Thankfuls            []*Thankful            `gorm:"foreignKey:CreatorID" json:"thankfuls,omitempty"`
 	CustomJournalTypes   []*CustomJournalType   `gorm:"foreignKey:CreatorID" json:"customJournalTypes,omitempty"`
+	UserFeatures         []*UserFeature         `gorm:"foreignKey:CreatorID" json:"userFeatures,omitempty"`
+	// Features             []*Feature             `gorm:"many2many:user_features;" json:"features"`
 }
 
 func (u *User) FullName() string {
@@ -61,4 +64,13 @@ func (u *User) BeforeUpdate(tx *gorm.DB) error {
 		tx.Statement.SetColumn("Password", hashedPassword)
 	}
 	return nil
+}
+
+func (u *User) HasFeature(feature string) bool {
+	for _, userFeature := range u.UserFeatures {
+		if userFeature.Feature.Code == feature && userFeature.EnabledAt != nil {
+			return true
+		}
+	}
+	return false
 }

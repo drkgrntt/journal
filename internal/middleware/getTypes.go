@@ -3,6 +3,7 @@ package middleware
 import (
 	"journal/internal/logger"
 	"journal/internal/models"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -28,5 +29,17 @@ func SetRatings(ctx *fiber.Ctx) error {
 	}
 
 	ctx.Locals("ratings", &ratings)
+	return ctx.Next()
+}
+
+func SetFeatures(ctx *fiber.Ctx) error {
+	var features []*models.Feature
+	err := db.Where("enabled_at < ?", time.Now().UTC()).Find(&features).Error
+	if err != nil {
+		logger.Error("Error getting features: ", "error message", err.Error())
+		return ctx.Next()
+	}
+
+	ctx.Locals("features", &features)
 	return ctx.Next()
 }

@@ -22,3 +22,11 @@ func GetDateInLocal(c *fiber.Ctx, date *time.Time) *time.Time {
 
 	return &localized
 }
+
+func Pointer[T any](value T) *T {
+	return &value
+}
+
+func Value[T any](pointer *T) T {
+	return *pointer
+}

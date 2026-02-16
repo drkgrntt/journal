@@ -158,6 +158,9 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 
 	moodChartTmp := map[string][]int{}
 	for _, journal := range journals {
+		if journal.Rating == nil {
+			continue
+		}
 		localizedDate := journal.Date.In(loc).Format("01-02-2006")
 
 		if _, ok := moodChartTmp[localizedDate]; !ok {
@@ -231,6 +234,9 @@ func (c *DashboardController) getMoodByDay(ctx *fiber.Ctx) error {
 
 	moodByDayTmp := map[time.Weekday][]int{}
 	for _, journal := range journals {
+		if journal.Rating == nil {
+			continue
+		}
 		localizedDate := journal.Date.In(loc).Weekday()
 		if _, ok := moodByDayTmp[localizedDate]; !ok {
 			moodByDayTmp[localizedDate] = []int{}
@@ -295,6 +301,9 @@ func (c *DashboardController) getMoodVsActionCompletion(ctx *fiber.Ctx) error {
 
 	daysWithoutCompletedActionItems := make(map[string][]int)
 	for _, journal := range journals {
+		if journal.Rating == nil {
+			continue
+		}
 		localizedDate := journal.Date.In(loc).Format("01-02-2006")
 		_, ok := daysWithCompletedActionItems[localizedDate]
 		if ok {
@@ -316,6 +325,9 @@ func (c *DashboardController) getMoodVsActionCompletion(ctx *fiber.Ctx) error {
 	moodVsActionCompletionData := []MoodVsActionCompletionData{}
 
 	for _, rating := range ratings {
+		if rating.Value == 0 {
+			continue
+		}
 		var withCompletions int
 		var withoutCompletions int
 
@@ -389,6 +401,9 @@ func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
 		jRatings := []int{}
 		withThankfuls := false
 		for _, journal := range js {
+			if journal.Rating == nil {
+				continue
+			}
 			if len(journal.Thankfuls) > 0 {
 				withThankfuls = true
 			}
@@ -410,6 +425,9 @@ func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
 	moodVsThankfulData := []MoodVsThankfulData{}
 
 	for _, rating := range ratings {
+		if rating.Value == 0 {
+			continue
+		}
 		var withThankfuls int
 		var withoutThankfuls int
 

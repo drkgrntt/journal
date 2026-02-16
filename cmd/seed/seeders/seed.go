@@ -18,7 +18,6 @@ func init() {
 }
 
 func Seed() {
-
 	var err error
 
 	err = SeedUsers()
@@ -47,6 +46,11 @@ func Seed() {
 	}
 
 	err = SeedThankfuls()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = SeedFeatures()
 	if err != nil {
 		log.Fatal(err)
 	}

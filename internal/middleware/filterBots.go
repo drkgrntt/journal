@@ -9,6 +9,9 @@ func FilterBots(ctx *fiber.Ctx) error {
 	useragent := string(ctx.Context().UserAgent())
 	result := isbot.UserAgent(useragent)
 	if isbot.Is(result) {
+		if ctx.Path() == "/api/stripe/webhook" {
+			return ctx.Next()
+		}
 		return ctx.SendStatus(fiber.StatusForbidden)
 	}
 	return ctx.Next()

@@ -10,12 +10,12 @@ import (
 func GetLocal[T any](ctx *fiber.Ctx, key string) *T {
 	valueInterface := ctx.Locals(key)
 	if valueInterface == nil {
-		logger.Warn("No locals found for key: ", key)
+		logger.Warn("No locals found for key: ", "key", key)
 		return nil
 	}
 	value, ok := valueInterface.(*T)
 	if !ok {
-		logger.Warn("Unable to cast interface for key: ", key)
+		logger.Warn("Unable to cast interface for key: ", "key", key)
 		return nil
 	}
 
