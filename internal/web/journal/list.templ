@@ -113,7 +113,7 @@ templ ListPage(c *fiber.Ctx) {
 				</a>
 				<a
 					href={ templ.SafeURL(fmt.Sprintf("/journal?sort=bookmark&topic=%s", c.Query("topic"))) }
-					class={ "sort", templ.KV("active", c.Query("bookmark") == "bookmark") }
+					class={ "sort", templ.KV("active", c.Query("sort") == "bookmark") }
 				>
 					Bookmarked
 				</a>
