@@ -600,7 +600,103 @@ func (c *DashboardController) getTimeOfDayPatterns(ctx *fiber.Ctx) error {
 
 // Entry frequency heatmap -- GitHub-style contribution graph showing journaling
 func (c *DashboardController) getEntryTimeFrequency(ctx *fiber.Ctx) error {
-	return ctx.SendStatus(http.StatusNotImplemented)
+	month := ctx.QueryInt("month")
+	year := ctx.QueryInt("year")
+	tz := ctx.Cookies("tz", "UTC")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	var journals []*models.Journal
+
+	tx := c.db.
+		Where("creator_id = ?", currentUser.ID).
+		Preload("Rating").
+		Preload("JournalType").
+		Preload("CustomJournalType").
+		Order("created_at DESC")
+
+	t := time.Now()
+	end := time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		0, 0, 0, 0,
+		loc,
+	)
+	start := end.AddDate(0, -1, -1)
+	if month != 0 && year != 0 {
+		date := time.Date(
+			year,
+			time.Month(month),
+			1, 0, 0, 0, 0,
+			loc,
+		)
+		start = date.AddDate(0, 0, -1)
+		end = date.AddDate(0, 1, 1)
+	}
+	tx = tx.Where("date BETWEEN ? AND ?", start.UTC(), end.UTC()).
+		Find(&journals)
+
+	frequencyChartTmp := map[string][]int{}
+	for _, journal := range journals {
+		if journal.Rating == nil {
+			journal.Rating = &models.Rating{Value: 0}
+		}
+		localizedDate := journal.Date.In(loc).Format("01-02-2006")
+
+		if _, ok := frequencyChartTmp[localizedDate]; !ok {
+			frequencyChartTmp[localizedDate] = []int{}
+		}
+		frequencyChartTmp[localizedDate] = append(frequencyChartTmp[localizedDate], journal.Rating.Value)
+	}
+
+	type FrequencyChartData struct {
+		Quantity *float64  `json:"quantity"`
+		Rating   *float64  `json:"rating"`
+		Date     string    `json:"date"`
+		DateTime time.Time `json:"-"`
+	}
+	frequencyChartData := []FrequencyChartData{}
+	for date, values := range frequencyChartTmp {
+		total := 0
+		qtyWithRatings := 0
+		for _, rating := range values {
+			total += rating
+			if rating > 0 {
+				qtyWithRatings++
+			}
+		}
+		dateTime, _ := time.Parse("01-02-2006", date)
+		rating := float64(total) / float64(qtyWithRatings)
+		frequencyChartData = append(frequencyChartData, FrequencyChartData{
+			Quantity: utils.Pointer(float64(len(values))),
+			Rating:   &rating,
+			Date:     date,
+			DateTime: dateTime,
+		})
+	}
+
+	for i := start; i.Before(end); i = i.AddDate(0, 0, 1) {
+		localizedDate := i.In(loc).Format("01-02-2006")
+		if _, ok := frequencyChartTmp[localizedDate]; !ok {
+			frequencyChartData = append(frequencyChartData, FrequencyChartData{
+				Rating:   nil,
+				Quantity: utils.Pointer(float64(0)),
+				Date:     localizedDate,
+				DateTime: i,
+			})
+		}
+	}
+
+	sort.Slice(frequencyChartData, func(i, j int) bool {
+		return frequencyChartData[i].DateTime.Before(frequencyChartData[j].DateTime)
+	})
+	ctx.Locals("frequencyChartData", &frequencyChartData)
+
+	return utils.RenderComponent(dashboard.FrequencyChartContent(ctx), ctx)
 }
 
 // Thankful frequency over time -- simple count of how often you include thankfuls, since the behavior itself is the signal

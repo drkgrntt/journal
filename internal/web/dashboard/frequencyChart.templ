@@ -1,0 +1,46 @@
+package dashboard
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+)
+
+templ FrequencyChartContent(c *fiber.Ctx) {
+	<a
+		href="#"
+		class="button"
+		hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/entry-time-frequency?month=%d&year=%d", int(current(c).AddDate(0, -1, 0).Month()), current(c).AddDate(0, -1, 0).Year())) }
+		hx-target="#frequency-chart"
+		hx-swap="innerHTML"
+	>
+		<i class="fa-solid fa-chevron-left"></i>
+	</a>
+	if c.Query("month") == "" && c.Query("year") == "" {
+		Current
+	} else {
+		{ month(c) } { year(c) }
+	}
+	<a
+		href="#"
+		class="button"
+		hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/entry-time-frequency?month=%d&year=%d", int(current(c).AddDate(0, 1, 0).Month()), current(c).AddDate(0, 1, 0).Year())) }
+		hx-target="#frequency-chart"
+		hx-swap="innerHTML"
+	>
+		<i class="fa-solid fa-chevron-right"></i>
+	</a>
+	<div class="frequency-chart">
+		@templ.JSONScript("frequency-chart-data", c.Locals("frequencyChartData"))
+		<script src="/assets/js/components/frequencyChart.js" type="module" onload="document.dispatchEvent(new Event('load-frequency-chart'))"></script>
+	</div>
+}
+
+templ FrequencyChart(c *fiber.Ctx) {
+	<div
+		id="frequency-chart"
+		hx-get="/dashboard/entry-time-frequency"
+		hx-trigger="load"
+		hx-target="#frequency-chart"
+		hx-swap="innerHTML"
+	></div>
+}
