@@ -1,0 +1,46 @@
+package dashboard
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+)
+
+templ ThankfulFrequencyChartContent(c *fiber.Ctx) {
+	<a
+		href="#"
+		class="button"
+		hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/thankful-frequency?month=%d&year=%d", int(current(c).AddDate(0, -1, 0).Month()), current(c).AddDate(0, -1, 0).Year())) }
+		hx-target="#thankful-frequency-chart"
+		hx-swap="innerHTML"
+	>
+		<i class="fa-solid fa-chevron-left"></i>
+	</a>
+	if c.Query("month") == "" && c.Query("year") == "" {
+		Current
+	} else {
+		{ month(c) } { year(c) }
+	}
+	<a
+		href="#"
+		class="button"
+		hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/thankful-frequency?month=%d&year=%d", int(current(c).AddDate(0, 1, 0).Month()), current(c).AddDate(0, 1, 0).Year())) }
+		hx-target="#thankful-frequency-chart"
+		hx-swap="innerHTML"
+	>
+		<i class="fa-solid fa-chevron-right"></i>
+	</a>
+	<div class="thankful-frequency-chart">
+		@templ.JSONScript("thankful-frequency-chart-data", c.Locals("thankfulFrequencyChartData"))
+		<script src="/assets/js/components/thankfulFrequencyChart.js" type="module" onload="document.dispatchEvent(new Event('load-thankful-frequency-chart'))"></script>
+	</div>
+}
+
+templ ThankfulFrequencyChart(c *fiber.Ctx) {
+	<div
+		id="thankful-frequency-chart"
+		hx-get="/dashboard/thankful-frequency"
+		hx-trigger="load"
+		hx-target="#thankful-frequency-chart"
+		hx-swap="innerHTML"
+	></div>
+}

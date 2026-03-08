@@ -1,6 +1,6 @@
-function initFrequencyChart() {
-  const data = JSON.parse(document.getElementById("frequency-chart-data").textContent);
-  const element = document.querySelector(".frequency-chart");
+function initThankfulFrequencyChart() {
+  const data = JSON.parse(document.getElementById("thankful-frequency-chart-data").textContent);
+  const element = document.querySelector(".thankful-frequency-chart");
 
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -14,7 +14,7 @@ function initFrequencyChart() {
       labels: data.map(item => item.date),
       datasets: [
         {
-          label: "Entries",
+          label: "Thankfuls",
           data: data.map(item => item.quantity),
           borderColor: getCssValue("--primary-color-dark"),
           backgroundColor: getCssValue("--primary-color"),
@@ -29,17 +29,9 @@ function initFrequencyChart() {
       plugins: {
         title: {
           display: true,
-          text: "Entries per Day",
+          text: "Thankfuls per Day",
           position: "bottom",
         },
-        tooltip: {
-          callbacks: {
-            footer: function([{dataIndex}]) {
-              const rating = data[dataIndex].rating
-              return `Average rating: ${rating?.toFixed(2)}`
-            },
-          }
-        }
       },
       scales: {
         x: {
@@ -60,4 +52,4 @@ function initFrequencyChart() {
   element.innerHTML = "";
   element.appendChild(canvas);
 }
-document.addEventListener("load-frequency-chart", initFrequencyChart)
+document.addEventListener("load-thankful-frequency-chart", initThankfulFrequencyChart)

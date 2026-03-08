@@ -701,7 +701,84 @@ func (c *DashboardController) getEntryTimeFrequency(ctx *fiber.Ctx) error {
 
 // Thankful frequency over time -- simple count of how often you include thankfuls, since the behavior itself is the signal
 func (c *DashboardController) getThankfulFrequency(ctx *fiber.Ctx) error {
-	return ctx.SendStatus(http.StatusNotImplemented)
+	month := ctx.QueryInt("month")
+	year := ctx.QueryInt("year")
+	tz := ctx.Cookies("tz", "UTC")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	var thankfuls []*models.Thankful
+
+	tx := c.db.
+		Where("creator_id = ?", currentUser.ID).
+		Order("created_at DESC")
+
+	t := time.Now()
+	end := time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		0, 0, 0, 0,
+		loc,
+	)
+	start := end.AddDate(0, -1, -1)
+	if month != 0 && year != 0 {
+		date := time.Date(
+			year,
+			time.Month(month),
+			1, 0, 0, 0, 0,
+			loc,
+		)
+		start = date.AddDate(0, 0, -1)
+		end = date.AddDate(0, 1, 1)
+	}
+	tx = tx.Where("created_at BETWEEN ? AND ?", start.UTC(), end.UTC()).
+		Find(&thankfuls)
+
+	thankfulFrequencyChartTmp := map[string]int{}
+	for _, thankful := range thankfuls {
+		localizedDate := thankful.CreatedAt.In(loc).Format("01-02-2006")
+		if _, ok := thankfulFrequencyChartTmp[localizedDate]; !ok {
+			thankfulFrequencyChartTmp[localizedDate] = 0
+		}
+		thankfulFrequencyChartTmp[localizedDate] = thankfulFrequencyChartTmp[localizedDate] + 1
+	}
+
+	type ThankfulFrequencyChartData struct {
+		Quantity *int      `json:"quantity"`
+		Date     string    `json:"date"`
+		DateTime time.Time `json:"-"`
+	}
+	thankfulFrequencyChartData := []ThankfulFrequencyChartData{}
+	for date, quantity := range thankfulFrequencyChartTmp {
+		dateTime, _ := time.Parse("01-02-2006", date)
+		thankfulFrequencyChartData = append(thankfulFrequencyChartData, ThankfulFrequencyChartData{
+			Quantity: utils.Pointer(quantity),
+			Date:     date,
+			DateTime: dateTime,
+		})
+	}
+
+	for i := start; i.Before(end); i = i.AddDate(0, 0, 1) {
+		localizedDate := i.In(loc).Format("01-02-2006")
+		if _, ok := thankfulFrequencyChartTmp[localizedDate]; !ok {
+			thankfulFrequencyChartData = append(thankfulFrequencyChartData, ThankfulFrequencyChartData{
+				Quantity: utils.Pointer(0),
+				Date:     localizedDate,
+				DateTime: i,
+			})
+		}
+	}
+
+	sort.Slice(thankfulFrequencyChartData, func(i, j int) bool {
+		return thankfulFrequencyChartData[i].DateTime.Before(thankfulFrequencyChartData[j].DateTime)
+	})
+	ctx.Locals("thankfulFrequencyChartData", &thankfulFrequencyChartData)
+
+	return utils.RenderComponent(dashboard.ThankfulFrequencyChartContent(ctx), ctx)
 }
 
 // Routine completion rate -- which routines are getting done and which aren't, presented neutrally
