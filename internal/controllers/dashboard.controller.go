@@ -786,7 +786,59 @@ func (c *DashboardController) getRoutineCompletionRate(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(http.StatusNotImplemented)
 }
 
-// Topic distribution over time -- are you writing more about health lately, more about work? Something like a stacked area or donut chart over a selectable time range
+// Topic distribution over time -- are you writing more about health lately, more about work?
 func (c *DashboardController) getTopicDistribution(ctx *fiber.Ctx) error {
-	return ctx.SendStatus(http.StatusNotImplemented)
+	tz := ctx.Cookies("tz", "UTC")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+	days := ctx.QueryInt("days", 30)
+	t := time.Now()
+	date := time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		0, 0, 0, 0,
+		loc,
+	).AddDate(0, 0, -days)
+
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	var journals []*models.Journal
+
+	c.db.Where("creator_id = ?", currentUser.ID).
+		Where("date >= ?", date.UTC()).
+		Preload("JournalType").
+		Preload("CustomJournalType").
+		Find(&journals)
+
+	distByTopicTmp := map[string]int{}
+	for _, journal := range journals {
+		topic := journal.JournalType.Name
+		if journal.CustomJournalType != nil {
+			topic = journal.CustomJournalType.Name
+		}
+		if _, ok := distByTopicTmp[topic]; !ok {
+			distByTopicTmp[topic] = 0
+		}
+		distByTopicTmp[topic] = distByTopicTmp[topic] + 1
+	}
+
+	type DistByTopicData struct {
+		Quantity int    `json:"quantity"`
+		Topic    string `json:"topic"`
+	}
+	distByTopicData := []DistByTopicData{}
+	for topic, quantity := range distByTopicTmp {
+		distByTopicData = append(distByTopicData, DistByTopicData{
+			Quantity: quantity,
+			Topic:    topic,
+		})
+	}
+	sort.Slice(distByTopicData, func(i, j int) bool {
+		return distByTopicData[i].Topic < distByTopicData[j].Topic
+	})
+	ctx.Locals("distByTopicData", &distByTopicData)
+
+	return utils.RenderComponent(dashboard.DistByTopicContent(ctx), ctx)
 }

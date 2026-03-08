@@ -1,0 +1,74 @@
+package dashboard
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+)
+
+templ DistByTopicContent(c *fiber.Ctx) {
+	<fieldset class="options">
+		<legend>Timespan</legend>
+		<div class="checkField">
+			<input
+				type="radio"
+				value="7"
+				name="topic-dist-days"
+				id="topic-dist-days-7"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/topic-distribution?days=%d", 7)) }
+				hx-trigger="click"
+				hx-target="#dist-by-topic"
+				hx-swap="innerHTML"
+				if c.QueryInt("days", 30) == 7 {
+					checked
+				}
+			/>
+			<label for="topic-dist-days-7">Last 7 days</label>
+		</div>
+		<div class="checkField">
+			<input
+				type="radio"
+				value="30"
+				name="topic-dist-days"
+				id="topic-dist-days-30"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/topic-distribution?days=%d", 30)) }
+				hx-trigger="click"
+				hx-target="#dist-by-topic"
+				hx-swap="innerHTML"
+				if c.QueryInt("days", 30) == 30 {
+					checked
+				}
+			/>
+			<label for="topic-dist-days-30">Last 30 days</label>
+		</div>
+		<div class="checkField">
+			<input
+				type="radio"
+				value="90"
+				name="topic-dist-days"
+				id="topic-dist-days-90"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/topic-distribution?days=%d", 90)) }
+				hx-trigger="click"
+				hx-target="#dist-by-topic"
+				hx-swap="innerHTML"
+				if c.QueryInt("days", 30) == 90 {
+					checked
+				}
+			/>
+			<label for="topic-dist-days-90">Last 90 days</label>
+		</div>
+	</fieldset>
+	<div class="dist-by-topic">
+		@templ.JSONScript("dist-by-topic-data", c.Locals("distByTopicData"))
+		<script src="/assets/js/components/distByTopic.js" type="module" onload="document.dispatchEvent(new Event('load-dist-by-topic'))"></script>
+	</div>
+}
+
+templ DistByTopic(c *fiber.Ctx) {
+	<div
+		id="dist-by-topic"
+		hx-get="/dashboard/topic-distribution"
+		hx-trigger="load"
+		hx-target="#dist-by-topic"
+		hx-swap="innerHTML"
+	></div>
+}
