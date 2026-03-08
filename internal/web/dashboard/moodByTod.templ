@@ -1,0 +1,74 @@
+package dashboard
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+)
+
+templ MoodByTodContent(c *fiber.Ctx) {
+	<fieldset class="options">
+		<legend>Timespan</legend>
+		<div class="checkField">
+			<input
+				type="radio"
+				value="7"
+				name="tod-days"
+				id="tod-days-7"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/time-of-day-patterns?days=%d", 7)) }
+				hx-trigger="click"
+				hx-target="#mood-by-tod"
+				hx-swap="innerHTML"
+				if c.QueryInt("days", 30) == 7 {
+					checked
+				}
+			/>
+			<label for="tod-days-7">Last 7 days</label>
+		</div>
+		<div class="checkField">
+			<input
+				type="radio"
+				value="30"
+				name="tod-days"
+				id="tod-days-30"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/time-of-day-patterns?days=%d", 30)) }
+				hx-trigger="click"
+				hx-target="#mood-by-tod"
+				hx-swap="innerHTML"
+				if c.QueryInt("days", 30) == 30 {
+					checked
+				}
+			/>
+			<label for="tod-days-30">Last 30 days</label>
+		</div>
+		<div class="checkField">
+			<input
+				type="radio"
+				value="90"
+				name="tod-days"
+				id="tod-days-90"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/time-of-day-patterns?days=%d", 90)) }
+				hx-trigger="click"
+				hx-target="#mood-by-tod"
+				hx-swap="innerHTML"
+				if c.QueryInt("days", 30) == 90 {
+					checked
+				}
+			/>
+			<label for="tod-days-90">Last 90 days</label>
+		</div>
+	</fieldset>
+	<div class="mood-by-tod">
+		@templ.JSONScript("mood-by-tod-data", c.Locals("moodByTodData"))
+		<script src="/assets/js/components/moodByTod.js" type="module" onload="document.dispatchEvent(new Event('load-mood-by-tod'))"></script>
+	</div>
+}
+
+templ MoodByTod(c *fiber.Ctx) {
+	<div
+		id="mood-by-tod"
+		hx-get="/dashboard/time-of-day-patterns"
+		hx-trigger="load"
+		hx-target="#mood-by-tod"
+		hx-swap="innerHTML"
+	></div>
+}

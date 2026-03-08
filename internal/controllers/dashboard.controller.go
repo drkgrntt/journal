@@ -6,6 +6,7 @@ import (
 	"journal/internal/utils"
 	"journal/internal/web/dashboard"
 	"math"
+	"net/http"
 	"sort"
 	"time"
 
@@ -76,6 +77,13 @@ func (c *DashboardController) RegisterViewRoutes() {
 	c.views.Get("/mood-by-day", c.getMoodByDay)
 	c.views.Get("/mood-vs-action-completion", c.getMoodVsActionCompletion)
 	c.views.Get("/mood-vs-thankfulness", c.getMoodVsThankfulness)
+
+	c.views.Get("/mood-by-topic", c.getMoodByTopic)
+	c.views.Get("/time-of-day-patterns", c.getTimeOfDayPatterns)
+	c.views.Get("/entry-time-frequency", c.getEntryTimeFrequency)
+	c.views.Get("/thankful-frequency", c.getThankfulFrequency)
+	c.views.Get("/routine-completion-rate", c.getRoutineCompletionRate)
+	c.views.Get("/topic-distribution", c.getTopicDistribution)
 }
 
 func (c *DashboardController) RegisterApiRoutes() {
@@ -463,4 +471,149 @@ func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
 	ctx.Locals("moodVsThankfulData", &moodVsThankfulData)
 
 	return utils.RenderComponent(dashboard.MoodVsThankfulnessContent(ctx), ctx)
+}
+
+// Mood by topic -- average rating per topic over time, so you can see things like "my professional entries consistently rate lower than family ones"
+func (c *DashboardController) getMoodByTopic(ctx *fiber.Ctx) error {
+	tz := ctx.Cookies("tz", "UTC")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+	days := ctx.QueryInt("days", 30)
+	t := time.Now()
+	date := time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		0, 0, 0, 0,
+		loc,
+	).AddDate(0, 0, -days)
+
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	var journals []*models.Journal
+
+	c.db.Where("creator_id = ?", currentUser.ID).
+		Where("date >= ?", date.UTC()).
+		Preload("Rating").
+		Preload("JournalType").
+		Preload("CustomJournalType").
+		Find(&journals)
+
+	moodByTopicTmp := map[string][]int{}
+	for _, journal := range journals {
+		if journal.Rating == nil {
+			continue
+		}
+		topic := journal.JournalType.Name
+		if journal.CustomJournalType != nil {
+			topic = journal.CustomJournalType.Name
+		}
+		if _, ok := moodByTopicTmp[topic]; !ok {
+			moodByTopicTmp[topic] = []int{}
+		}
+		moodByTopicTmp[topic] = append(moodByTopicTmp[topic], journal.Rating.Value)
+	}
+
+	type MoodByTopicData struct {
+		Value float64 `json:"value"`
+		Topic string  `json:"topic"`
+	}
+	moodByTopicData := []MoodByTopicData{}
+	for topic, values := range moodByTopicTmp {
+		total := 0
+		for _, value := range values {
+			total += value
+		}
+		moodByTopicData = append(moodByTopicData, MoodByTopicData{
+			Value: float64(total) / float64(len(values)),
+			Topic: topic,
+		})
+	}
+	sort.Slice(moodByTopicData, func(i, j int) bool {
+		return moodByTopicData[i].Topic < moodByTopicData[j].Topic
+	})
+	ctx.Locals("moodByTopicData", &moodByTopicData)
+
+	return utils.RenderComponent(dashboard.MoodByTopicContent(ctx), ctx)
+}
+
+// Time of day patterns -- do morning entries rate differently than evening ones
+func (c *DashboardController) getTimeOfDayPatterns(ctx *fiber.Ctx) error {
+	tz := ctx.Cookies("tz", "UTC")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+	days := ctx.QueryInt("days", 30)
+	t := time.Now()
+	date := time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		0, 0, 0, 0,
+		loc,
+	).AddDate(0, 0, -days)
+
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	var journals []*models.Journal
+
+	c.db.Where("creator_id = ?", currentUser.ID).
+		Where("date >= ?", date.UTC()).
+		Preload("Rating").
+		Find(&journals)
+
+	moodByTodTmp := map[string][]int{}
+	for _, journal := range journals {
+		if journal.Rating == nil {
+			continue
+		}
+		tod := journal.Date.In(loc).Format("15:00")
+		if _, ok := moodByTodTmp[tod]; !ok {
+			moodByTodTmp[tod] = []int{}
+		}
+		moodByTodTmp[tod] = append(moodByTodTmp[tod], journal.Rating.Value)
+	}
+
+	type MoodByTodData struct {
+		Value float64 `json:"value"`
+		Tod   string  `json:"tod"`
+	}
+	moodByTodData := []MoodByTodData{}
+	for tod, values := range moodByTodTmp {
+		total := 0
+		for _, value := range values {
+			total += value
+		}
+		moodByTodData = append(moodByTodData, MoodByTodData{
+			Value: float64(total) / float64(len(values)),
+			Tod:   tod,
+		})
+	}
+	sort.Slice(moodByTodData, func(i, j int) bool {
+		return moodByTodData[i].Tod < moodByTodData[j].Tod
+	})
+	ctx.Locals("moodByTodData", &moodByTodData)
+
+	return utils.RenderComponent(dashboard.MoodByTodContent(ctx), ctx)
+}
+
+// Entry frequency heatmap -- GitHub-style contribution graph showing journaling
+func (c *DashboardController) getEntryTimeFrequency(ctx *fiber.Ctx) error {
+	return ctx.SendStatus(http.StatusNotImplemented)
+}
+
+// Thankful frequency over time -- simple count of how often you include thankfuls, since the behavior itself is the signal
+func (c *DashboardController) getThankfulFrequency(ctx *fiber.Ctx) error {
+	return ctx.SendStatus(http.StatusNotImplemented)
+}
+
+// Routine completion rate -- which routines are getting done and which aren't, presented neutrally
+func (c *DashboardController) getRoutineCompletionRate(ctx *fiber.Ctx) error {
+	return ctx.SendStatus(http.StatusNotImplemented)
+}
+
+// Topic distribution over time -- are you writing more about health lately, more about work? Something like a stacked area or donut chart over a selectable time range
+func (c *DashboardController) getTopicDistribution(ctx *fiber.Ctx) error {
+	return ctx.SendStatus(http.StatusNotImplemented)
 }
