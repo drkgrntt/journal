@@ -11,18 +11,19 @@ templ LandingPage(c *fiber.Ctx) {
 			<header>
 				<h1>A journal that helps you notice patterns</h1>
 				<p>
-					Write freely, rate your day, capture small actions and gratitude —
-					and see how it all connects over time.
+					Write freely, rate your day, capture small actions and things worth being grateful for.
+					Over time, it adds up to something you can actually see.
 				</p>
 				<a class="cta" href="/auth/register">Start journaling</a>
 			</header>
 			<!-- Problem -->
 			<section>
-				<h2>Journaling doesn’t usually fail because writing isn’t helpful</h2>
+				<h2>Most journaling doesn't fail because writing isn't useful</h2>
 				<p>
-					It fails because it’s hard to see what your entries add up to.
-					This journal is designed to turn reflection into insight,
-					without demanding consistency or perfection.
+					It fails because it's hard to see what your entries add up to, and because
+					the tools either get in the way or don't do enough. This journal tries to
+					sit in the middle -- simple enough to actually use, with just enough structure
+					to make patterns visible over time.
 				</p>
 			</section>
 			<!-- Features -->
@@ -30,87 +31,82 @@ templ LandingPage(c *fiber.Ctx) {
 				<h2>How it works</h2>
 				<div class="features">
 					<div class="feature">
-						<h3>📝 Freeform entries</h3>
+						<h3>Freeform entries</h3>
 						<p>
 							Write as much or as little as you want. One sentence or several
-							paragraphs both count.
+							paragraphs both count. Multiple entries a day works too.
 						</p>
 					</div>
 					<div class="feature">
-						<h3>⭐ Simple ratings & topics</h3>
+						<h3>Ratings and topics</h3>
 						<p>
-							Each entry gets a quick rating and a topic, unlocking patterns
-							without interrupting your flow.
+							A quick rating and a topic on each entry. Not much to fill out,
+							but enough to start seeing trends.
 						</p>
 					</div>
 					<div class="feature">
-						<h3>✅ Actions</h3>
+						<h3>Actions</h3>
 						<p>
-							Add small, concrete steps alongside your writing. Reflection is
-							useful — action makes it stick.
+							Small, concrete steps that come out of what you wrote. Reflection
+							is useful -- doing something with it is better.
 						</p>
 					</div>
 					<div class="feature">
-						<h3>🙏 Thankful notes</h3>
+						<h3>Thankfuls</h3>
 						<p>
-							Capture what’s worth noticing. Gratitude without ceremony or pressure.
+							A place to jot down things worth noticing. No ceremony, no pressure,
+							just a quick note in the margin.
 						</p>
 					</div>
 					<div class="feature">
-						<h3>📊 Pattern-focused views</h3>
+						<h3>Patterns over time</h3>
 						<p>
-							Calendar and charts help you see trends between mood, actions,
-							and gratitude over time.
+							Charts and a calendar that show how mood, actions, and gratitude
+							connect -- things you probably wouldn't notice just from reading entries.
+						</p>
+					</div>
+					<div class="feature">
+						<h3>Routines</h3>
+						<p>
+							Recurring actions that nudge you toward habits without pressure.
+							Miss a day and it just waits. No streaks, no guilt.
 						</p>
 					</div>
 				</div>
 			</section>
-			<!-- Philosophy / Privacy -->
+			<!-- Privacy -->
 			<section>
 				<div class="philosophy">
-					<h2>Privacy-first, intentionally</h2>
+					<h2>Private, actually</h2>
 					<p>
-						All freeform text — journal entries, actions, and thankful notes —
-						is encrypted at rest.
+						Journaling only works if you can be honest. All entries, actions, and
+						thankfuls are encrypted. There are no ads, no data selling, and no AI
+						reading what you write. There's a blur mode if you're writing somewhere
+						public.
 					</p>
 					<p>
-						There are no ads, no tracking for marketing, and no data mining.
-						Your journal is yours.
-					</p>
-					<p>
-						The goal is a calm, sustainable tool that respects your attention
-						and your data.
+						None of that is a feature. It's just how a journal should work.
 					</p>
 				</div>
 			</section>
-			<!-- Who it's for -->
+			<!-- Human hint -->
 			<section>
-				<h2>Is this for you?</h2>
-				<div class="for-who">
-					<div>
-						<h3>Probably yes, if:</h3>
-						<ul>
-							<li>You want insight, not just storage</li>
-							<li>You like simple tools that don’t demand daily streaks</li>
-							<li>You care about privacy and ownership</li>
-						</ul>
-					</div>
-					<div>
-						<h3>Probably not, if:</h3>
-						<ul>
-							<li>You want heavy prompts or guided therapy</li>
-							<li>You want social sharing or gamification</li>
-							<li>You want productivity metrics first and reflection second</li>
-						</ul>
-					</div>
-				</div>
+				<h2>Built by one person, for one person</h2>
+				<p>
+					This started as something I built for myself because nothing else felt right.
+					The tools I found were either too much, not quite right in feel, or asked me
+					to hand over my writing to a platform I didn't fully trust. So I built my own,
+					and I still use it every day.
+				</p>
+				<p>
+					If you have thoughts, run into something broken, or just want to say something,
+					there's a <a href="/feedback">feedback form</a> and someone actually reads it.
+				</p>
 			</section>
 			<!-- Closing CTA -->
-			<section style="text-align: center;">
-				<h2>If you’ve ever wanted journaling to add up to something</h2>
-				<p style="padding-bottom: 1rem;">
-					This might be worth trying.
-				</p>
+			<section class="closing">
+				<h2>If you've ever wanted journaling to add up to something</h2>
+				<p>This might be worth trying.</p>
 				<a class="cta" href="/auth/register">Create an account</a>
 			</section>
 		</div>

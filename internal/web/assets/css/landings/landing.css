@@ -1,115 +1,108 @@
 #landing-page {
-    --bg: #fafafa;
-    --text: #1f2937;
-    --muted: #6b7280;
-    --accent: var(--primary-color-darkest);
-    --border: #e5e7eb;
-
     a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 4rem 1.5rem;
+        color: var(--primary-color-darkest);
+        text-decoration: none;
     }
 
     header {
-      text-align: center;
-      margin-bottom: 6rem;
+        text-align: center;
+        padding: 4rem 1rem 5rem;
     }
 
     header h1 {
-      font-size: 2.75rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      line-height: 1.2;
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 1rem;
     }
 
     header p {
-      font-size: 1.25rem;
-      color: var(--muted);
-      max-width: 700px;
-      margin: 0 auto 2rem;
+        font-size: 1.15rem;
+        color: var(--text-secondary-color);
+        max-width: 600px;
+        margin: 0 auto 2rem;
     }
 
     .cta {
-      display: inline-block;
-      padding: 0.75rem 1.5rem;
-      border-radius: 6px;
-      background: var(--accent);
-      color: white;
-      font-weight: 600;
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        background: var(--primary-color-darkest);
+        color: var(--text-color-inverse);
+        font-weight: 600;
+    }
+
+    .cta:hover {
+        background: var(--primary-color-dark);
     }
 
     section {
-      margin-bottom: 5rem;
+        max-width: 760px;
+        margin: 0 auto 4rem;
     }
 
     section h2 {
-      font-size: 1.75rem;
-      margin-bottom: 1rem;
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
     }
 
     section p {
-      max-width: 700px;
-      color: var(--muted);
+        color: var(--text-secondary-color);
+        line-height: 1.7;
+        margin-bottom: 0.75rem;
+    }
+
+    section a {
+        color: var(--primary-color-darkest);
     }
 
     .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 2rem;
-      margin-top: 2.5rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
     }
 
     .feature {
-      padding: 1.5rem;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: white;
+        padding: 1.25rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: white;
     }
 
     .feature h3 {
-      margin-top: 0;
-      margin-bottom: 0.5rem;
-      font-size: 1.1rem;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem;
     }
 
     .feature p {
-      font-size: 0.95rem;
-      margin: 0;
+        font-size: 0.9rem;
+        margin: 0;
     }
 
     .philosophy {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 2rem;
+        background: var(--primary-color-lightest);
+        border: 1px solid var(--primary-color);
+        border-radius: 8px;
+        padding: 2rem;
     }
 
-    .philosophy p {
-      margin-top: 0;
+    .philosophy h2 {
+        margin-top: 0;
     }
 
-    .for-who {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      margin-top: 2rem;
+    .philosophy p:last-child {
+        margin-bottom: 0;
     }
 
-    ul {
-      padding-left: 1.2rem;
+    .closing {
+        text-align: center;
+        padding-top: 2rem;
     }
 
-    footer {
-      text-align: center;
-      padding: 3rem 1.5rem;
-      border-top: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 0.9rem;
+    .closing p {
+        margin-bottom: 1.5rem;
     }
 }
