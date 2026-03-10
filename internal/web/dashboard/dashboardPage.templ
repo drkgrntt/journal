@@ -17,36 +17,55 @@ func getOutstandingActionItems(c *fiber.Ctx) []*models.ActionItem {
 	return []*models.ActionItem{}
 }
 
+templ Tabs(c *fiber.Ctx) {
+	<nav class="tabs">
+		<a href="/dashboard?tab=today" class={ "tab", templ.KV("active", c.Query("tab", "today") == "today") }>Today</a>
+		<a href="/dashboard?tab=patterns" class={ "tab", templ.KV("active", c.Query("tab") == "patterns") }>Patterns</a>
+	</nav>
+}
+
+templ Today(c *fiber.Ctx) {
+	<h2 class="heading">How are you feeling?</h2>
+	@journal.Form(c, nil)
+	<br/>
+	<h3 class="heading">Here's what's left.</h3>
+	@actionItems.Form(c, nil, nil)
+	<br/>
+	@actionItems.List(c, getOutstandingActionItems(c))
+}
+
+templ Patterns(c *fiber.Ctx) {
+	@RatingCalendar(c)
+	<br/>
+	@MoodByDay(c)
+	<br/>
+	@MoodChart(c)
+	<br/>
+	@MoodVsThankfulness(c)
+	<br/>
+	@MoodVsActionCompletion(c)
+	<br/>
+	@MoodByTopic(c)
+	<br/>
+	@FrequencyChart(c)
+	<br/>
+	@MoodByTod(c)
+	<br/>
+	@ThankfulFrequencyChart(c)
+	<br/>
+	@DistByTopic(c)
+}
+
 templ DashboardPage(c *fiber.Ctx) {
 	@web.Base(c) {
 		<div id="dashboard-page">
-			<h2 class="heading">How are you feeling?</h2>
-			@journal.Form(c, nil)
-			<br/>
-			<h3 class="heading">Here's what's left.</h3>
-			@actionItems.Form(c, nil, nil)
-			<br/>
-			@actionItems.List(c, getOutstandingActionItems(c))
-			<br/>
-			@RatingCalendar(c)
-			<br/>
-			@MoodByDay(c)
-			<br/>
-			@MoodChart(c)
-			<br/>
-			@MoodVsThankfulness(c)
-			<br/>
-			@MoodVsActionCompletion(c)
-			<br/>
-			@MoodByTopic(c)
-			<br/>
-			@FrequencyChart(c)
-			<br/>
-			@MoodByTod(c)
-			<br/>
-			@ThankfulFrequencyChart(c)
-			<br/>
-			@DistByTopic(c)
+			@Tabs(c)
+			if c.Query("tab", "today") == "today" {
+				@Today(c)
+			}
+			if c.Query("tab") == "patterns" {
+				@Patterns(c)
+			}
 		</div>
 	}
 }

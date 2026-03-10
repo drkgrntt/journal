@@ -16,6 +16,28 @@
 	max-width: 40rem;
 	margin: 0 auto;
 
+	.tabs {
+		display: flex;
+		margin: 0 auto 1rem;
+
+		padding: .2rem;
+		background-color: var(--primary-color-darkest);
+		cursor: pointer;
+		border-radius: 5rem;
+
+		.tab {
+			padding: .3rem 1rem;
+			text-decoration: none;
+			color: var(--text-color-inverse);
+
+			&.active {
+				border-radius: 5rem;
+				color: var(--text-color);
+				background-color: var(--secondary-color-lightest);
+			}
+		}
+	}
+
 	.heading {
 		padding-bottom: 1rem;
 		font-size: 1.5rem;
