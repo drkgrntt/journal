@@ -817,11 +817,8 @@ func (c *DashboardController) getRoutineCompletionRate(ctx *fiber.Ctx) error {
 
 		nowUnix := time.Now().Unix()
 		frequency := int64(routine.Frequency.Seconds())
-		periodsSinceStart := (nowUnix - int64(startsAtUnix)) / frequency
-		percent := float64(0)
-		if periodsSinceStart > 0 {
-			percent = float64(len(routine.ActionItems)) / float64(periodsSinceStart) * 100
-		}
+		periodsSinceStart := ((nowUnix - int64(startsAtUnix)) / frequency) + 1
+		percent := float64(len(routine.ActionItems)) / float64(periodsSinceStart) * 100
 
 		routineCompletionRates = append(routineCompletionRates, RoutineCompletionRate{
 			Percent: percent,
