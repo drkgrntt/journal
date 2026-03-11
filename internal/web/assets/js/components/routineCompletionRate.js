@@ -15,7 +15,7 @@ function initRoutineCompletionRate() {
       datasets: [
         {
           label: "Completion Rate",
-          data: data.map(item => item.percent.toFixed(2)),
+          data: data.map(item => `${item.percent.toFixed(2)}%`),
           borderColor: getCssValue("--secondary-color-dark"),
           backgroundColor: getCssValue("--secondary-color-light"),
           borderWidth: 2,
