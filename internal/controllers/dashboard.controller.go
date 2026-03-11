@@ -6,7 +6,6 @@ import (
 	"journal/internal/utils"
 	"journal/internal/web/dashboard"
 	"math"
-	"net/http"
 	"sort"
 	"time"
 
@@ -783,7 +782,58 @@ func (c *DashboardController) getThankfulFrequency(ctx *fiber.Ctx) error {
 
 // Routine completion rate -- which routines are getting done and which aren't, presented neutrally
 func (c *DashboardController) getRoutineCompletionRate(ctx *fiber.Ctx) error {
-	return ctx.SendStatus(http.StatusNotImplemented)
+	tz := ctx.Cookies("tz", "UTC")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+	days := ctx.QueryInt("days", 30)
+	t := time.Now()
+	date := time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		0, 0, 0, 0,
+		loc,
+	).AddDate(0, 0, -days)
+
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	var routines []*models.RecurringActionItem
+
+	c.db.Where("creator_id = ?", currentUser.ID).
+		Preload("ActionItems", func(tx *gorm.DB) *gorm.DB {
+			return tx.Where("created_at >= ?", date.UTC()).
+				Where("completed_at IS NOT NULL")
+		}).
+		Find(&routines)
+
+	type RoutineCompletionRate struct {
+		Percent float64 `json:"percent"`
+		Routine string  `json:"routine"`
+	}
+	routineCompletionRates := []RoutineCompletionRate{}
+	for _, routine := range routines {
+		startsAtUnix := math.Max(float64(routine.StartsAt.Unix()), float64(date.Unix()))
+
+		nowUnix := time.Now().Unix()
+		frequency := int64(routine.Frequency.Seconds())
+		periodsSinceStart := (nowUnix - int64(startsAtUnix)) / frequency
+		percent := float64(0)
+		if periodsSinceStart > 0 {
+			percent = float64(len(routine.ActionItems)) / float64(periodsSinceStart) * 100
+		}
+
+		routineCompletionRates = append(routineCompletionRates, RoutineCompletionRate{
+			Percent: percent,
+			Routine: routine.Text,
+		})
+	}
+	sort.Slice(routineCompletionRates, func(i, j int) bool {
+		return routineCompletionRates[i].Routine < routineCompletionRates[j].Routine
+	})
+	ctx.Locals("routineCompletionRateData", &routineCompletionRates)
+
+	return utils.RenderComponent(dashboard.RoutineCompletionRateContent(ctx), ctx)
 }
 
 // Topic distribution over time -- are you writing more about health lately, more about work?

@@ -1,0 +1,74 @@
+package dashboard
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+)
+
+templ RoutineCompletionRateContent(c *fiber.Ctx) {
+	<fieldset class="options">
+		<legend>Timespan</legend>
+		<div class="checkField">
+			<input
+				type="radio"
+				value="7"
+				name="routine-completion-rate-days"
+				id="routine-completion-rate-days-7"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/routine-completion-rate?days=%d", 7)) }
+				hx-trigger="click"
+				hx-target="#routine-completion-rate"
+				hx-swap="innerHTML"
+				if c.QueryInt("days", 30) == 7 {
+					checked
+				}
+			/>
+			<label for="routine-completion-rate-days-7">Last 7 days</label>
+		</div>
+		<div class="checkField">
+			<input
+				type="radio"
+				value="30"
+				name="routine-completion-rate-days"
+				id="routine-completion-rate-days-30"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/routine-completion-rate?days=%d", 30)) }
+				hx-trigger="click"
+				hx-target="#routine-completion-rate"
+				hx-swap="innerHTML"
+				if c.QueryInt("days", 30) == 30 {
+					checked
+				}
+			/>
+			<label for="routine-completion-rate-days-30">Last 30 days</label>
+		</div>
+		<div class="checkField">
+			<input
+				type="radio"
+				value="90"
+				name="routine-completion-rate-days"
+				id="routine-completion-rate-days-90"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/routine-completion-rate?days=%d", 90)) }
+				hx-trigger="click"
+				hx-target="#routine-completion-rate"
+				hx-swap="innerHTML"
+				if c.QueryInt("days", 30) == 90 {
+					checked
+				}
+			/>
+			<label for="routine-completion-rate-days-90">Last 90 days</label>
+		</div>
+	</fieldset>
+	<div class="routine-completion-rate">
+		@templ.JSONScript("routine-completion-rate-data", c.Locals("routineCompletionRateData"))
+		<script src="/assets/js/components/routineCompletionRate.js" type="module" onload="document.dispatchEvent(new Event('load-routine-completion-rate'))"></script>
+	</div>
+}
+
+templ RoutineCompletionRate(c *fiber.Ctx) {
+	<div
+		id="routine-completion-rate"
+		hx-get="/dashboard/routine-completion-rate"
+		hx-trigger="load"
+		hx-target="#routine-completion-rate"
+		hx-swap="innerHTML"
+	></div>
+}

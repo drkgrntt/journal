@@ -54,6 +54,10 @@ templ Patterns(c *fiber.Ctx) {
 	@ThankfulFrequencyChart(c)
 	<br/>
 	@DistByTopic(c)
+	if web.CurrentUser(c).HasFeature("routines") {
+		<br/>
+		@RoutineCompletionRate(c)
+	}
 }
 
 templ DashboardPage(c *fiber.Ctx) {
