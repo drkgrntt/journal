@@ -34,11 +34,6 @@
       maintainAspectRatio: false,
       minBarLength: 2,
       plugins: {
-        title: {
-          display: true,
-          text: "Average Rating vs Action Completion",
-          position: "bottom",
-        },
       },
       scales: {
         x: {

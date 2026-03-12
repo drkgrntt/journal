@@ -27,10 +27,8 @@ function initFrequencyChart() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        title: {
-          display: true,
-          text: "Entries per Day",
-          position: "bottom",
+        legend: {
+          display: false
         },
         tooltip: {
           callbacks: {

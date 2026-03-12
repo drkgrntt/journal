@@ -26,10 +26,8 @@ function initMoodByTopic() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        title: {
-          display: true,
-          text: "Average Rating By Topic",
-          position: "bottom",
+        legend: {
+          display: false,
         },
       },
       scales: {

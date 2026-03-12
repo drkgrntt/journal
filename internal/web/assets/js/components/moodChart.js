@@ -26,6 +26,11 @@ function initMoodChart() {
       tension: .4,
       responsive: true,
       maintainAspectRatio: false,
+      plugins: {
+        legend: {
+           display: false
+        },
+      },
       scales: {
         x: {
           grid: {

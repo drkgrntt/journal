@@ -6,6 +6,7 @@ import (
 	"journal/internal/utils"
 	"journal/internal/web"
 	"journal/internal/web/actionItems"
+	"journal/internal/web/components"
 	"journal/internal/web/journal"
 )
 
@@ -35,27 +36,60 @@ templ Today(c *fiber.Ctx) {
 }
 
 templ Patterns(c *fiber.Ctx) {
+	@components.Accordion("The Calendar") {
+		A quick look at how your days have felt over time without having to read back through anything. Patterns tend to emerge that you might not notice day to day -- a rough stretch, a good week, how things have shifted over months.
+	}
 	@RatingCalendar(c)
 	<br/>
+	@components.Accordion("Average Rating by Day") {
+		Some days of the week just tend to feel different than others. This might show you that your Mondays are rougher than you thought, or that your weekends aren't as good as you'd expect. The 7, 30, and 90 day ranges let you see whether those patterns are consistent over time or just a recent thing.
+	}
 	@MoodByDay(c)
 	<br/>
+	@components.Accordion("Rating Flow") {
+		The same mood data as the calendar but stretched out as a line, which makes it easier to see momentum -- whether things have been trending up, down, or just kind of flat. A single bad day looks different when you can see what was on either side of it.
+	}
 	@MoodChart(c)
 	<br/>
+	@components.Accordion("Rating vs Thankfulness") {
+		On days where you took a moment to note something worth being grateful for, did it actually make a difference? This tries to show that, comparing the average mood of entries with at least one thankful against those without, grouped by rating. It won't always show a clear pattern, and that's okay -- sometimes it just reflects that you're good at finding gratitude even on hard days.
+	}
 	@MoodVsThankfulness(c)
 	<br/>
+	@components.Accordion("Rating vs Action Completion") {
+		On days where you checked something off, did things feel any different? This compares the average mood of entries on days with at least one completed action against those without. The pattern won't always be dramatic -- sometimes it just means you're getting things done regardless of how you feel, which is its own kind of useful to see.
+	}
 	@MoodVsActionCompletion(c)
 	<br/>
+	@components.Accordion("Rating by Topic") {
+		Different areas of life don't always feel the same. This shows your average rating per topic over the selected time range, which can surface things you might not have noticed -- that work entries consistently rate lower than everything else, or that the topics you write about least are actually the ones that feel best.
+	}
 	@MoodByTopic(c)
 	<br/>
+	@components.Accordion("Entries per Day") {
+		A look at how often you've been writing. Less about consistency as a goal and more about noticing your own patterns -- when you tend to write more, whether busy or difficult stretches show up as gaps, and how that's shifted over time.
+	}
 	@FrequencyChart(c)
 	<br/>
+	@components.Accordion("Rating by Time of Day") {
+		Whether the time you write has any relationship to how you're feeling. Morning entries might rate differently than late night ones, or there might be no pattern at all -- but if there is one, it's the kind of thing you'd probably never notice just from writing.
+	}
 	@MoodByTod(c)
 	<br/>
+	@components.Accordion("Thankfuls per Day") {
+		Tracks how often you're jotting down things worth being grateful for. Less about hitting a number and more about noticing whether the habit is forming, fading, or just inconsistent in ways that might be interesting.
+	}
 	@ThankfulFrequencyChart(c)
 	<br/>
+	@components.Accordion("What You're Writing About") {
+		Which parts of your life are taking up the most space in your journal lately. Sometimes the distribution is what you'd expect, sometimes it isn't -- and noticing that you've been writing almost entirely about work, or that you haven't touched a topic in months, can be worth knowing.
+	}
 	@DistByTopic(c)
 	if web.CurrentUser(c).HasFeature("routines") {
 		<br/>
+		@components.Accordion("Routine Completion") {
+			A non-judgmental look at how consistently you've been following through on your recurring actions. The rolling window is intentional -- a rough week doesn't define the whole month, and a good stretch can show up even if things fell apart for a while. Less about holding yourself accountable and more about just knowing where things actually stand.
+		}
 		@RoutineCompletionRate(c)
 	}
 }

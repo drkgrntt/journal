@@ -26,10 +26,8 @@ function initMoodByDay() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        title: {
-          display: true,
-          text: "Average Rating By Day",
-          position: "bottom",
+        legend: {
+           display: false
         },
       },
       scales: {

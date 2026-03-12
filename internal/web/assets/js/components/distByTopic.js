@@ -26,10 +26,8 @@ function initDistByTopic() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        title: {
-          display: true,
-          text: "Distribution By Topic",
-          position: "bottom",
+        legend: {
+          display: false,
         },
       },
       scales: {

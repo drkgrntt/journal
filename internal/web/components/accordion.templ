@@ -1,0 +1,15 @@
+package components
+
+templ Accordion(summary string) {
+	<details class="accordion">
+		<summary class="accordion-summary">
+			<h5>{ summary }</h5>
+			<span class="accordion-icon">
+				<i class="fa-solid fa-chevron-down"></i>
+			</span>
+		</summary>
+		<div class="accordion-content">
+			{ children... }
+		</div>
+	</details>
+}

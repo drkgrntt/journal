@@ -27,11 +27,9 @@ function initThankfulFrequencyChart() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        title: {
-          display: true,
-          text: "Thankfuls per Day",
-          position: "bottom",
-        },
+        legend: {
+          display: false
+        }
       },
       scales: {
         x: {

@@ -26,13 +26,8 @@ function initRoutineCompletionRate() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        blurTicks: {
-          backgroundColor: '#ffffff',
-        },
-        title: {
-          display: true,
-          text: "Routine Completion Rate",
-          position: "bottom",
+        legend: {
+          display: false,
         },
       },
       scales: {

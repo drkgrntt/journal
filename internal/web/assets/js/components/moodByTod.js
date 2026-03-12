@@ -35,10 +35,8 @@ function initMoodByTod() {
       maintainAspectRatio: false,
       tension: 0.4,
       plugins: {
-        title: {
-          display: true,
-          text: "Average Rating By Time of Day",
-          position: "bottom",
+        legend: {
+          display: false,
         },
       },
       scales: {
