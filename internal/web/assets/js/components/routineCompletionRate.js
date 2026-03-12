@@ -26,6 +26,9 @@ function initRoutineCompletionRate() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
+        blurTicks: {
+          backgroundColor: '#ffffff',
+        },
         title: {
           display: true,
           text: "Routine Completion Rate",
@@ -34,9 +37,15 @@ function initRoutineCompletionRate() {
       },
       scales: {
         x: {
-          grid: {
+          grid: { 
             display: false,
           },
+          ticks: {
+            callback: function(value, index) {
+              const shouldBlur = localStorage.getItem(`blur-text-${document.body.id}`) === "true";
+              return shouldBlur ? '' : this.getLabelForValue(value);
+            }
+          }
         },
         y: {
           grid: {
