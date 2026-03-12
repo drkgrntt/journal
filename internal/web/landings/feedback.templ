@@ -9,6 +9,7 @@ templ FeedbackPage(c *fiber.Ctx) {
 	@web.Base(c) {
 		<div id="feedback-page" class="landing">
 			<h2 class="heading">Feedback</h2>
+			<p>Whether you ran into something broken, have an idea, or just want to share how the journal has been useful to you -- this is the place. The email field is optional and only needed if you'd like a response. Either way, someone actually reads these.</p>
 			<form
 				class="form"
 				hx-post="/api/feedback"
