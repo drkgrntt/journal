@@ -34,7 +34,7 @@
 			&.active {
 				border-radius: 5rem;
 				color: var(--text-color);
-				background-color: var(--secondary-color-lightest);
+				background-color: var(--background-color);
 			}
 		}
 	}
