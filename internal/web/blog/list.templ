@@ -1,0 +1,32 @@
+package blog
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/models"
+	"journal/internal/utils"
+	"journal/internal/web"
+)
+
+func getBlogs(c *fiber.Ctx) []*models.Blog {
+	blogs := utils.GetLocal[[]*models.Blog](c, "blogs")
+	return *blogs
+}
+
+templ List(c *fiber.Ctx) {
+	@web.Base(c, nil) {
+		<div id="blog-list-page">
+			<h2 class="heading">Blog</h2>
+			<ul>
+				for _, blog := range getBlogs(c) {
+					<li>
+						<a href={ templ.SafeURL("/blog/" + blog.Slug) }>
+							<h3>{ blog.Title }</h3>
+						</a>
+						<time datetime={ blog.Date.Format("2006-01-02") }>{ blog.Date.Format("January 2, 2006") }</time>
+						<p>{ blog.Description }</p>
+					</li>
+				}
+			</ul>
+		</div>
+	}
+}

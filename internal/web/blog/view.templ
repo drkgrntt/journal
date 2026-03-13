@@ -1,0 +1,30 @@
+
+package blog
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/models"
+	"journal/internal/utils"
+	"journal/internal/web"
+)
+
+func getBlog(c *fiber.Ctx) *models.Blog {
+	blog := utils.GetLocal[models.Blog](c, "blog")
+	return blog
+}
+
+templ View(c *fiber.Ctx) {
+	@web.Base(c, &web.Head{Title: getBlog(c).Title, Description: getBlog(c).Description}) {
+		<div id="blog-view-page">
+			<h2>{ getBlog(c).Title }</h2>
+			<a href={ templ.SafeURL("/blog") }>
+				<i class="fas fa-chevron-left"></i>
+				Back
+			</a>
+			<p>{ getBlog(c).Date.Format("January 2, 2006") }</p>
+			<div>
+				@templ.Raw(getBlog(c).Content)
+			</div>
+		</div>
+	}
+}
