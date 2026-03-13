@@ -90,7 +90,7 @@ templ ListItems(c *fiber.Ctx) {
 }
 
 templ ListPage(c *fiber.Ctx) {
-	@web.Base(c) {
+	@web.Base(c, nil) {
 		<div id="journal-list-page">
 			<div class="top">
 				<h1 class="heading">Journal Entries</h1>

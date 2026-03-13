@@ -1,6 +1,7 @@
 package web
 
 import "github.com/gofiber/fiber/v2"
+import "fmt"
 
 func id(c *fiber.Ctx) string {
 	user := CurrentUser(c)
@@ -10,13 +11,40 @@ func id(c *fiber.Ctx) string {
 	return user.ID.String()
 }
 
-templ Base(c *fiber.Ctx) {
+type Head struct {
+	Title       string
+	Description string
+}
+
+func DefaultHead() *Head {
+	return &Head{
+		Title:       "A Journal for Noticing Patterns",
+		Description: "Contour Journal is a private journaling app for tracking mood, routines, and patterns over time.",
+	}
+}
+
+templ Base(c *fiber.Ctx, head *Head) {
+	@baseWithHead(c, resolveHead(head)) {
+		{ children... }
+	}
+}
+
+func resolveHead(h *Head) *Head {
+	if h == nil {
+		return DefaultHead()
+	}
+	return h
+}
+
+templ baseWithHead(c *fiber.Ctx, h *Head) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<title>A Journal for Noticing Patterns</title>
+			<title>Contour Journal - { h.Title }</title>
+			<meta name="og:title" content={ fmt.Sprintf("Contour Journal - %s", h.Title) }/>
+			<meta name="description" content={ h.Description }/>
 			<link href="/assets/fontawesome/css/fontawesome.css" rel="stylesheet"/>
 			<link href="/assets/fontawesome/css/solid.css" rel="stylesheet"/>
 			<link href="/assets/fontawesome/css/regular.css" rel="stylesheet"/>

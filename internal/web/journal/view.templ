@@ -90,7 +90,7 @@ templ View(c *fiber.Ctx, journal *models.Journal) {
 }
 
 templ ViewPage(c *fiber.Ctx) {
-	@web.Base(c) {
+	@web.Base(c, nil) {
 		<div id="journal-view-page">
 			<div>
 				@View(c, getJournal(c))

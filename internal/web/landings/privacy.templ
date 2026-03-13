@@ -6,7 +6,7 @@ import (
 )
 
 templ PrivacyPage(c *fiber.Ctx) {
-	@web.Base(c) {
+	@web.Base(c, &web.Head{Title: "Privacy Policy"}) {
 		<section class="landing" id="privacy-page">
 			<h2>Privacy Policy</h2>
 			<p>

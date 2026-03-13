@@ -6,7 +6,7 @@ import (
 )
 
 templ AboutPage(c *fiber.Ctx) {
-	@web.Base(c) {
+	@web.Base(c, &web.Head{Title: "About"}) {
 		<section class="landing" id="about-page">
 			<h2>About This Journal</h2>
 			<p>I built this for myself.</p>

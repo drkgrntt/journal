@@ -6,7 +6,7 @@ import (
 )
 
 templ ForgotPage(c *fiber.Ctx) {
-	@web.Base(c) {
+	@web.Base(c, nil) {
 		<div id="forgot-page">
 			<h1 class="heading">Forgot Password</h1>
 			<form

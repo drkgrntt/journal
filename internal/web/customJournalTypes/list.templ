@@ -70,7 +70,7 @@ templ ListItems(c *fiber.Ctx) {
 }
 
 templ ListPage(c *fiber.Ctx) {
-	@web.Base(c) {
+	@web.Base(c, nil) {
 		<div id="custom-journal-types-list-page">
 			<h1 class="heading">Custom Topics</h1>
 			@List(c, getCustomJournalTypes(c))

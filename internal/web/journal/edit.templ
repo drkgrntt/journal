@@ -31,7 +31,7 @@ templ editContent(c *fiber.Ctx, journal *models.Journal) {
 }
 
 templ EditPage(c *fiber.Ctx) {
-	@web.Base(c) {
+	@web.Base(c, nil) {
 		<div id="edit-journal-page">
 			@editContent(c, getJournal(c))
 		</div>

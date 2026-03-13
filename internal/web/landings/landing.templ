@@ -6,7 +6,7 @@ import (
 )
 
 templ LandingPage(c *fiber.Ctx) {
-	@web.Base(c) {
+	@web.Base(c, nil) {
 		<div id="landing-page">
 			<header>
 				<h1>A journal that helps you notice patterns</h1>

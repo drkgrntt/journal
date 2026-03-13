@@ -17,7 +17,7 @@ func getRecurringActionItems(c *fiber.Ctx) []*models.RecurringActionItem {
 }
 
 templ Page(c *fiber.Ctx) {
-	@web.Base(c) {
+	@web.Base(c, nil) {
 		<div id="action-item-list-page">
 			if web.CurrentUser(c).HasFeature("routines") {
 				<h2 class="heading">Routines</h2>

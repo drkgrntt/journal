@@ -18,7 +18,7 @@ func getOutstandingActionItems(c *fiber.Ctx) []*models.ActionItem {
 }
 
 templ NewPage(c *fiber.Ctx) {
-	@web.Base(c) {
+	@web.Base(c, nil) {
 		<div id="new-journal-page">
 			<a class="back" href={ templ.SafeURL("/journal") }>
 				<i class="fas fa-chevron-left"></i>

@@ -207,7 +207,7 @@ templ featureList(c *fiber.Ctx) {
 }
 
 templ ProfilePage(c *fiber.Ctx) {
-	@web.Base(c) {
+	@web.Base(c, nil) {
 		<div id="profile-page">
 			<h1 class="heading">Profile</h1>
 			@blurTextToggle(c)

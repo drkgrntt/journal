@@ -95,7 +95,7 @@ templ Patterns(c *fiber.Ctx) {
 }
 
 templ DashboardPage(c *fiber.Ctx) {
-	@web.Base(c) {
+	@web.Base(c, nil) {
 		<div id="dashboard-page">
 			@Tabs(c)
 			if c.Query("tab", "today") == "today" {
