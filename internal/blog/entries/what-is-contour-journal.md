@@ -14,7 +14,7 @@ Contour Journal is meant to feel cozy. Everything about this is supposed to feel
 
 ### Privacy
 
-I think it's safe to say privacy is both a concern and not a concern for most people to different levels. Privacy sounds awesome as an idea, but then we opt in to every cookies banner given by every site, leave our locations turned on on our phones, and use every "free" product created by huge companies who are really in the business of data collection and advertizing without a second thought. 
+I'll be honest, I'm as guilty as anyone of clicking through every cookie banner without reading it and leaving my location on for apps that probably don't need it. Privacy sounds great until it's inconvenient. So I get it.
 
 Here, privacy isn't an option, it's just how this works. For starters, all personal data (journal entries, actions, routines, thankfuls) are encrypted in the database, basically meaning I can't accidentally read your stuff if I'm in there. There is absolutely no social aspect to this. You cannot share your journal entries short of giving someone your password (please don't), copy/pasting to something else, or taking screenshots. There are no third party cookies, only a single cookie is used so you don't have to login every time you come back. There are _no_ advertizements ever. There is even a blur mode (it's in your profile page) to blur all sensitive text so no one can look over your shoulder to read your info.
 
