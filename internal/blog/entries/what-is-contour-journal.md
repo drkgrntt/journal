@@ -32,6 +32,12 @@ If you don't use the journal, patterns are a big focus here. In fact, the first 
 
 The visualizers tell you what you've given the journal. It's up to you to interpret them based on what you know about yourself. Perhaps they reveal something you'd like to change, or perhaps they just reveal something that feels worth noticeing and understanding about yourself. Either way, I consider it a win!
 
+### Cost
+
+I'm well aware of subscription fatigue, so there are no subscriptions here. I also firmly believe ads have absolutely no place in a personal private journal, so there are no ads here. I will never sell your data. So where does that leave me? 
+
+Well there are a couple of things. First is that there is basically no overhead for this journal. It's not another VC backed product trying to get its investors an ROI. It's just me, and I'm running it with every free option available to me. That has some drawbacks such as occasional down time, but as a user of this journal, I do everything I can to get it back up as quickly as possible. There are also several "modular" features you can pay for to go with the journal. My intent is that the journal is entirely useful and helpful at its base free version and anything paid is just frills, automation, customization, etc. You can pay their low cost _once_ and then you own it and never have to pay for it again. Lastly, I have a [buy me a coffee](https://buymeacoffee.com/drkgrntt2) that you can visit if you believe in what the journal is doing and want to help support. As soon as it starts making any money, it's going to go toward better-than-free tooling for better maintaining and up time. That said, I want to keep the barrier to entry as low as possible, and I'm not trying to milk you for all you're worth, so if you don't want to pay for anything, don't.
+
 ---
 
 If you think that sounds cool, [check it out](/auth/register). You'll get out of it what you put in. If you have any questions or would like to share your experience with using the journal, I would love to hear it, just [drop me a message](/feedback). I read everything I get and would love to hear from you!
