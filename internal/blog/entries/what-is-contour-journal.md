@@ -1,6 +1,6 @@
 ---
 title: What is Contour Journal?
-date: 2026-03-20
+date: 2026-03-22
 description: These are what Contour Journal is and what I feel like makes it special.
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: Why I Built Contour Journal
-date: 2026-03-13
+date: 2026-03-15
 description: Thoughts on building Contour Journal -- the decisions behind it, how it works, and why it's built the way it is.
 ---
 
