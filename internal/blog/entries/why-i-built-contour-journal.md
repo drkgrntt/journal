@@ -1,14 +1,14 @@
 ---
 title: Why I Built Contour Journal
 date: 2026-03-15
-description: Thoughts on building Contour Journal -- the decisions behind it, how it works, and why it's built the way it is.
+description: Thoughts on building Contour Journal; the decisions behind it, how it works, and why it's built the way it is.
 ---
 
 ## The Problem
 
 A while back I was going through a hard stretch and started therapy. One thing I noticed pretty quickly was that by the time I sat down with my therapist, I wasn't really in the same headspace I'd been in when things were difficult. The feelings were harder to remember, harder to access, harder to describe. I figured if I wanted therapy to be as valuable as possible, I'd have to put in the legwork outside of the seesions. I decided if I could capture things at the time of them happening, I'd have something more useful to work with.
  
-So I tried journaling. I used pen and paper first, which I'd attempted before and never stuck with. Like with many people, I had a few journals that I'd started and only got a few pages in. While I think there's something special about pen and paper, I've found that the friction is just high enough - having the right tools at the right moment, taking the time to get thoughts out slowly -- that it eventually stops happening. This time, I wrote once and that was about it.
+So I tried journaling. I used pen and paper first, which I'd attempted before and never stuck with. Like with many people, I had a few journals that I'd started and only got a few pages in. While I think there's something special about pen and paper, I've found that the friction is just high enough - having the right tools at the right moment, taking the time to get thoughts out slowly - that it eventually stops happening. This time, I wrote once and that was about it.
  
 I looked at a few digital journals after that. Some felt too sleek, too much like a product someone built to make money rather than something actually useful. One had the calendar visualization I was looking for but came with so many configuration options that setting it up felt like another thing to manage. Another felt more like a productivity tool than a journal. None of them felt right, and I also kept running into the same issue of not wanting to be limited to my phone.
  
