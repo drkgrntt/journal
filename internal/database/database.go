@@ -31,12 +31,16 @@ var (
 	dbInstance *Service
 )
 
+func connectionStr() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
+}
+
 func New() *Service {
 	// Reuse Connection
 	if dbInstance != nil {
 		return dbInstance
 	}
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s&TimeZone=UTC", username, password, host, port, database, schema)
+	connStr := fmt.Sprintf("%s&TimeZone=UTC&search_path=%s", connectionStr(), schema)
 
 	logMode := logger.Info
 	if os.Getenv("APP_ENV") == "production" {
