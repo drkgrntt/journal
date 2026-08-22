@@ -1,15 +1,13 @@
 services:
-  psql_bp:
-    image: postgres:latest
+  web:
+    build: .
+    container_name: mental-health-journal-web
     restart: unless-stopped
-    environment:
-      POSTGRES_DB: ${BLUEPRINT_DB_DATABASE}
-      POSTGRES_USER: ${BLUEPRINT_DB_USERNAME}
-      POSTGRES_PASSWORD: ${BLUEPRINT_DB_PASSWORD}
-    ports:
-      - "${BLUEPRINT_DB_PORT}:5432"
-    volumes:
-      - psql_volume_bp:/var/lib/postgresql/data
-
-volumes:
-  psql_volume_bp:
+    # Postgres stays native on the host, so the container shares the host's
+    # network namespace instead of a bridge network. This means
+    # BLUEPRINT_DB_HOST=localhost in .env keeps working unchanged, and nginx
+    # keeps proxying to 127.0.0.1:$PORT exactly as it does for the
+    # systemd-run binary today.
+    network_mode: host
+    env_file:
+      - .env
