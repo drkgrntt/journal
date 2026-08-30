@@ -17,7 +17,10 @@ RUN CGO_ENABLED=0 go build -trimpath -o /out/app ./cmd/api
 
 # ---- runtime stage ----
 FROM alpine:3.20
-RUN apk add --no-cache ca-certificates tzdata \
+# postgresql-client provides pg_dump, used by the nightly backup job.
+# Alpine 3.20 ships pg_dump 16, newer than the host's Postgres 13 -- that's
+# fine, pg_dump supports dumping from older server versions.
+RUN apk add --no-cache ca-certificates tzdata postgresql-client \
     && adduser -D -H appuser
 WORKDIR /app
 COPY --from=build /out/app ./app
