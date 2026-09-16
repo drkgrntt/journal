@@ -54,10 +54,14 @@
 .toggle-button {
   cursor: pointer;
   position: fixed;
-  top: 1.75rem;
-  right: 1.65rem;
-  width: 1.5rem;
-  height: 1.5rem;
+  /* 1.75rem (28px), not the 1.5rem/24px this used to be - WCAG 2.5.8
+     Target Size only requires "at least" 24x24, but that's a zero-margin
+     minimum; a touch target this small deserves real headroom above it,
+     not the exact floor. */
+  top: 1.625rem;
+  right: 1.525rem;
+  width: 1.75rem;
+  height: 1.75rem;
 
   & span {
     color: transparent;

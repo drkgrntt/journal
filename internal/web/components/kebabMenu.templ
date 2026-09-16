@@ -4,6 +4,7 @@ templ KebabMenu() {
 	<div class="kebab-menu">
 		<button
 			class="button"
+			aria-label="More actions"
 			onclick="
 				const d = this.nextElementSibling;
 				d.show();
@@ -18,7 +19,7 @@ templ KebabMenu() {
 				});
 			"
 		>
-			<i class="fa fa-ellipsis-v"></i>
+			<i class="fa fa-ellipsis-v" aria-hidden="true"></i>
 		</button>
 		<dialog
 			class="dialog"

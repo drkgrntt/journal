@@ -14,7 +14,7 @@ templ View(c *fiber.Ctx, journal *models.Journal) {
 	<div class="journal">
 		<div class="actions">
 			<a class="back" href={ templ.SafeURL("/journal") }>
-				<i class="fa fa-chevron-left"></i>
+				<i class="fa fa-chevron-left" aria-hidden="true"></i>
 				Back
 			</a>
 			@components.KebabMenu() {
@@ -46,6 +46,8 @@ templ View(c *fiber.Ctx, journal *models.Journal) {
 			if journal.BookmarkedAt != nil {
 				<i
 					title={ bookmarkedAtLocalized(c, journal) }
+					role="img"
+					aria-label={ bookmarkedAtLocalized(c, journal) }
 					class="bookmark fa-solid fa-bookmark"
 				></i>
 			}
@@ -72,7 +74,7 @@ templ View(c *fiber.Ctx, journal *models.Journal) {
 					class="previous"
 					href={ templ.SafeURL(fmt.Sprintf("/journal/%s", journal.PreviousJournal.ID.String())) }
 				>
-					<i class="fa fa-chevron-left"></i>
+					<i class="fa fa-chevron-left" aria-hidden="true"></i>
 					Previous
 				</a>
 			}
@@ -82,7 +84,7 @@ templ View(c *fiber.Ctx, journal *models.Journal) {
 					href={ templ.SafeURL(fmt.Sprintf("/journal/%s", journal.NextJournal.ID.String())) }
 				>
 					Next
-					<i class="fa fa-chevron-right"></i>
+					<i class="fa fa-chevron-right" aria-hidden="true"></i>
 				</a>
 			}
 		</div>

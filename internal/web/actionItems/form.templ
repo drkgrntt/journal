@@ -56,8 +56,9 @@ templ Form(
 		}
 		<button
 			class="button"
+			aria-label={ fmt.Sprintf("%s action item", map[bool]string{true: "Save", false: "Add"}[actionItem != nil]) }
 		>
-			<i class="fas fa-plus"></i>
+			<i class="fas fa-plus" aria-hidden="true"></i>
 		</button>
 	</form>
 }

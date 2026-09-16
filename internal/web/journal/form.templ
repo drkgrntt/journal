@@ -123,9 +123,10 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 				<label class="label" for="entry">Entry</label>
 				<button
 					class="button"
+					aria-label="Dictate entry"
 					onclick="event.preventDefault(); textToSpeech(this, 'textarea#entry')"
 				>
-					<i class="fa fa-microphone"></i>
+					<i class="fa fa-microphone" aria-hidden="true"></i>
 				</button>
 			</span>
 			// For writing recognition, reference this

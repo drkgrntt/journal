@@ -84,21 +84,23 @@ templ RatingCalendar(c *fiber.Ctx) {
 				<a
 					href="#"
 					class="button"
+					aria-label="Previous month"
 					hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/calendar?month=%d&year=%d", int(current(c).AddDate(0, -1, 0).Month()), current(c).AddDate(0, -1, 0).Year())) }
 					hx-target=".rating-calendar"
 					hx-swap="outerHTML"
 				>
-					<i class="fa-solid fa-chevron-left"></i>
+					<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
 				</a>
 				{ month(c) } { year(c) }
 				<a
 					href="#"
 					class="button"
+					aria-label="Next month"
 					hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/calendar?month=%d&year=%d", int(current(c).AddDate(0, 1, 0).Month()), current(c).AddDate(0, 1, 0).Year())) }
 					hx-target=".rating-calendar"
 					hx-swap="outerHTML"
 				>
-					<i class="fa-solid fa-chevron-right"></i>
+					<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
 				</a>
 			</caption>
 			<thead>

@@ -46,8 +46,12 @@ templ Form(
 				value={ journal.ID.String() }
 			/>
 		}
-		<button class="button" type="submit">
-			<i class="far fa-plus"></i>
+		<button
+			class="button"
+			type="submit"
+			aria-label={ fmt.Sprintf("%s thankful", map[bool]string{true: "Save", false: "Add"}[thankful != nil]) }
+		>
+			<i class="far fa-plus" aria-hidden="true"></i>
 		</button>
 	</form>
 }

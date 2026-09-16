@@ -46,6 +46,8 @@ templ listItemsWithButton(c *fiber.Ctx, includeButton bool) {
 				if journal.BookmarkedAt != nil {
 					<i
 						title={ bookmarkedAtLocalized(c, journal) }
+						role="img"
+						aria-label={ bookmarkedAtLocalized(c, journal) }
 						class="bookmark fa-solid fa-bookmark"
 					></i>
 				}
@@ -68,12 +70,12 @@ templ listItemsWithButton(c *fiber.Ctx, includeButton bool) {
 			<p can-blur class="entry">{ utils.SubstringToFullWords(journal.Entry, 130) }</p>
 			<div class="actions">
 				<span>
-					<i class="fa fa-check"></i>
+					<i class="fa fa-check" aria-hidden="true"></i>
 					{ len(journal.ActionItems) }
 					actions
 				</span>
 				<span>
-					<i class="fa fa-heart"></i>
+					<i class="fa fa-heart" aria-hidden="true"></i>
 					{ len(journal.Thankfuls) }
 					thankful
 				</span>
@@ -94,8 +96,8 @@ templ ListPage(c *fiber.Ctx) {
 		<div id="journal-list-page">
 			<div class="top">
 				<h1 class="heading">Journal Entries</h1>
-				<a href="/journal/new" class="button">
-					<i class="fa fa-pen"></i>
+				<a href="/journal/new" class="button" aria-label="New journal entry">
+					<i class="fa fa-pen" aria-hidden="true"></i>
 				</a>
 			</div>
 			<div class="sorts">
@@ -153,7 +155,7 @@ templ ListPage(c *fiber.Ctx) {
 						class="prev"
 						href={ templ.SafeURL(fmt.Sprintf("/journal?topic=%s&date=%s", c.Query("topic"), web.PrevDate(c))) }
 					>
-						<i class="fa fa-chevron-left"></i>
+						<i class="fa fa-chevron-left" aria-hidden="true"></i>
 						Previous
 					</a>
 				}
@@ -163,7 +165,7 @@ templ ListPage(c *fiber.Ctx) {
 						href={ templ.SafeURL(fmt.Sprintf("/journal?topic=%s&date=%s", c.Query("topic"), web.NextDate(c))) }
 					>
 						Next
-						<i class="fa fa-chevron-right"></i>
+						<i class="fa fa-chevron-right" aria-hidden="true"></i>
 					</a>
 				}
 			</div>

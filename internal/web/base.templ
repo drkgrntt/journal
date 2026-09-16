@@ -57,8 +57,10 @@ templ baseWithHead(c *fiber.Ctx, h *Head) {
 			<script src={ AssetURL("/assets/js/lib/chart.min.js") }></script>
 		</head>
 		<body id={ id(c) }>
+			<a class="skip-link" href="#main-content">Skip to main content</a>
 			@Header(c)
 			<main
+				id="main-content"
 				class="main"
 				hx-on:htmx:after-request="handleHtmxError?.(event)"
 			>

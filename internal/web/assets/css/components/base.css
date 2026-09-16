@@ -2,6 +2,27 @@ body {
 	background-color: var(--background-color);
 }
 
+/* WCAG 2.4.1 Bypass Blocks - lets keyboard users jump past the header/nav
+   straight to page content instead of tabbing through them every time.
+   Offscreen until focused, then drops in above .top-bar's own z-index
+   (header.css, 900) so it's never obscured by the sticky header itself. */
+.skip-link {
+	position: absolute;
+	top: -3rem;
+	left: var(--space-2);
+	z-index: 1000;
+	padding: var(--space-2) var(--space-4);
+	border-radius: var(--radius-sm);
+	background-color: var(--surface);
+	color: var(--accent);
+	box-shadow: var(--shadow-md);
+	transition: top var(--duration-fast) var(--ease-standard);
+}
+
+.skip-link:focus {
+	top: var(--space-2);
+}
+
 ::selection {
 	background-color: var(--primary-color);
 	color: var(--text-color);

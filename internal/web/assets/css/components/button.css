@@ -9,7 +9,11 @@ button,
 	min-height: var(--control-height);
 	padding: .5rem 1.25rem;
 	border-radius: var(--radius-md);
-	border: 1px solid var(--border-color);
+	/* --control-border, not --border-color: a button's resting border is
+	   its only boundary cue before hover/focus, same reasoning as form
+	   controls (theme/colors.css) - --border-color's ~1.5:1 fails WCAG
+	   1.4.11's 3:1 non-text-contrast minimum for that. */
+	border: 1px solid var(--control-border);
 	background-color: var(--surface);
 	color: var(--text-color);
 	text-decoration: none;

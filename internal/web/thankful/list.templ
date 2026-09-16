@@ -31,19 +31,21 @@ templ ListItem(c *fiber.Ctx, thankful *models.Thankful) {
 			</p>
 			<button
 				class="button"
+				aria-label="Edit thankful"
 				hx-get={ fmt.Sprintf("/thankfuls/%s/form", thankful.ID.String()) }
 				hx-swap="none"
 			>
-				<i class="fa fa-pen"></i>
+				<i class="fa fa-pen" aria-hidden="true"></i>
 			</button>
 			<button
 				class="button"
+				aria-label="Delete thankful"
 				hx-delete={ fmt.Sprintf("/api/thankfuls/%s", thankful.ID.String()) }
 				hx-swap="delete"
 				hx-confirm="Are you sure?"
 				hx-target="closest [thankful]"
 			>
-				<i class="fa fa-trash"></i>
+				<i class="fa fa-trash" aria-hidden="true"></i>
 			</button>
 		</div>
 	</li>

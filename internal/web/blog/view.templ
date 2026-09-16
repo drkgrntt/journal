@@ -18,7 +18,7 @@ templ View(c *fiber.Ctx) {
 		<div id="blog-view-page">
 			<h2>{ getBlog(c).Title }</h2>
 			<a href={ templ.SafeURL("/blog") }>
-				<i class="fas fa-chevron-left"></i>
+				<i class="fas fa-chevron-left" aria-hidden="true"></i>
 				Back
 			</a>
 			<p>{ getBlog(c).Date.Format("January 2, 2006") }</p>

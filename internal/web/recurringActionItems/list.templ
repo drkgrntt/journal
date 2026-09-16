@@ -18,7 +18,7 @@ templ ListItem(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) {
 		class="item"
 	>
 		<div class="created">
-			<i class="fa fa-calendar"></i>
+			<i class="fa fa-calendar" aria-hidden="true"></i>
 			<span>At</span>
 			<span data-time={ recurringActionItem.StartsAt.Format("2006-01-02 15:04 -0700") }>
 				{ recurringActionItem.StartsAt.Format("2006-01-02 15:04") }
@@ -37,19 +37,21 @@ templ ListItem(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) {
 			</p>
 			<button
 				class="button"
+				aria-label="Edit recurring action item"
 				hx-get={ fmt.Sprintf("/recurring-action-items/%s/form", recurringActionItem.ID.String()) }
 				hx-swap="none"
 			>
-				<i class="fa fa-pen"></i>
+				<i class="fa fa-pen" aria-hidden="true"></i>
 			</button>
 			<button
 				class="button"
+				aria-label="Delete recurring action item"
 				hx-delete={ fmt.Sprintf("/api/recurring-action-items/%s", recurringActionItem.ID.String()) }
 				hx-swap="delete"
 				hx-confirm="Are you sure?"
 				hx-target="closest [recurring-action-item]"
 			>
-				<i class="fa fa-trash"></i>
+				<i class="fa fa-trash" aria-hidden="true"></i>
 			</button>
 		</div>
 	</li>

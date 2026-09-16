@@ -29,7 +29,7 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 				{ actionItem.CreatedAt.Format("2006-01-02 15:04") }
 			</span>
 			if actionItem.IsRecurring() {
-				<i class="fa fa-sync"></i>
+				<i class="fa fa-sync" role="img" aria-label="Recurring"></i>
 			}
 		</div>
 		<div class="info">
@@ -56,8 +56,9 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 				<button
 					type="submit"
 					class="button"
+					aria-label={ fmt.Sprintf("Mark as %s", map[bool]string{true: "incomplete", false: "complete"}[actionItem.IsComplete()]) }
 				>
-					<i class="fa fa-check"></i>
+					<i class="fa fa-check" aria-hidden="true"></i>
 				</button>
 			</form>
 			<p can-blur class={ fmt.Sprintf("text %s", completedClass(actionItem)) }>
@@ -68,19 +69,21 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 			</p>
 			<button
 				class="button"
+				aria-label="Edit action item"
 				hx-get={ fmt.Sprintf("/action-items/%s/form", actionItem.ID.String()) }
 				hx-swap="none"
 			>
-				<i class="fa fa-pen"></i>
+				<i class="fa fa-pen" aria-hidden="true"></i>
 			</button>
 			<button
 				class="button"
+				aria-label="Delete action item"
 				hx-delete={ fmt.Sprintf("/api/action-items/%s", actionItem.ID.String()) }
 				hx-swap="delete"
 				hx-confirm="Are you sure?"
 				hx-target="closest [action-item]"
 			>
-				<i class="fa fa-trash"></i>
+				<i class="fa fa-trash" aria-hidden="true"></i>
 			</button>
 		</div>
 		if actionItem.IsComplete() {

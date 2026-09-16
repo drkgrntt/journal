@@ -45,7 +45,11 @@
 	   need more contrast than a card edge or divider does. */
 	--surface: #fff;
 	--surface-hover: var(--primary-color-lightest);
-	--control-border: hsl(180deg 6% 58%);
+	/* 58% lightness (the original value here) only reached ~2.8:1 against
+	   --surface/--background - short of WCAG 1.4.11's 3:1 non-text-contrast
+	   minimum despite being the token created specifically to clear it.
+	   50% actually clears it, with margin (~3.6-3.7:1 on both). */
+	--control-border: hsl(180deg 6% 50%);
 
 	--awful-color: #C44536;   /* deep red */
 	--bad-color:   #E27A3F;   /* orange */
