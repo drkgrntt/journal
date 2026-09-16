@@ -1,20 +1,28 @@
 # Simple Makefile for a Go project
 
+# The exact templ CLI version this module's generated code is compatible
+# with - kept in sync with go.mod automatically (not hardcoded a second
+# time) so bumping the dependency there is the only place that needs to
+# change. Mirrors the Dockerfile's own exact-version pin.
+TEMPL_VERSION := $(shell awk '/github.com\/a-h\/templ /{print $$2}' go.mod)
+
 # Build the application
 all: build test
 templ-install:
 	@if ! command -v templ > /dev/null; then \
 		read -p "Go's 'templ' is not installed on your machine. Do you want to install it? [Y/n] " choice; \
-		if [ "$$choice" != "n" ] && [ "$$choice" != "N" ]; then \
-			go install github.com/a-h/templ/cmd/templ@latest; \
-			if [ ! -x "$$(command -v templ)" ]; then \
-				echo "templ installation failed. Exiting..."; \
-				exit 1; \
-			fi; \
-		else \
+		if [ "$$choice" = "n" ] || [ "$$choice" = "N" ]; then \
 			echo "You chose not to install templ. Exiting..."; \
 			exit 1; \
 		fi; \
+	fi
+	@if [ "$$(templ version 2>/dev/null)" != "$(TEMPL_VERSION)" ]; then \
+		echo "Installed templ CLI doesn't match go.mod's github.com/a-h/templ ($(TEMPL_VERSION)) - a version-mismatched generator produces code the pinned runtime can't compile. Installing $(TEMPL_VERSION)..."; \
+		go install github.com/a-h/templ/cmd/templ@$(TEMPL_VERSION); \
+	fi
+	@if [ ! -x "$$(command -v templ)" ]; then \
+		echo "templ installation failed. Exiting..."; \
+		exit 1; \
 	fi
 
 build: templ-install
