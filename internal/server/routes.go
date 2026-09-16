@@ -14,9 +14,15 @@ import (
 
 func (s *FiberServer) RegisterFiberRoutes() {
 	s.App.Use("/assets", filesystem.New(filesystem.Config{
-		Root:       http.FS(web.Files),
+		// Every request that reaches here carries the current build's
+		// ?v=AssetVersion (base.templ's tags, and each CSS/JS file's own
+		// @import/import specifiers - see web.newVersionedAssetFS), so a
+		// year-long cache is safe: a changed file is a genuinely new URL,
+		// never the same cached one.
+		Root:       web.NewVersionedAssetFS(http.FS(web.Files)),
 		PathPrefix: "assets",
 		Browse:     false,
+		MaxAge:     60 * 60 * 24 * 365,
 	}))
 
 	s.App.Use(func(c *fiber.Ctx) error {
