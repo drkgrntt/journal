@@ -22,6 +22,9 @@ tmp/
 .vscode
 .idea
 
+# Serena MCP
+.serena
+
 # .env file
 .env
 
