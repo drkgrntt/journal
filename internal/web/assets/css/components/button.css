@@ -1,15 +1,85 @@
+button,
 .button {
-	background-color: transparent;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: .4rem;
+	font: inherit;
+	font-weight: 600;
+	min-height: var(--control-height);
+	padding: .5rem 1.25rem;
+	border-radius: var(--radius-md);
+	border: 1px solid var(--border-color);
+	background-color: var(--surface);
 	color: var(--text-color);
-	border: none;
-	border-radius: .3rem;
-	padding: .5rem 1rem;
+	text-decoration: none;
 	cursor: pointer;
-	transition: .25s ease;
-	/* box-shadow: 0 0 .3rem var(--border-color); */
+	transition: background-color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 
 	&:hover {
-		box-shadow: 0 0 .5rem var(--border-color);
-		scale: 1.03;
+		background-color: var(--surface-hover);
+		border-color: var(--primary-color-dark);
 	}
+
+	&:active {
+		transform: scale(.98);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 1px;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: .55;
+		transform: none;
+	}
+}
+
+/* The one or two clearest calls to action per page (submit a journal
+   entry, sign in, save a change) - a solid accent fill so they visibly
+   outrank the neutral outline buttons around them. */
+.button-primary {
+	border-color: var(--accent);
+	background-color: var(--accent);
+	color: var(--text-color-inverse);
+
+	&:hover {
+		background-color: var(--accent-hover);
+		border-color: var(--accent-hover);
+	}
+}
+
+.button-danger {
+	border-color: var(--awful-color);
+	color: var(--awful-color);
+	background-color: var(--surface);
+
+	&:hover {
+		background-color: color-mix(in srgb, var(--awful-color) 10%, var(--surface));
+	}
+}
+
+/* A quieter, text-like button for a secondary action next to a primary
+   one - no border/fill until hovered. */
+.button-ghost {
+	min-height: auto;
+	padding: .3rem .6rem;
+	border-color: transparent;
+	background-color: transparent;
+
+	&:hover {
+		background-color: var(--surface-hover);
+		border-color: transparent;
+	}
+}
+
+.button-sm {
+	min-height: auto;
+	font-size: var(--text-sm);
+	padding: .35rem .8rem;
 }

@@ -1,8 +1,8 @@
 .rating-calendar {
 	padding: .5rem;
-	border-radius: .5rem;
+	border-radius: var(--radius-lg);
 	background-color: var(--secondary-color-lightest);
-	box-shadow: 0 0 .5rem rgba(0, 0, 0, .1);
+	box-shadow: var(--shadow-sm);
 
 	.legend {
 		display: flex;

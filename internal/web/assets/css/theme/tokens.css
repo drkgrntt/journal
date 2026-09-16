@@ -1,0 +1,70 @@
+/* Design tokens - spacing, radius, shadow, motion, and type scale. Colors
+   stay in colors.css (the mint/peach brand palette); this file only adds
+   the structural scale that was missing before, so every card/button/gap
+   in the app can share the same handful of values instead of each file
+   picking its own one-off rem/px number. */
+:root {
+	/* --- Spacing: a quarter-rem grid --- */
+	--space-1: 0.25rem;
+	--space-2: 0.5rem;
+	--space-3: 0.75rem;
+	--space-4: 1rem;
+	--space-5: 1.25rem;
+	--space-6: 1.5rem;
+	--space-8: 2rem;
+	--space-10: 2.5rem;
+	--space-12: 3rem;
+	--space-16: 4rem;
+
+	/* --- Radius --- */
+	--radius-sm: 6px;
+	--radius-md: 10px;
+	--radius-lg: 16px;
+	--radius-full: 999px;
+
+	/* --- Shadow: layered/soft, tinted toward the mint hue rather than flat
+	   black, so elevated cards read as part of the same palette instead of
+	   a generic gray drop-shadow. --shadow-sm is a resting card border-lift,
+	   --shadow-md is a hovered/raised card, --shadow-lg is a popover/menu. */
+	--shadow-sm:
+		0 1px 2px hsl(167deg 30% 30% / 0.06),
+		0 2px 4px hsl(167deg 30% 30% / 0.05);
+	--shadow-md:
+		0 2px 4px hsl(167deg 30% 25% / 0.05),
+		0 8px 16px hsl(167deg 30% 25% / 0.08),
+		0 16px 32px hsl(167deg 30% 25% / 0.06);
+	--shadow-lg:
+		0 4px 8px hsl(167deg 30% 20% / 0.06),
+		0 16px 32px hsl(167deg 30% 20% / 0.12),
+		0 24px 48px hsl(167deg 30% 20% / 0.1);
+
+	/* --- Motion --- */
+	--duration-fast: 0.15s;
+	--duration-base: 0.2s;
+	--ease-standard: ease;
+	--ease-emphasized: cubic-bezier(0.4, 0, 0.2, 1);
+
+	/* --- Typography scale --- */
+	--text-xs: 0.75rem;
+	--text-sm: 0.85rem;
+	--text-md: 0.95rem;
+	--text-base: 1rem;
+	--text-lg: 1.1rem;
+	--text-xl: 1.25rem;
+	--text-2xl: 1.5rem;
+	--text-3xl: 2rem;
+	--text-4xl: 2.5rem;
+
+	--font-normal: 400;
+	--font-medium: 500;
+	--font-semibold: 600;
+	--font-bold: 700;
+
+	--leading-tight: 1.2;
+	--leading-normal: 1.5;
+
+	--tracking-tight: -0.01em;
+
+	/* The comfortable-tap-target height shared by inputs/buttons/selects. */
+	--control-height: 2.75rem;
+}

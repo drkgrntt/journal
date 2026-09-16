@@ -12,11 +12,40 @@
 	--secondary-color-dark: #FFC39E;
 	--secondary-color-darkest: #FFB689;
 
+	/* --primary-color/--primary-color-darkest are both too light (83%/72%
+	   lightness) to use as text/button-fill color themselves - white text on
+	   top reads as barely-there, and as body text on --background-color it's
+	   close to invisible (this was happening in several places: blog links,
+	   landing page CTAs/links). --accent is the same mint hue (167deg) taken
+	   down to a lightness that clears WCAG AA (~7.3:1 on --background-color,
+	   ~7.1:1 on --surface) - use it anywhere mint needs to carry text, an
+	   icon, a solid button fill, or a focus ring; keep --primary-color/its
+	   tints for decorative fills and subtle backgrounds only. */
+	--accent: hsl(167deg 68% 26%);
+	--accent-hover: hsl(167deg 68% 20%);
+	--accent-subtle: var(--primary-color-lightest);
+
+	/* A secondary, peach-hued accent (same hue as --secondary-color, 23deg)
+	   for the odd spot that wants a warm counterpoint to --accent instead of
+	   another shade of mint (e.g. a bookmark/favorite state) - same
+	   lightness-drop reasoning as --accent above. */
+	--accent-secondary: hsl(23deg 75% 38%);
+
 	--text-color: #2f2f2f;
 	--text-secondary-color: #5f5f5f;
 	--text-color-inverse: #fff;
 	--background-color: #fafafa;
 	--border-color: #ccc;
+
+	/* Elevated surfaces (cards, menus, the header) sit on plain white so
+	   they read as lifted above --background-color's off-white; --surface-
+	   hover ties hover/active states back to the mint identity instead of a
+	   generic gray. --control-border is --border-color's own hue pushed
+	   darker, used only for input/select/textarea resting borders, which
+	   need more contrast than a card edge or divider does. */
+	--surface: #fff;
+	--surface-hover: var(--primary-color-lightest);
+	--control-border: hsl(180deg 6% 58%);
 
 	--awful-color: #C44536;   /* deep red */
 	--bad-color:   #E27A3F;   /* orange */

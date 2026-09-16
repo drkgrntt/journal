@@ -1,8 +1,8 @@
 #mood-by-tod {
 	padding: .5rem;
-	border-radius: .5rem;
+	border-radius: var(--radius-lg);
 	background-color: var(--primary-color-lightest);
-	box-shadow: 0 0 .5rem rgba(0, 0, 0, .1);
+	box-shadow: var(--shadow-sm);
 
 	.options {
 		display: flex;

@@ -11,7 +11,7 @@
     }
 
     a {
-        color: var(--primary-color-darkest);
+        color: var(--accent);
         text-decoration: none;
         font-size: 0.9rem;
         display: inline-flex;
@@ -47,7 +47,7 @@
         }
 
         a {
-            color: var(--primary-color-darkest);
+            color: var(--accent);
             text-decoration: underline;
             font-size: inherit;
         }

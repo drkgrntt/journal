@@ -21,20 +21,29 @@
 		display: flex;
 		margin: 0 auto 1rem;
 
-		padding: .2rem;
-		background-color: var(--primary-color-darkest);
+		padding: .25rem;
+		background-color: var(--primary-color-lightest);
+		border: 1px solid var(--border-color);
 		cursor: pointer;
-		border-radius: 5rem;
+		border-radius: var(--radius-full);
 
 		.tab {
-			padding: .3rem 1rem;
+			padding: .4rem 1.1rem;
+			border-radius: var(--radius-full);
 			text-decoration: none;
-			color: var(--text-color-inverse);
+			color: var(--text-secondary-color);
+			font-weight: 500;
+			transition: background-color var(--duration-fast) var(--ease-standard),
+				color var(--duration-fast) var(--ease-standard);
+
+			&:hover {
+				color: var(--accent);
+			}
 
 			&.active {
-				border-radius: 5rem;
-				color: var(--text-color);
-				background-color: var(--background-color);
+				color: var(--text-color-inverse);
+				background-color: var(--accent);
+				box-shadow: var(--shadow-sm);
 			}
 		}
 	}

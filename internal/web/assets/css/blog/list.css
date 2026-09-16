@@ -29,7 +29,7 @@
     }
 
     a:hover h3 {
-        color: var(--primary-color-darkest);
+        color: var(--accent);
     }
 
     h3 {

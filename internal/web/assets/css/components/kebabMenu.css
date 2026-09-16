@@ -1,12 +1,18 @@
 .kebab-menu {
 	position: relative;
 
+	.button {
+		border-color: transparent;
+		background-color: transparent;
+	}
+
 	.dialog {
 		margin: 0;
-		padding: .5rem;
-		border-radius: .3rem;
-		border: none;
-		box-shadow: 0 0 .5rem var(--border-color);
+		padding: var(--space-2);
+		border-radius: var(--radius-md);
+		border: 1px solid var(--border-color);
+		background-color: var(--surface);
+		box-shadow: var(--shadow-md);
 		position: absolute;
 		top: 2.5rem;
 		right: 0;

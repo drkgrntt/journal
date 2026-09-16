@@ -32,16 +32,23 @@
 
 	.filter {
 		display: inline-block;
-		padding: .3rem .5rem;
+		padding: .3rem .8rem;
 		cursor: pointer;
 		border: 1px solid var(--border-color);
-		border-radius: 999px;
+		border-radius: var(--radius-full);
 		text-decoration: none;
+		transition: background-color var(--duration-fast) var(--ease-standard),
+			border-color var(--duration-fast) var(--ease-standard),
+			color var(--duration-fast) var(--ease-standard);
+
+		&:hover {
+			border-color: var(--primary-color-dark);
+		}
 
 		&.active {
-			border: 1px solid #333;
-			background-color: #333;
-			color: white;
+			border: 1px solid var(--accent);
+			background-color: var(--accent);
+			color: var(--text-color-inverse);
 		}
 	}
 }

@@ -2,10 +2,47 @@ body {
 	background-color: var(--background-color);
 }
 
+::selection {
+	background-color: var(--primary-color);
+	color: var(--text-color);
+}
+
 .main {
 	position: relative;
 	max-width: 80rem;
 	margin: 0 auto;
 	padding: 1.5rem;
 	min-height: var(--main-height);
+}
+
+/* App-wide heading defaults - every page.templ sets an explicit .heading
+   font-size/font-weight on top of whichever h1/h2/h3 it uses, so this only
+   needs to cover what they all share: the Poppins family switch (fonts.css)
+   plus a little brand presence so headings don't look identical to a bolded
+   paragraph. h1 gets the page-title underline treatment; h2/h3 pick up the
+   accent color directly instead. */
+h1, h2, h3, h4 {
+	letter-spacing: var(--tracking-tight);
+	line-height: var(--leading-tight);
+}
+
+/* Scoped to .main (page content), not header.templ's own h1.heading in the
+   top bar - that one lives in a fixed-height flex row and isn't a page
+   title in the same sense. */
+.main h1 {
+	border-bottom: 2px solid var(--primary-color);
+	padding-bottom: var(--space-2);
+	margin-bottom: var(--space-4);
+}
+
+h2, h3 {
+	color: var(--accent);
+}
+
+a {
+	color: var(--accent);
+}
+
+a:hover {
+	color: var(--accent-hover);
 }

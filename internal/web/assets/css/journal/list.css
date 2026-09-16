@@ -37,25 +37,33 @@
 	}
 
 	.sort {
-		background-color: transparent;
+		background-color: var(--surface);
 		color: var(--text-color);
 		border: 1px solid var(--border-color);
-		border-radius: 999px;
-		padding: .3rem .5rem;
+		border-radius: var(--radius-full);
+		padding: .3rem .8rem;
 		cursor: pointer;
 		text-decoration: none;
+		transition: background-color var(--duration-fast) var(--ease-standard),
+			border-color var(--duration-fast) var(--ease-standard),
+			color var(--duration-fast) var(--ease-standard);
+
+		&:hover {
+			border-color: var(--primary-color-dark);
+		}
 
 		&.active {
-			background-color: #333;
-			border: 1px solid #333;
-			color: white
+			background-color: var(--accent);
+			border: 1px solid var(--accent);
+			color: var(--text-color-inverse);
 		}
 	}
 
 	.list {
-		border-radius: .5rem;
+		background-color: var(--surface);
+		border-radius: var(--radius-lg);
 		padding: 2rem 1rem;
-		box-shadow: 0 0 1.5rem #ccc;
+		box-shadow: var(--shadow-sm);
 
 		display: flex;
 		flex-direction: column;
@@ -127,9 +135,7 @@
 
 	.prev-next {
 		display: flex;
-		.button {
-			color: var(--text-secondary-color);
-		}
+		gap: .5rem;
 		.next {
 			margin-left: auto;
 		}
