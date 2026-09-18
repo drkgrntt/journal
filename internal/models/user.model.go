@@ -11,7 +11,7 @@ func init() {
 
 type User struct {
 	*Base
-	Email            string `gorm:"unique;not null" json:"email,omitempty"`
+	Email            string `gorm:"uniqueIndex:idx_users_email,where:deleted_at IS NULL;not null" json:"email,omitempty"`
 	FirstName        string `gorm:"not null" json:"firstName,omitempty"`
 	LastName         string `gorm:"not null" json:"lastName,omitempty"`
 	Password         string `gorm:"not null" json:"-"`

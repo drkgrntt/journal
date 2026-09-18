@@ -62,6 +62,11 @@ func New() *Service {
 	return dbInstance
 }
 
+// AutoMigrate is no longer called by cmd/migrate or cmd/seed - schema
+// creation/evolution now goes through RunMigrations and hand-written SQL
+// files in internal/database/migrations (see 000000_initial_schema for the
+// baseline). Kept around as a dev-time convenience for quickly trying out
+// a model change locally before writing the corresponding migration.
 func AutoMigrate() {
 	dbInstance.DB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
 
@@ -76,6 +81,14 @@ func DropTables() {
 		if err := dbInstance.DB.Migrator().DropTable(&model); err != nil {
 			panic(err)
 		}
+	}
+
+	// schema_migrations isn't a registered model, but it must be dropped
+	// too so a subsequent RunMigrations() re-applies everything from
+	// scratch instead of seeing these migrations as already applied
+	// against a database that no longer has any of their tables.
+	if err := dbInstance.DB.Exec("DROP TABLE IF EXISTS schema_migrations").Error; err != nil {
+		panic(err)
 	}
 }
 

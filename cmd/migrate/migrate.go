@@ -7,6 +7,6 @@ import (
 
 func main() {
 	database.New()
-	database.AutoMigrate()
-	logger.Info("? AutoMigrated Successfully")
+	database.RunMigrations()
+	logger.Info("Ran pending SQL migrations successfully")
 }
