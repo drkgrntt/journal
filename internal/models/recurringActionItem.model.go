@@ -16,7 +16,7 @@ type RecurringActionItem struct {
 	*Base
 	Text        string        `gorm:"type:text;not null" json:"text"`
 	IsEncrypted bool          `gorm:"type:bool;not null" json:"isEncrypted"`
-	Frequency   time.Duration `gorm:"type:int" json:"frequency,omitempty"`
+	Frequency   time.Duration `gorm:"type:bigint" json:"frequency,omitempty"`
 	StartsAt    *time.Time    `gorm:"type:timestamptz" json:"startsAt,omitempty"`
 	ActionItems []*ActionItem `gorm:"foreignKey:RecurringActionItemID" json:"actionItems,omitempty"`
 }
@@ -56,7 +56,7 @@ func (a *RecurringActionItem) AfterSave(tx *gorm.DB) error {
 	err := a.DecryptText()
 	if err != nil {
 		logger.Error(err.Error())
-		a.IsEncrypted = false
+		return err
 	}
 	return nil
 }
@@ -65,7 +65,7 @@ func (a *RecurringActionItem) AfterFind(tx *gorm.DB) error {
 	err := a.DecryptText()
 	if err != nil {
 		logger.Error(err.Error())
-		a.IsEncrypted = false
+		return err
 	}
 	return nil
 }

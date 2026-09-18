@@ -166,6 +166,14 @@ func (c *ActionItemController) parseActionItemFromBody(ctx *fiber.Ctx, actionIte
 		if err != nil {
 			return err
 		}
+
+		user := utils.GetLocal[models.User](ctx, "currentUser")
+		var journal models.Journal
+		err = c.db.Where("id = ? AND creator_id = ?", journalUuid, user.ID).First(&journal).Error
+		if err != nil {
+			return errors.New("journal not found")
+		}
+
 		actionItem.JournalID = &journalUuid
 	}
 

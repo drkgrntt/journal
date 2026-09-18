@@ -128,7 +128,6 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 	err = user.ComparePasswords(body.Password)
 	if err != nil {
 		logger.Warn("Error comparing passwords", err)
-		logger.Warn("Body", body)
 		return ctx.Status(http.StatusBadRequest).SendString("Email or password incorrect")
 	}
 

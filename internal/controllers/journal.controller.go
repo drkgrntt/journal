@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"journal/internal/logger"
 	"journal/internal/middleware"
@@ -122,13 +123,13 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 
 	topic := ctx.Query("topic")
 	if topic != "" {
-		tx = tx.Where(
+		tx = tx.Where(c.db.Where(
 			"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
 			topic,
 		).Or(
 			"custom_journal_type_id::text LIKE ?",
 			fmt.Sprintf("%%%s", topic),
-		)
+		))
 	}
 
 	tz := ctx.Cookies("tz", "UTC")
@@ -172,13 +173,13 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 			Where("creator_id = ?", currentUser.ID)
 
 		if topic != "" {
-			daySubquery = daySubquery.Where(
+			daySubquery = daySubquery.Where(c.db.Where(
 				"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
 				topic,
 			).Or(
 				"custom_journal_type_id::text LIKE ?",
 				fmt.Sprintf("%%%s", topic),
-			)
+			))
 		}
 
 		daySubquery = daySubquery.
@@ -232,13 +233,13 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 			Where("date < ?", startLocal.UTC())
 		if topic != "" {
 			prevTx = prevTx.
-				Where(
+				Where(c.db.Where(
 					"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
 					topic,
 				).Or(
-				"custom_journal_type_id::text LIKE ?",
-				fmt.Sprintf("%%%s", topic),
-			)
+					"custom_journal_type_id::text LIKE ?",
+					fmt.Sprintf("%%%s", topic),
+				))
 		}
 		err = prevTx.
 			Order("date DESC").
@@ -265,13 +266,13 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 			Where("date >= ?", endLocal.UTC())
 		if topic != "" {
 			nextTx = nextTx.
-				Where(
+				Where(c.db.Where(
 					"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
 					topic,
 				).Or(
-				"custom_journal_type_id::text LIKE ?",
-				fmt.Sprintf("%%%s", topic),
-			)
+					"custom_journal_type_id::text LIKE ?",
+					fmt.Sprintf("%%%s", topic),
+				))
 		}
 		err = nextTx.
 			Order("date ASC").
@@ -348,6 +349,11 @@ type JournalBody struct {
 }
 
 func (c *JournalController) parseJournalFromBody(ctx *fiber.Ctx, journal *models.Journal) error {
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	if currentUser == nil {
+		return errors.New("missing current user")
+	}
+
 	var body JournalBody
 	err := ctx.BodyParser(&body)
 
@@ -369,6 +375,19 @@ func (c *JournalController) parseJournalFromBody(ctx *fiber.Ctx, journal *models
 			return err
 		}
 	} else {
+		// Verify the referenced custom journal type belongs to the current
+		// user before accepting it, otherwise a user could reference
+		// (and thereby associate their journal with) someone else's
+		// custom journal type.
+		var ownedCustomType models.CustomJournalType
+		err = c.db.
+			Where("id = ?", journal.CustomJournalTypeID).
+			Where("creator_id = ?", currentUser.ID).
+			First(&ownedCustomType).Error
+		if err != nil {
+			return errors.New("custom journal type not found")
+		}
+
 		var customType *models.JournalType
 		err = c.db.Where("code = ?", "custom").Find(&customType).Error
 		if err != nil {
@@ -390,7 +409,9 @@ func (c *JournalController) parseJournalFromBody(ctx *fiber.Ctx, journal *models
 
 	if len(body.ActionItemIDs) > 0 {
 		actionItems := []*models.ActionItem{}
-		err := c.db.Where("id in (?)", body.ActionItemIDs).Find(&actionItems).Error
+		err := c.db.Where("id in (?)", body.ActionItemIDs).
+			Where("creator_id = ?", currentUser.ID).
+			Find(&actionItems).Error
 		if err != nil {
 			return err
 		}
@@ -399,7 +420,9 @@ func (c *JournalController) parseJournalFromBody(ctx *fiber.Ctx, journal *models
 
 	if len(body.ThankfulIDs) > 0 {
 		thankfuls := []*models.Thankful{}
-		err := c.db.Where("id in (?)", body.ThankfulIDs).Find(&thankfuls).Error
+		err := c.db.Where("id in (?)", body.ThankfulIDs).
+			Where("creator_id = ?", currentUser.ID).
+			Find(&thankfuls).Error
 		if err != nil {
 			return err
 		}
@@ -443,7 +466,7 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 	defer tx.Rollback()
 
 	if tx.Error != nil {
-		logger.Error(err.Error())
+		logger.Error(tx.Error.Error())
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating journal"})
 	}
 

@@ -92,7 +92,7 @@ func (a *ActionItem) AfterSave(tx *gorm.DB) error {
 	err := a.DecryptText()
 	if err != nil {
 		logger.Error(err.Error())
-		a.IsEncrypted = false
+		return err
 	}
 	return nil
 }
@@ -101,7 +101,7 @@ func (a *ActionItem) AfterFind(tx *gorm.DB) error {
 	err := a.DecryptText()
 	if err != nil {
 		logger.Error(err.Error())
-		a.IsEncrypted = false
+		return err
 	}
 	return nil
 }

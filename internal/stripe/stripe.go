@@ -3,6 +3,7 @@ package stripe
 import (
 	"journal/internal/logger"
 	"os"
+	"sync"
 
 	_ "github.com/joho/godotenv/autoload"
 	stripego "github.com/stripe/stripe-go/v84"
@@ -15,12 +16,19 @@ func init() {
 	stripego.Key = os.Getenv("STRIPE_SECRET_KEY")
 }
 
-var priceMap = make(map[string]*stripego.Price)
+var (
+	priceMap   = make(map[string]*stripego.Price)
+	priceMapMu sync.RWMutex
+)
 
 func GetPrice(priceId string) *stripego.Price {
+	priceMapMu.RLock()
 	if price, ok := priceMap[priceId]; ok {
+		priceMapMu.RUnlock()
 		return price
 	}
+	priceMapMu.RUnlock()
+
 	params := &stripego.PriceParams{}
 	result, err := price.Get(priceId, params)
 	if err != nil {
@@ -33,7 +41,9 @@ func GetPrice(priceId string) *stripego.Price {
 	}
 	result.Product = product
 
+	priceMapMu.Lock()
 	priceMap[priceId] = result
+	priceMapMu.Unlock()
 	return result
 }
 

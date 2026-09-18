@@ -56,7 +56,7 @@ func runJobs() {
 		Where("processed_at IS NULL").
 		Where("scheduled_at <= ?", now).
 		Where("retries <= ? OR retries IS NULL", maxRetries).
-		Where("attempted_at >= ? OR attempted_at IS NULL", now.Add(timeBetweenRetries)).
+		Where("attempted_at <= ? OR attempted_at IS NULL", now.Add(-timeBetweenRetries)).
 		Order("priority ASC").
 		Order("scheduled_at ASC").
 		Limit(jobLimit).
@@ -69,6 +69,7 @@ func runJobs() {
 
 	defer func() {
 		if r := recover(); r != nil {
+			logger.Error("Recovered from panic while running jobs", "panic", r)
 			if len(jobs) > 0 {
 				db.Save(&jobs)
 			}

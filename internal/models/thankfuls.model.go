@@ -17,7 +17,7 @@ type Thankful struct {
 	Text string `gorm:"type:text;not null" json:"text"`
 
 	Journal   *Journal   `json:"journal,omitempty"`
-	JournalID *uuid.UUID `gorm:"type:int" json:"journalId,omitempty"`
+	JournalID *uuid.UUID `gorm:"type:uuid" json:"journalId,omitempty"`
 
 	IsEncrypted bool `gorm:"type:bool;not null" json:"isEncrypted"`
 }
@@ -71,7 +71,7 @@ func (t *Thankful) AfterSave(tx *gorm.DB) error {
 	err := t.DecryptText()
 	if err != nil {
 		logger.Error(err.Error())
-		t.IsEncrypted = false
+		return err
 	}
 	return nil
 }
@@ -80,7 +80,7 @@ func (t *Thankful) AfterFind(tx *gorm.DB) error {
 	err := t.DecryptText()
 	if err != nil {
 		logger.Error(err.Error())
-		t.IsEncrypted = false
+		return err
 	}
 	return nil
 }

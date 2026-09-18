@@ -71,7 +71,7 @@ func (j *Journal) AfterSave(tx *gorm.DB) error {
 	err := j.DecryptEntry()
 	if err != nil {
 		logger.Error(err.Error())
-		j.IsEncrypted = false
+		return err
 	}
 	return nil
 }
@@ -80,7 +80,7 @@ func (j *Journal) AfterFind(tx *gorm.DB) error {
 	err := j.DecryptEntry()
 	if err != nil {
 		logger.Error(err.Error())
-		j.IsEncrypted = false
+		return err
 	}
 	return nil
 }
