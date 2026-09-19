@@ -1,3 +1,12 @@
 .util-hidden {
 	display: none;
 }
+
+[can-blur] {
+	filter: blur(3px);
+}
+
+input[can-blur]:placeholder-shown,
+textarea[can-blur]:placeholder-shown {
+	filter: none;
+}

@@ -37,8 +37,7 @@ function initRoutineCompletionRate() {
           },
           ticks: {
             callback: function(value, index) {
-              const shouldBlur = localStorage.getItem(`blur-text-${document.body.id}`) === "true";
-              return shouldBlur ? '' : this.getLabelForValue(value);
+              return shouldBlurText() ? '' : this.getLabelForValue(value);
             }
           }
         },

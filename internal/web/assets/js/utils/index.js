@@ -53,12 +53,38 @@ export function getCssValue(variable) {
 }
 setToWindow("getCssValue", getCssValue)
 
+export function shouldBlurText() {
+	return localStorage.getItem(`blur-text-${document.body.id}`) === "true"
+}
+setToWindow("shouldBlurText", shouldBlurText)
+
+function isEmptyField(element) {
+	if (element.tagName !== "INPUT" && element.tagName !== "TEXTAREA") return false
+	return element.value === ""
+}
+
+function applyBlur(element) {
+	const blur = shouldBlurText() && !isEmptyField(element)
+	element.style.filter = blur ? "blur(3px)" : "none"
+}
+
 htmx.onLoad(function(_e) {
-	const blurText = localStorage.getItem(`blur-text-${document.body.id}`) === "true"
+	document.querySelectorAll("[can-blur]").forEach(applyBlur)
+})
 
-	if (!blurText) return
+// Elements are blurred by default via CSS to avoid flashing sensitive text
+// before the setting above resolves; inputs/textareas additionally reveal
+// on focus so they stay editable, then re-blur once focus leaves.
+document.addEventListener("focusin", function(e) {
+	const element = e.target.closest("[can-blur]")
+	if (!element) return
+	if (element.tagName !== "INPUT" && element.tagName !== "TEXTAREA") return
+	element.style.filter = "none"
+})
 
-	document.querySelectorAll("[can-blur]").forEach(function(element) {
-		element.style.filter = "blur(3px)"
-	})
+document.addEventListener("focusout", function(e) {
+	const element = e.target.closest("[can-blur]")
+	if (!element) return
+	if (element.tagName !== "INPUT" && element.tagName !== "TEXTAREA") return
+	applyBlur(element)
 })
