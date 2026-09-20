@@ -4,6 +4,8 @@ Full-repo audit for bugs, anti-patterns, and cleanup opportunities, done via fou
 
 **Status as of 2026-09-18: all 10 critical items fixed and verified** (build/vet clean; schema changes live-verified against the dev DB, including on a throwaway fresh database). See "Resolution notes" after each item and the new "Migration system" section below for what shipped beyond the original findings.
 
+**Status as of 2026-09-20: all 8 medium items also fixed** (`make build` and `go vet ./...` clean, modulo the pre-existing unrelated `database.go:113` finding noted below). See the "Resolution notes" under `## Medium` for what changed.
+
 ## Critical — data leaks / crashes
 
 1. **Cross-user journal leak via topic filter** — `internal/controllers/journal.controller.go` (lines ~124-131, duplicated at 174-181, 233-241, 266-274). `.Where("creator_id = ?", ...)` followed by `.Or("custom_journal_type_id::text LIKE ?", ...)` produces unparenthesized SQL: `creator_id = ? AND journal_type_id IN (...) OR custom_journal_type_id::text LIKE ?`. The `OR` branch isn't scoped by `creator_id`, so filtering by topic can return other users' journal entries. Needs `.Where(db.Where(...).Or(...))` grouping.
@@ -37,13 +39,21 @@ Fixing #8 exposed that GORM's `AutoMigrate` can't retype/replace an existing con
 ## Medium
 
 - `journal.controller.go:135-139`: invalid `tz` cookie leaves `loc` as `nil` instead of falling back to `time.UTC` (dashboard.controller.go does this correctly) — a bad cookie triggers a nil-pointer 500.
+    - **Fixed.** `getJournals` now sets `loc = time.UTC` alongside `tz = "UTC"` in the `LoadLocation` error branch, matching `dashboard.controller.go`'s existing pattern.
 - `profile.controller.go:89-95,112-115` (`buyFeature`) and `stripe.controller.go:76-78` (`getUser`): Stripe/webhook error returns are logged but not returned, then the nil result is dereferenced — panics on the billing and webhook paths.
+    - **Fixed.** `buyFeature` now returns a 500 via `ctx.Status(...).SendString(...)` (matching the `SendString` error style already used elsewhere in this same handler) immediately after logging both the `customer.New` and `session.New` errors, instead of falling through to dereference `result`. `StripeController.getUser` now returns `(*models.User, error)` instead of swallowing `.First`'s error; `handlePaymentIntentSucceeded` checks that error and returns early (logging via `logger.Error`, same as the rest of that function) instead of dereferencing a possibly-nil `user`.
 - `internal/emails/email.job.go:45` (`ScheduleEmailJob`) and `internal/emails/send.go:83,86`: `db.Save` and template `.Render` errors are discarded — a scheduling or render failure looks like success but the email never sends or goes out empty.
+    - **Fixed.** (Note: this function actually lives at `internal/jobs/email.job.go`, not `internal/emails/` — the doc's path had drifted.) `ScheduleEmailJob` now returns `(*models.Job, error)`, logs and returns the `db.Save` error instead of discarding it; its two callers (`auth.controller.go`'s `forgot` and `landing.controller.go`'s `sendFeedback`) now check that error and return a 500 instead of ignoring the returned job. `emails.SendEmail` in `send.go` now checks the `.Render` error from both the `WithoutLayout` and layout-wrapped branches, logs via `internal/logger`, and returns early instead of sending an empty-bodied email.
 - No row-locking on the job-fetch query (`jobs.job.go:54-63`) — combined with #5 above, multiple job-runner instances would double-send emails.
+    - **Fixed.** The job-fetch query in `runJobs` is now wrapped in a `db.Transaction`, with `.Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"})` added to the `SELECT`. Claiming (incrementing `Retries`, setting `AttemptedAt`) now happens inside that same transaction via `tx.Save`, so a concurrent runner's query for "due" jobs no longer matches a row another instance is already claiming, and `SKIP LOCKED` lets it move on to other rows instead of blocking.
 - `internal/controllers/utils.go:27-33` (`GetJournalTypes`/`GetRatings`) dereference locals without nil-checking; a transient DB error upstream causes a panic downstream.
+    - **Fixed.** Both functions now check `utils.GetLocal[...]`'s result for `nil` before dereferencing, returning `nil` in that case — matching the nil-check pattern already used by `internal/web/utils.go`'s `HasMore`/`NextPage`/etc.
 - `internal/web/profile/profile.templ:178-188`: four `<img>` screenshots have no `alt` attribute at all — a WCAG gap missed by the recent accessibility pass.
+    - **Fixed.** Added descriptive `alt` text to all four (`custom-topic-form.png`, `custom-topic-journal.png`, `routine-form.png`, `routine-in-list.png`), written against what each screenshot actually shows (verified by viewing the images).
 - `internal/web/journal/form.templ` speech-to-text button: no feature detection before `new SpeechRecognition()` — throws unhandled in browsers without support (e.g. Firefox), silently dead button.
+    - **Fixed.** `textToSpeech()` in `internal/web/assets/js/journal/textToSpeech.js` now checks `window.SpeechRecognition || window.webkitSpeechRecognition` before constructing it; if unsupported, it logs a console warning, disables the button, and sets an explanatory `title`, instead of throwing.
 - Several dashboard chart JS files (`moodByTopic.js` etc.) add a `document`-level event listener on every HTMX fragment swap with no cleanup — listener/memory leak on repeated interaction.
+    - **Fixed.** Applied a `removeEventListener` immediately before each `addEventListener` in all 9 affected files (`moodByTopic.js`, `moodByDay.js`, `moodByTod.js`, `distByTopic.js`, `routineCompletionRate.js`, `frequencyChart.js`, `thankfulFrequencyChart.js`, `moodChart.js`, `ratingCalendar.js`), so re-registration is idempotent regardless of how many times the wrapping `<script>` tag is swapped back in. `moodVsThankfulness.js` and `moodVsActionCompletion.js` were checked too but don't register any `document`-level listener (they run as a plain IIFE), so they weren't affected by this issue.
 
 ## Low / cleanup
 

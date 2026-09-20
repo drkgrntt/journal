@@ -73,9 +73,10 @@ func (c *StripeController) handleWebhook(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(http.StatusOK)
 }
 
-func (c *StripeController) getUser(stripeCustomerId string) (user *models.User) {
-	c.db.Where("stripe_customer_id = ?", stripeCustomerId).First(&user)
-	return
+func (c *StripeController) getUser(stripeCustomerId string) (*models.User, error) {
+	var user *models.User
+	err := c.db.Where("stripe_customer_id = ?", stripeCustomerId).First(&user).Error
+	return user, err
 }
 
 func (c *StripeController) handlePaymentIntentSucceeded(event *stripe.Event) error {
@@ -100,7 +101,12 @@ func (c *StripeController) handlePaymentIntentSucceeded(event *stripe.Event) err
 		return err
 	}
 
-	user := c.getUser(paymentIntent.Customer.ID)
+	user, err := c.getUser(paymentIntent.Customer.ID)
+	if err != nil {
+		logger.Error("Error getting user", "error", err)
+		return err
+	}
+
 	err = c.db.Save(&models.UserFeature{
 		FeatureID: feature.ID,
 		EnabledAt: utils.Pointer(time.Now().UTC()),

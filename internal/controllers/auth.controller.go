@@ -197,7 +197,10 @@ func (c *AuthController) forgot(ctx *fiber.Ctx) error {
 			RootUrl:    os.Getenv("ROOT_URL"),
 		},
 	}
-	jobs.ScheduleEmailJob(user.ID, data, time.Now())
+	_, err = jobs.ScheduleEmailJob(user.ID, data, time.Now())
+	if err != nil {
+		return ctx.Status(http.StatusInternalServerError).SendString("Error sending reset email")
+	}
 
 	return ctx.Status(http.StatusAccepted).SendString("Check your email to reset your password.")
 }

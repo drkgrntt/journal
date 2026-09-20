@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-co-op/gocron/v2"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var (
@@ -51,16 +52,43 @@ func runJobs() {
 
 	var jobs []*models.Job
 	now := time.Now()
-	err := db.
-		Session(&gorm.Session{Logger: gormlogger.Default.LogMode(gormlogger.Error)}).
-		Where("processed_at IS NULL").
-		Where("scheduled_at <= ?", now).
-		Where("retries <= ? OR retries IS NULL", maxRetries).
-		Where("attempted_at <= ? OR attempted_at IS NULL", now.Add(-timeBetweenRetries)).
-		Order("priority ASC").
-		Order("scheduled_at ASC").
-		Limit(jobLimit).
-		Find(&jobs).Error
+
+	// Fetch and claim due jobs inside a transaction with a row lock so that
+	// multiple job-runner instances can't grab and double-process the same
+	// job: SKIP LOCKED lets a concurrent runner skip rows another runner is
+	// already claiming, and marking AttemptedAt before committing keeps it
+	// from matching the "due" query again once the lock is released.
+	err := db.Transaction(func(tx *gorm.DB) error {
+		err := tx.
+			Session(&gorm.Session{Logger: gormlogger.Default.LogMode(gormlogger.Error)}).
+			Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
+			Where("processed_at IS NULL").
+			Where("scheduled_at <= ?", now).
+			Where("retries <= ? OR retries IS NULL", maxRetries).
+			Where("attempted_at <= ? OR attempted_at IS NULL", now.Add(-timeBetweenRetries)).
+			Order("priority ASC").
+			Order("scheduled_at ASC").
+			Limit(jobLimit).
+			Find(&jobs).Error
+		if err != nil {
+			return err
+		}
+
+		for _, job := range jobs {
+			if job.AttemptedAt != nil {
+				job.Retries += 1
+			} else {
+				job.Retries = 0
+			}
+			job.AttemptedAt = &now
+		}
+
+		if len(jobs) > 0 {
+			return tx.Save(&jobs).Error
+		}
+
+		return nil
+	})
 
 	if err != nil {
 		logger.Error("Error finding jobs", "error", err.Error())
@@ -77,15 +105,6 @@ func runJobs() {
 	}()
 
 	for _, job := range jobs {
-		if job.AttemptedAt != nil {
-			job.Retries += 1
-		} else {
-			job.Retries = 0
-		}
-
-		now = time.Now()
-		job.AttemptedAt = &now
-
 		switch strings.ToLower(job.Type) {
 		case EMAIL_JOB_TYPE:
 			err = sendEmail(job)
@@ -95,7 +114,8 @@ func runJobs() {
 		}
 
 		if err == nil {
-			job.ProcessedAt = &now
+			processedAt := time.Now()
+			job.ProcessedAt = &processedAt
 		} else {
 			if job.Notes != "" {
 				job.Notes += "\n"

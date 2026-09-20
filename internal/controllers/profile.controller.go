@@ -89,6 +89,7 @@ func (c *ProfileController) buyFeature(ctx *fiber.Ctx) error {
 		result, err := customer.New(params)
 		if err != nil {
 			logger.Error("Error creating stripe customer", "error", err)
+			return ctx.Status(http.StatusInternalServerError).SendString("Error creating stripe customer")
 		}
 		currentUser.StripeCustomerID = result.ID
 		c.db.Save(&currentUser)
@@ -112,6 +113,7 @@ func (c *ProfileController) buyFeature(ctx *fiber.Ctx) error {
 	result, err := session.New(params)
 	if err != nil {
 		logger.Error("Error creating stripe checkout session", "error", err)
+		return ctx.Status(http.StatusInternalServerError).SendString("Error creating stripe checkout session")
 	}
 
 	ctx.Set("HX-Redirect", result.URL)

@@ -49,4 +49,7 @@ function initDistByTopic() {
   element.innerHTML = "";
   element.appendChild(canvas);
 }
+// Remove before add: prevents duplicate listeners from stacking up on
+// `document` when this fragment (and its <script> tag) is swapped in again.
+document.removeEventListener("load-dist-by-topic", initDistByTopic)
 document.addEventListener("load-dist-by-topic", initDistByTopic)
