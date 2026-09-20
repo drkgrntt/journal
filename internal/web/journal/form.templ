@@ -137,6 +137,9 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 				name="entry"
 				class="textarea"
 				id="entry"
+				if journal == nil {
+					hx-on:input="resetPendingActionItemIds(event)"
+				}
 			>
 				if journal != nil {
 					{ journal.Entry }

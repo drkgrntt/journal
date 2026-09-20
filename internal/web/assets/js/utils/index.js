@@ -41,6 +41,23 @@ export function setUnixValue(dateString, element) {
 }
 setToWindow("setUnixValue", setUnixValue);
 
+// Checking an action item OOB-appends it into #action-item-ids so a journal
+// entry submitted afterward picks it up. That queue otherwise survives for as
+// long as the dashboard page stays open, so a box checked hours ago still
+// attaches to an unrelated entry written later. Starting to type a brand-new
+// entry is treated as the start of a fresh session: it wipes anything queued
+// before that point, so only items checked while this entry is actively being
+// written still attach. Only fires once per draft (see draftStarted guard) so
+// later keystrokes don't wipe items checked mid-write.
+export function resetPendingActionItemIds(event) {
+	const textarea = event.target
+	if (textarea.dataset.draftStarted) return
+	textarea.dataset.draftStarted = "true"
+	const container = document.getElementById("action-item-ids")
+	if (container) container.innerHTML = ""
+}
+setToWindow("resetPendingActionItemIds", resetPendingActionItemIds)
+
 (function() {
 	const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
 	document.cookie = `tz=${tz}; Path=/; Max-Age=31536000`
