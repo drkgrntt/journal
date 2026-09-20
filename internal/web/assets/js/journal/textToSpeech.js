@@ -2,6 +2,12 @@ import { setToWindow } from "../utils/index.js";
 
 export function textToSpeech(button, inputQuery) {
 	const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+	if (!SpeechRecognition) {
+		console.warn("Speech recognition isn't supported in this browser.");
+		button.disabled = true;
+		button.title = "Voice dictation isn't supported in this browser";
+		return;
+	}
 	const recognition = new SpeechRecognition();
 	recognition.continuous = true;
 

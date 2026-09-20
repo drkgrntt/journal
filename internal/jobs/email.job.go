@@ -25,11 +25,11 @@ func ScheduleEmailJob(
 	userId uuid.UUID,
 	data *EmailData,
 	scheduledAt time.Time,
-) *models.Job {
+) (*models.Job, error) {
 	jobData, err := models.EncodeMetadata(data)
 	if err != nil {
 		logger.Error("Unable to encode data: ", "error", err.Error())
-		return nil
+		return nil, err
 	}
 
 	job := models.Job{
@@ -42,9 +42,13 @@ func ScheduleEmailJob(
 		ScheduledAt: &scheduledAt,
 	}
 
-	db.Save(&job)
+	err = db.Save(&job).Error
+	if err != nil {
+		logger.Error("Unable to save email job: ", "error", err.Error())
+		return nil, err
+	}
 
-	return &job
+	return &job, nil
 }
 
 func sendEmail(job *models.Job) error {

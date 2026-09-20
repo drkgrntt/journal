@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"journal/internal/logger"
 	"journal/internal/utils"
 	"os"
 	"time"
@@ -80,10 +81,14 @@ func SendEmail(emailConfig *EmailConfig) (mes string, id string, err error) {
 
 	var buffer bytes.Buffer
 	if emailConfig.WithoutLayout {
-		emailConfig.Content.Render(context.Background(), &buffer)
+		err = emailConfig.Content.Render(context.Background(), &buffer)
 	} else {
 		renderContext := templ.WithChildren(context.Background(), emailConfig.Content)
-		Layout().Render(renderContext, &buffer)
+		err = Layout().Render(renderContext, &buffer)
+	}
+	if err != nil {
+		logger.Error("Error rendering email content", "error", err)
+		return
 	}
 
 	html := buffer.String()

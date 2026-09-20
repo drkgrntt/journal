@@ -136,6 +136,7 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
 		tz = "UTC"
+		loc = time.UTC
 	}
 	err = nil
 

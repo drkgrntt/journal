@@ -25,10 +25,16 @@ func GetControllers() []Controller {
 
 func GetJournalTypes(ctx *fiber.Ctx) []*models.JournalType {
 	types := utils.GetLocal[[]*models.JournalType](ctx, "journalTypes")
+	if types == nil {
+		return nil
+	}
 	return *types
 }
 
 func GetRatings(ctx *fiber.Ctx) []*models.Rating {
 	ratings := utils.GetLocal[[]*models.Rating](ctx, "ratings")
+	if ratings == nil {
+		return nil
+	}
 	return *ratings
 }
