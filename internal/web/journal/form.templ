@@ -67,8 +67,8 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 		<div class="row">
 			<fieldset class="field">
 				<legend class="label legend">Rating</legend>
-				for _, rating := range getRatings(c) {
-					<div class="check-field">
+				<div class="rating-picker">
+					for _, rating := range getRatings(c) {
 						<input
 							id={ fmt.Sprint(rating.ID) }
 							type="radio"
@@ -78,9 +78,9 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 								checked
 							}
 						/>
-						<label class="label" for={ fmt.Sprint(rating.ID) }>{ rating.Name }</label>
-					</div>
-				}
+						<label class={ "rating-picker-option", rating.Code } for={ fmt.Sprint(rating.ID) }>{ rating.Name }</label>
+					}
+				</div>
 			</fieldset>
 			<div class="field">
 				<label class="label" for="journalType">Topic</label>
