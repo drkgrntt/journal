@@ -8,4 +8,10 @@
 	canvas {
 		min-height: 15rem;
 	}
+
+	.button {
+		margin: 0 .5rem;
+		min-height: 2rem;
+		padding: .3rem .6rem;
+	}
 }

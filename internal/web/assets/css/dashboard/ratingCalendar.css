@@ -41,6 +41,12 @@
 		padding: .5rem 0;
 	}
 
+	caption .button {
+		margin: 0 .5rem;
+		min-height: 2rem;
+		padding: .3rem .6rem;
+	}
+
 	th, td {
 		padding: .2rem .5rem;
 		text-align: center;
