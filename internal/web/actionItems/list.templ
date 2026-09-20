@@ -76,7 +76,7 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 				<i class="fa fa-pen" aria-hidden="true"></i>
 			</button>
 			<button
-				class="button"
+				class="button button-danger"
 				aria-label="Delete action item"
 				hx-delete={ fmt.Sprintf("/api/action-items/%s", actionItem.ID.String()) }
 				hx-swap="delete"

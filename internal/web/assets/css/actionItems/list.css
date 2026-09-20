@@ -72,6 +72,7 @@
 		display: flex;
 		justify-content: flex-end;
 		align-items: center;
+		gap: .5rem;
 	}
 
 	.text {
@@ -81,9 +82,5 @@
 		&.completed {
 			text-decoration: line-through;
 		}
-	}
-	
-	.button {
-		border: none;
 	}
 }
