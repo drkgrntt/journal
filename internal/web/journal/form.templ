@@ -55,6 +55,7 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 		id="journal-form"
 		if journal != nil {
 			hx-put={ fmt.Sprintf("/api/journal/%s", journal.ID.String()) }
+			data-existing="true"
 		} else {
 			hx-post="/api/journal"
 		}
@@ -172,7 +173,10 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 				}
 			</div>
 			<div class="bottom">
-				<input class="button" type="submit"/>
+				<div class="bottom-actions">
+					<button class="button" type="submit">Done</button>
+					<button class="button button-danger" type="button" id="discard-button">Discard</button>
+				</div>
 				<span id="autosave-status" class="autosave-status" aria-live="polite"></span>
 				<label
 					for="isBookmarked"

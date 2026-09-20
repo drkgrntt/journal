@@ -23,10 +23,6 @@ function initAutosave() {
 		return put.split("/").pop()
 	}
 
-	function hasRatingSelected() {
-		return !!form.querySelector('input[name="rating"]:checked')
-	}
-
 	function promoteFormToEditMode(id) {
 		form.removeAttribute("hx-post")
 		form.setAttribute("hx-put", `/api/journal/${id}`)
@@ -42,7 +38,7 @@ function initAutosave() {
 
 		const id = currentId()
 		const entryEmpty = !entryEl || entryEl.value.trim() === ""
-		if (!id && (entryEmpty || !hasRatingSelected())) return
+		if (!id && entryEmpty) return
 
 		const formData = new FormData(form)
 		formData.set("autosave", "true")
@@ -58,7 +54,7 @@ function initAutosave() {
 				if (!res.ok) throw new Error(await res.text())
 				const journal = await res.json()
 				if (!id) promoteFormToEditMode(journal.id)
-				setStatus("Saved")
+				setStatus("Saved!")
 			})
 			.catch(() => setStatus("Error saving"))
 			.finally(() => {
