@@ -58,7 +58,7 @@ export function resetPendingActionItemIds(event) {
 }
 setToWindow("resetPendingActionItemIds", resetPendingActionItemIds)
 
-(function() {
+;(function() {
 	const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
 	document.cookie = `tz=${tz}; Path=/; Max-Age=31536000`
 })()

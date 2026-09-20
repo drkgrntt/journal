@@ -10,3 +10,13 @@ input[can-blur]:placeholder-shown,
 textarea[can-blur]:placeholder-shown {
 	filter: none;
 }
+
+/* Focus always wins, full stop - !important so it beats the inline
+   `style.filter` the JS in utils/index.js sets (JS controls the blurred/
+   revealed state while a field is unfocused; native :focus overrides it
+   the instant a field is focused, and keeps overriding it while typing,
+   with no dependency on event ordering or JS having run at all). */
+input[can-blur]:focus,
+textarea[can-blur]:focus {
+	filter: none !important;
+}
