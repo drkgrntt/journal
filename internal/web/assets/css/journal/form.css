@@ -32,6 +32,11 @@
 		justify-content: space-between;
 		gap: 1.5rem;
 		align-items: center;
+
+		.autosave-status {
+			font-size: var(--text-sm);
+			color: var(--text-secondary-color);
+		}
 	}
 
 	.bookmark-label {

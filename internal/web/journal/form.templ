@@ -137,6 +137,7 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 				name="entry"
 				class="textarea"
 				id="entry"
+				placeholder="What's on your mind?"
 				if journal == nil {
 					hx-on:input="resetPendingActionItemIds(event)"
 				}
@@ -172,6 +173,7 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 			</div>
 			<div class="bottom">
 				<input class="button" type="submit"/>
+				<span id="autosave-status" class="autosave-status" aria-live="polite"></span>
 				<label
 					for="isBookmarked"
 					class="button bookmark-label"
