@@ -1,4 +1,5 @@
 const AUTOSAVE_DELAY_MS = 1500
+const SAVED_STATUS_DISPLAY_MS = 3000
 
 function initAutosave() {
 	const form = document.getElementById("journal-form")
@@ -10,11 +11,21 @@ function initAutosave() {
 	const entryEl = form.querySelector("#entry")
 
 	let debounceTimer = null
+	let statusTimer = null
 	let inFlight = false
 	let dirty = false
 
 	function setStatus(text) {
+		clearTimeout(statusTimer)
 		if (statusEl) statusEl.textContent = text
+	}
+
+	function showSavedStatus() {
+		setStatus("Saved!")
+		statusTimer = setTimeout(() => {
+			const time = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+			if (statusEl) statusEl.textContent = `Saved at ${time}`
+		}, SAVED_STATUS_DISPLAY_MS)
 	}
 
 	function currentId() {
@@ -23,11 +34,39 @@ function initAutosave() {
 		return put.split("/").pop()
 	}
 
+	function crossfadeText(el, text) {
+		if (!el) return
+		el.style.transition = "opacity var(--duration-fast) var(--ease-standard)"
+		el.style.opacity = "0"
+		el.addEventListener(
+			"transitionend",
+			() => {
+				el.textContent = text
+				el.style.opacity = "1"
+			},
+			{ once: true },
+		)
+	}
+
+	function updatePageChrome(id) {
+		// The New Entry page becomes the Edit Entry page in place - no
+		// reload, so nothing steals focus from the textarea mid-sentence.
+		const page = document.getElementById("new-journal-page")
+		if (!page) return
+		page.id = "edit-journal-page"
+
+		const backLink = page.querySelector(":scope > a.back")
+		if (backLink) backLink.setAttribute("href", `/journal/${id}`)
+
+		crossfadeText(page.querySelector(":scope > h1.heading"), "Edit Journal Entry")
+	}
+
 	function promoteFormToEditMode(id) {
 		form.removeAttribute("hx-post")
 		form.setAttribute("hx-put", `/api/journal/${id}`)
 		htmx.process(form)
 		history.replaceState(null, "", `/journal/${id}/edit`)
+		updatePageChrome(id)
 	}
 
 	function runSave() {
@@ -54,7 +93,7 @@ function initAutosave() {
 				if (!res.ok) throw new Error(await res.text())
 				const journal = await res.json()
 				if (!id) promoteFormToEditMode(journal.id)
-				setStatus("Saved!")
+				showSavedStatus()
 			})
 			.catch(() => setStatus("Error saving"))
 			.finally(() => {
