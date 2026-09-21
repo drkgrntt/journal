@@ -1,0 +1,35 @@
+package components
+
+import (
+	"fmt"
+	"time"
+)
+
+// MonthPager renders the prev/current/next month pager shared across the
+// dashboard chart partials that page by month. baseURL is the hx-get path
+// (e.g. "/dashboard/mood-chart"); target is the hx-target selector (e.g.
+// "#mood-chart"); current is the month currently being displayed; label is
+// the text shown between the two arrows (e.g. "Current" or "January 2026").
+templ MonthPager(baseURL string, target string, current time.Time, label string) {
+	<a
+		href="#"
+		class="button"
+		aria-label="Previous month"
+		hx-get={ templ.SafeURL(fmt.Sprintf("%s?month=%d&year=%d", baseURL, int(current.AddDate(0, -1, 0).Month()), current.AddDate(0, -1, 0).Year())) }
+		hx-target={ target }
+		hx-swap="innerHTML"
+	>
+		<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+	</a>
+	{ label }
+	<a
+		href="#"
+		class="button"
+		aria-label="Next month"
+		hx-get={ templ.SafeURL(fmt.Sprintf("%s?month=%d&year=%d", baseURL, int(current.AddDate(0, 1, 0).Month()), current.AddDate(0, 1, 0).Year())) }
+		hx-target={ target }
+		hx-swap="innerHTML"
+	>
+		<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+	</a>
+}

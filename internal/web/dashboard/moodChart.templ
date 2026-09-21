@@ -1,36 +1,12 @@
 package dashboard
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"journal/internal/web/components"
 )
 
 templ MoodChartContent(c *fiber.Ctx) {
-	<a
-		href="#"
-		class="button"
-		aria-label="Previous month"
-		hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/mood-chart?month=%d&year=%d", int(current(c).AddDate(0, -1, 0).Month()), current(c).AddDate(0, -1, 0).Year())) }
-		hx-target="#mood-chart"
-		hx-swap="innerHTML"
-	>
-		<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-	</a>
-	if c.Query("month") == "" && c.Query("year") == "" {
-		Current
-	} else {
-		{ month(c) } { year(c) }
-	}
-	<a
-		href="#"
-		class="button"
-		aria-label="Next month"
-		hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/mood-chart?month=%d&year=%d", int(current(c).AddDate(0, 1, 0).Month()), current(c).AddDate(0, 1, 0).Year())) }
-		hx-target="#mood-chart"
-		hx-swap="innerHTML"
-	>
-		<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
-	</a>
+	@components.MonthPager("/dashboard/mood-chart", "#mood-chart", current(c), monthYearLabel(c))
 	<div class="mood-chart">
 		@templ.JSONScript("mood-chart-data", c.Locals("moodChartData"))
 		@templ.JSONScript("mood-chart-ratings-data", c.Locals("ratings"))

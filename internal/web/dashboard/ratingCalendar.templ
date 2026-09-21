@@ -69,6 +69,13 @@ func current(ctx *fiber.Ctx) time.Time {
 	return time.Date(year, time.Month(month), 1, 0, 0, 0, 0, loc)
 }
 
+func monthYearLabel(ctx *fiber.Ctx) string {
+	if ctx.Query("month") == "" && ctx.Query("year") == "" {
+		return "Current"
+	}
+	return fmt.Sprintf("%s %s", month(ctx), year(ctx))
+}
+
 templ RatingCalendar(c *fiber.Ctx) {
 	<div class="rating-calendar">
 		<div class="legend">

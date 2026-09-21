@@ -23,6 +23,8 @@ templ View(c *fiber.Ctx) {
 			</a>
 			<p>{ getBlog(c).Date.Format("January 2, 2006") }</p>
 			<div>
+				<!-- templ.Raw skips HTML escaping; safe here because blog content is
+				     Markdown from files in the repo, not runtime user input -->
 				@templ.Raw(getBlog(c).Content)
 			</div>
 		</div>

@@ -1,0 +1,36 @@
+package components
+
+import (
+	"fmt"
+)
+
+// TimespanFieldset renders the 7/30/90-day timespan radio fieldset shared
+// across the dashboard chart partials. baseURL is the hx-get path (e.g.
+// "/dashboard/mood-by-day"); extraQuery is any additional query string to
+// append after the days param (e.g. "&granularity=hour"), or "" if none;
+// name is the radio group's name/id prefix; target is the hx-target
+// selector (e.g. "#mood-by-day"); selectedDays is the currently active days
+// value used to mark the matching radio as checked.
+templ TimespanFieldset(baseURL string, extraQuery string, name string, target string, selectedDays int) {
+	<fieldset class="options">
+		<legend>Timespan</legend>
+		for _, days := range []int{ 7, 30, 90 } {
+			<div class="checkField">
+				<input
+					type="radio"
+					value={ fmt.Sprint(days) }
+					name={ name }
+					id={ fmt.Sprintf("%s-%d", name, days) }
+					hx-get={ templ.SafeURL(fmt.Sprintf("%s?days=%d%s", baseURL, days, extraQuery)) }
+					hx-trigger="click"
+					hx-target={ target }
+					hx-swap="innerHTML"
+					if selectedDays == days {
+						checked
+					}
+				/>
+				<label for={ fmt.Sprintf("%s-%d", name, days) }>Last { fmt.Sprint(days) } days</label>
+			</div>
+		}
+	</fieldset>
+}

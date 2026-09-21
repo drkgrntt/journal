@@ -57,14 +57,24 @@ Fixing #8 exposed that GORM's `AutoMigrate` can't retype/replace an existing con
 
 ## Low / cleanup
 
+**Status as of 2026-09-21: all items fixed** except where noted.
+
 - `internal/utils/formatting.go:13-20`: `CentsToDollars`/`DollarsToCents` divide/multiply by 10 instead of 100 — currently unused (no callers), but a 10x money-math landmine if ever wired to real Stripe amounts.
+    - **Fixed.** Both now divide/multiply by 100.
 - `internal/controllers/stripe.controller.go` uses raw `fmt.Printf`/`log.Printf` instead of the project's `internal/logger`, inconsistent with the rest of the codebase.
+    - **Fixed.** All four call sites now use `logger.Error`; also dropped a dead commented-out `io.ReadAll` block in `handleWebhook` and the now-unused `log` import.
 - `internal/emails/forgotPassword.templ:14-16`: `templ.SafeURL` bypasses URL sanitization for the reset link — safe today (server-generated inputs) but fragile if that ever changes.
+    - **Fixed.** Added a comment on the `SafeURL` call noting the trust assumption (server-generated inputs, not user input).
 - `internal/web/blog/view.templ:26`: `@templ.Raw(getBlog(c).Content)` — safe today since blog content comes from Markdown files in the repo, not runtime input, but the only raw-HTML sink in the templates; worth a comment noting the trust assumption.
+    - **Fixed.** Added a comment noting blog content is repo Markdown, not runtime user input.
 - Dead code: `internal/scopes/journal.go` (empty file), commented-out handlers in `recurringActionItem.controller.go:161-201` and `thankful.controller.go:87-88`, unused/typo'd vars in `cmd/seed/seed.go` (`autoMigrage`).
+    - **Fixed.** Deleted the empty `internal/scopes/journal.go` (and the now-empty `internal/scopes` dir — nothing else referenced the package). Removed the commented-out `getActionItems` handler and its dead route-registration comment from `recurringActionItem.controller.go`, and the two commented-out routes from `thankful.controller.go`. The `cmd/seed/seed.go` `autoMigrage` typo'd var no longer exists in the codebase — already cleaned up prior to this pass.
 - Substantial duplicated markup across the 8 dashboard chart `.templ` files — good candidate for one parameterized shared component.
+    - **Fixed.** Extracted two shared partials into `internal/web/components/`: `TimespanFieldset(baseURL, extraQuery, name, target, selectedDays)` renders the 7/30/90-day radio fieldset and is now used by `moodByDay.templ`, `moodByTopic.templ`, `distByTopic.templ`, `routineCompletionRate.templ`, and `moodByTod.templ` (which still keeps its own granularity `<select>` alongside it); `MonthPager(baseURL, target, current, label)` renders the prev/current/next month pager and is now used by `moodChart.templ`, `frequencyChart.templ`, and `thankfulFrequencyChart.templ`. `ratingCalendar.templ`'s own prev/next-month pager was left alone — it uses `hx-swap="outerHTML"` against a class selector (not `innerHTML` against an id like the other three) and is embedded inside a `<table><caption>`, so it isn't actually a duplicate of the `MonthPager` shape.
 - `internal/database/database.go:92-101`: `Health()` calls `log.Fatal` on a DB ping error instead of returning a "down" status, killing the whole process on a transient hiccup.
+    - **Fixed.** The ping-failure branch now logs via `log.Printf` and returns the already-populated `"down"` stats map instead of calling `log.Fatalf`.
 - `internal/database/database.go` singleton init has no `sync.Once`/mutex — safe today only because every caller happens to invoke it single-threaded.
+    - **Fixed.** `New()` now takes a package-level `sync.Mutex` around the reuse-check-and-create path.
 
 ## Verified clean
 

@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -22,13 +23,14 @@ type Service struct {
 }
 
 var (
-	database   = os.Getenv("BLUEPRINT_DB_DATABASE")
-	password   = os.Getenv("BLUEPRINT_DB_PASSWORD")
-	username   = os.Getenv("BLUEPRINT_DB_USERNAME")
-	port       = os.Getenv("BLUEPRINT_DB_PORT")
-	host       = os.Getenv("BLUEPRINT_DB_HOST")
-	schema     = os.Getenv("BLUEPRINT_DB_SCHEMA")
-	dbInstance *Service
+	database     = os.Getenv("BLUEPRINT_DB_DATABASE")
+	password     = os.Getenv("BLUEPRINT_DB_PASSWORD")
+	username     = os.Getenv("BLUEPRINT_DB_USERNAME")
+	port         = os.Getenv("BLUEPRINT_DB_PORT")
+	host         = os.Getenv("BLUEPRINT_DB_HOST")
+	schema       = os.Getenv("BLUEPRINT_DB_SCHEMA")
+	dbInstance   *Service
+	dbInstanceMu sync.Mutex
 )
 
 func connectionStr() string {
@@ -36,6 +38,9 @@ func connectionStr() string {
 }
 
 func New() *Service {
+	dbInstanceMu.Lock()
+	defer dbInstanceMu.Unlock()
+
 	// Reuse Connection
 	if dbInstance != nil {
 		return dbInstance
@@ -110,7 +115,7 @@ func (s *Service) Health() map[string]string {
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
-		log.Fatalf(fmt.Sprintf("db down: %v", err)) // Log the error and terminate the program
+		log.Printf("db down: %v", err)
 		return stats
 	}
 

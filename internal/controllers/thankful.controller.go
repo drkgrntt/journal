@@ -84,8 +84,6 @@ func (c *ThankfulController) getThankfuls(ctx *fiber.Ctx) error {
 func (c *ThankfulController) RegisterViewRoutes() {
 	c.views.Use(middleware.RequireAuth)
 
-	// c.views.Get("/", middleware.SetJournalTypes, c.getThankfuls, utils.RenderPage(thankfuls.ListPage))
-	// c.views.Get("/list", c.getThankfuls, utils.RenderPage(thankfuls.ListItems))
 	c.views.Get("/:id/form", c.getThankful, c.getThankfulForm)
 }
 

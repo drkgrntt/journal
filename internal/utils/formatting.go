@@ -11,11 +11,11 @@ func FormatMoney(cost float64) string {
 }
 
 func CentsToDollars(cents int) float64 {
-	return float64(cents) / 10
+	return float64(cents) / 100
 }
 
 func DollarsToCents(dollars float64) int {
-	cents := dollars * 10
+	cents := dollars * 100
 	return int(cents)
 }
 

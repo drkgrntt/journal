@@ -7,7 +7,6 @@ import (
 	"journal/internal/models"
 	_ "journal/internal/stripe"
 	"journal/internal/utils"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -43,12 +42,6 @@ func (c *StripeController) RegisterApiRoutes() {
 }
 
 func (c *StripeController) handleWebhook(ctx *fiber.Ctx) error {
-	// payload, err := io.ReadAll(ctx.Request().BodyStream())
-	// if err != nil {
-	// 	fmt.Printf("Error reading request body: %v\n", err)
-	// 	return ctx.Status(http.StatusServiceUnavailable).SendString(fmt.Sprintf("Error reading request body: %v\n", err))
-	// }
-
 	// Pass the request body and Stripe-Signature header to ConstructEvent, along
 	// with the webhook signing key.
 	endpointSecret := os.Getenv("STRIPE_WEBHOOK_SECRET")
@@ -56,7 +49,7 @@ func (c *StripeController) handleWebhook(ctx *fiber.Ctx) error {
 		endpointSecret)
 
 	if err != nil {
-		fmt.Printf("Error verifying webhook signature: %v\n", err)
+		logger.Error("Error verifying webhook signature", "error", err)
 		return ctx.Status(http.StatusBadRequest).SendString(fmt.Sprintf("Error verifying webhook signature: %v\n", err))
 	}
 
@@ -66,7 +59,7 @@ func (c *StripeController) handleWebhook(ctx *fiber.Ctx) error {
 	}
 
 	if err != nil {
-		log.Printf("Error handling webhook: %v\n", err)
+		logger.Error("Error handling webhook", "error", err)
 		return ctx.SendStatus(http.StatusBadRequest)
 	}
 
@@ -83,7 +76,7 @@ func (c *StripeController) handlePaymentIntentSucceeded(event *stripe.Event) err
 	var paymentIntent *stripe.PaymentIntent
 	err := json.Unmarshal(event.Data.Raw, &paymentIntent)
 	if err != nil {
-		log.Printf("Error parsing webhook JSON: %v\n", err)
+		logger.Error("Error parsing webhook JSON", "error", err)
 		return err
 	}
 
