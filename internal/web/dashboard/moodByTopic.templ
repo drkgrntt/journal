@@ -59,6 +59,7 @@ templ MoodByTopicContent(c *fiber.Ctx) {
 	</fieldset>
 	<div class="mood-by-topic">
 		@templ.JSONScript("mood-by-topic-data", c.Locals("moodByTopicData"))
+		@templ.JSONScript("mood-by-topic-ratings-data", c.Locals("ratings"))
 		<script src="/assets/js/components/moodByTopic.js" type="module" onload="document.dispatchEvent(new Event('load-mood-by-topic'))"></script>
 	</div>
 }

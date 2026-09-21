@@ -55,3 +55,16 @@
 	}
 }
 
+/* Shared empty state for charts whose selected window has no data to plot
+   (see internal/web/assets/js/utils/index.js's renderChartEmptyState) -
+   replaces the canvas so the widget doesn't collapse to nothing. */
+.chart-empty-state {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 15rem;
+	margin: 0;
+	color: var(--text-secondary-color);
+	text-align: center;
+}
+

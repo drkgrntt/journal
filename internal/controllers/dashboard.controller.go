@@ -29,6 +29,58 @@ func (c *DashboardController) Init(db *gorm.DB, app *fiber.App) {
 	c.api = app.Group("api/dashboard")
 }
 
+// ratingValueRange returns the min/max Value across the real (non-placeholder) Rating rows,
+// used to clamp a computed average rating into a valid bucket. A rating with Value == 0 is a
+// placeholder/unset marker, not a real tier, and is excluded from the range.
+func ratingValueRange(ratings []*models.Rating) (min int, max int) {
+	first := true
+	for _, rating := range ratings {
+		if rating.Value == 0 {
+			continue
+		}
+		if first {
+			min = rating.Value
+			max = rating.Value
+			first = false
+			continue
+		}
+		if rating.Value < min {
+			min = rating.Value
+		}
+		if rating.Value > max {
+			max = rating.Value
+		}
+	}
+	return min, max
+}
+
+// bucketDaysByRating averages each day's ratings and tallies how many days round into each
+// rating tier, clamping the rounded average into [min, max] so it can never land outside the
+// real rating range. Days with no ratings (an empty slice -- e.g. a day with a completed action
+// item or a thankful but no rated journal entry) are skipped entirely rather than producing a
+// 0/0 NaN average that would silently fail to match any bucket.
+func bucketDaysByRating(daysToValues map[string][]int, min, max int) map[int]int {
+	counts := make(map[int]int)
+	for _, values := range daysToValues {
+		if len(values) == 0 {
+			continue
+		}
+		total := 0
+		for _, value := range values {
+			total += value
+		}
+		average := float64(total) / float64(len(values))
+		bucket := int(math.Round(average))
+		if bucket < min {
+			bucket = min
+		} else if bucket > max {
+			bucket = max
+		}
+		counts[bucket]++
+	}
+	return counts
+}
+
 func (c *DashboardController) setJournals(ctx *fiber.Ctx) error {
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	var journals []*models.Journal
@@ -71,14 +123,14 @@ func (c *DashboardController) RegisterViewRoutes() {
 		c.setOutstandingActionItems,
 		utils.RenderPage(dashboard.DashboardPage),
 	)
-	c.views.Get("/calendar", c.getCalendar)
-	c.views.Get("/mood-chart", c.getMoodChart)
-	c.views.Get("/mood-by-day", c.getMoodByDay)
+	c.views.Get("/calendar", middleware.SetRatings, c.getCalendar)
+	c.views.Get("/mood-chart", middleware.SetRatings, c.getMoodChart)
+	c.views.Get("/mood-by-day", middleware.SetRatings, c.getMoodByDay)
 	c.views.Get("/mood-vs-action-completion", c.getMoodVsActionCompletion)
 	c.views.Get("/mood-vs-thankfulness", c.getMoodVsThankfulness)
 
-	c.views.Get("/mood-by-topic", c.getMoodByTopic)
-	c.views.Get("/time-of-day-patterns", c.getTimeOfDayPatterns)
+	c.views.Get("/mood-by-topic", middleware.SetRatings, c.getMoodByTopic)
+	c.views.Get("/time-of-day-patterns", middleware.SetRatings, c.getTimeOfDayPatterns)
 	c.views.Get("/entry-time-frequency", c.getEntryTimeFrequency)
 	c.views.Get("/thankful-frequency", c.getThankfulFrequency)
 	c.views.Get("/routine-completion-rate", c.getRoutineCompletionRate)
@@ -282,21 +334,35 @@ func (c *DashboardController) getMoodVsActionCompletion(ctx *fiber.Ctx) error {
 	if err != nil {
 		loc = time.UTC
 	}
+	days := ctx.QueryInt("days", 30)
+	t := time.Now()
+	date := time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		0, 0, 0, 0,
+		loc,
+	).AddDate(0, 0, -days)
+
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	var journals []*models.Journal
 
 	c.db.Where("creator_id = ?", currentUser.ID).
+		Where("date >= ?", date.UTC()).
 		Preload("Rating").
 		Find(&journals)
 
 	var actionItems []*models.ActionItem
 	c.db.Where("creator_id = ?", currentUser.ID).
 		Where("completed_at IS NOT NULL").
+		Where("completed_at >= ?", date.UTC()).
 		Find(&actionItems)
 
 	var ratings []*models.Rating
 	c.db.Order("value DESC").
 		Find(&ratings)
+
+	minRatingValue, maxRatingValue := ratingValueRange(ratings)
 
 	daysWithCompletedActionItems := make(map[string][]int)
 	for _, actionItem := range actionItems {
@@ -323,6 +389,11 @@ func (c *DashboardController) getMoodVsActionCompletion(ctx *fiber.Ctx) error {
 		}
 	}
 
+	// Bucket each day's average rating (clamped into the valid rating range) exactly once,
+	// skipping days with no rated journal entries instead of dividing by zero.
+	withCompletionsByRating := bucketDaysByRating(daysWithCompletedActionItems, minRatingValue, maxRatingValue)
+	withoutCompletionsByRating := bucketDaysByRating(daysWithoutCompletedActionItems, minRatingValue, maxRatingValue)
+
 	type MoodVsActionCompletionData struct {
 		RatingValue        int    `json:"-"`
 		Rating             string `json:"rating"`
@@ -335,36 +406,12 @@ func (c *DashboardController) getMoodVsActionCompletion(ctx *fiber.Ctx) error {
 		if rating.Value == 0 {
 			continue
 		}
-		var withCompletions int
-		var withoutCompletions int
-
-		for _, values := range daysWithCompletedActionItems {
-			var total int
-			for _, value := range values {
-				total += value
-			}
-			average := float64(total) / float64(len(values))
-			if math.Round(average) == float64(rating.Value) {
-				withCompletions++
-			}
-
-		}
-		for _, values := range daysWithoutCompletedActionItems {
-			var total int
-			for _, value := range values {
-				total += value
-			}
-			average := float64(total) / float64(len(values))
-			if math.Round(average) == float64(rating.Value) {
-				withoutCompletions++
-			}
-		}
 
 		moodVsActionCompletionData = append(moodVsActionCompletionData, MoodVsActionCompletionData{
 			RatingValue:        rating.Value,
 			Rating:             rating.Name,
-			WithCompletions:    withCompletions,
-			WithoutCompletions: withoutCompletions,
+			WithCompletions:    withCompletionsByRating[rating.Value],
+			WithoutCompletions: withoutCompletionsByRating[rating.Value],
 		})
 	}
 	ctx.Locals("moodVsActionCompletionData", &moodVsActionCompletionData)
@@ -378,11 +425,21 @@ func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
 	if err != nil {
 		loc = time.UTC
 	}
+	days := ctx.QueryInt("days", 30)
+	t := time.Now()
+	date := time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		0, 0, 0, 0,
+		loc,
+	).AddDate(0, 0, -days)
 
 	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
 	var journals []*models.Journal
 
 	c.db.Where("creator_id = ?", currentUser.ID).
+		Where("date >= ?", date.UTC()).
 		Preload("Rating").
 		Preload("Thankfuls").
 		Find(&journals)
@@ -392,6 +449,8 @@ func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
 	var ratings []*models.Rating
 	c.db.Order("value DESC").
 		Find(&ratings)
+
+	minRatingValue, maxRatingValue := ratingValueRange(ratings)
 
 	journalsByDay := make(map[string][]*models.Journal)
 	for _, journal := range journals {
@@ -423,6 +482,11 @@ func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
 		}
 	}
 
+	// Bucket each day's average rating (clamped into the valid rating range) exactly once,
+	// skipping days with no rated journal entries instead of dividing by zero.
+	withThankfulsByRating := bucketDaysByRating(daysWithThankfuls, minRatingValue, maxRatingValue)
+	withoutThankfulsByRating := bucketDaysByRating(daysWithoutThankfuls, minRatingValue, maxRatingValue)
+
 	type MoodVsThankfulData struct {
 		RatingValue      int    `json:"-"`
 		Rating           string `json:"rating"`
@@ -435,35 +499,12 @@ func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
 		if rating.Value == 0 {
 			continue
 		}
-		var withThankfuls int
-		var withoutThankfuls int
-
-		for _, values := range daysWithThankfuls {
-			var total int
-			for _, value := range values {
-				total += value
-			}
-			average := float64(total) / float64(len(values))
-			if math.Round(average) == float64(rating.Value) {
-				withThankfuls++
-			}
-		}
-		for _, values := range daysWithoutThankfuls {
-			var total int
-			for _, value := range values {
-				total += value
-			}
-			average := float64(total) / float64(len(values))
-			if math.Round(average) == float64(rating.Value) {
-				withoutThankfuls++
-			}
-		}
 
 		moodVsThankfulData = append(moodVsThankfulData, MoodVsThankfulData{
 			RatingValue:      rating.Value,
 			Rating:           rating.Name,
-			WithThankfuls:    withThankfuls,
-			WithoutThankfuls: withoutThankfuls,
+			WithThankfuls:    withThankfulsByRating[rating.Value],
+			WithoutThankfuls: withoutThankfulsByRating[rating.Value],
 		})
 	}
 
@@ -669,10 +710,14 @@ func (c *DashboardController) getEntryTimeFrequency(ctx *fiber.Ctx) error {
 			}
 		}
 		dateTime, _ := time.Parse("01-02-2006", date)
-		rating := float64(total) / float64(qtyWithRatings)
+		var ratingPtr *float64
+		if qtyWithRatings > 0 {
+			rating := float64(total) / float64(qtyWithRatings)
+			ratingPtr = &rating
+		}
 		frequencyChartData = append(frequencyChartData, FrequencyChartData{
 			Quantity: utils.Pointer(float64(len(values))),
-			Rating:   &rating,
+			Rating:   ratingPtr,
 			Date:     date,
 			DateTime: dateTime,
 		})
@@ -813,10 +858,15 @@ func (c *DashboardController) getRoutineCompletionRate(ctx *fiber.Ctx) error {
 	}
 	routineCompletionRates := []RoutineCompletionRate{}
 	for _, routine := range routines {
+		frequency := int64(routine.Frequency.Seconds())
+		if frequency <= 0 {
+			// Bad/legacy data (zero or negative frequency) -- skip rather than divide by zero.
+			continue
+		}
+
 		startsAtUnix := math.Max(float64(routine.StartsAt.Unix()), float64(date.Unix()))
 
 		nowUnix := time.Now().Unix()
-		frequency := int64(routine.Frequency.Seconds())
 		periodsSinceStart := ((nowUnix - int64(startsAtUnix)) / frequency) + 1
 		percent := float64(len(routine.ActionItems)) / float64(periodsSinceStart) * 100
 

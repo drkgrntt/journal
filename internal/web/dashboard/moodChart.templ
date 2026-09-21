@@ -33,6 +33,7 @@ templ MoodChartContent(c *fiber.Ctx) {
 	</a>
 	<div class="mood-chart">
 		@templ.JSONScript("mood-chart-data", c.Locals("moodChartData"))
+		@templ.JSONScript("mood-chart-ratings-data", c.Locals("ratings"))
 		<script src="/assets/js/components/moodChart.js" type="module" onload="document.dispatchEvent(new Event('load-mood-chart'))"></script>
 	</div>
 }

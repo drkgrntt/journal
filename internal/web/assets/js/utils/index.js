@@ -75,6 +75,50 @@ export function shouldBlurText() {
 }
 setToWindow("shouldBlurText", shouldBlurText)
 
+// Shared by the dashboard's rating charts (mood-by-day/tod/topic, the
+// month-view mood chart): Math.min(...[]) / Math.max(...[]) evaluate to
+// +/-Infinity for an empty values array, which produces an inverted/broken
+// y-axis instead of degrading gracefully. Returns null when there's nothing
+// to chart so the caller can render an empty state instead of handing
+// Chart.js a broken range; otherwise the padded [min, max] range for the
+// axis (round=false skips the floor/ceil, for charts - like the month view -
+// whose values aren't already whole rating numbers being padded to whole
+// ticks).
+export function ratingAxisRange(values, { round = true } = {}) {
+	if (!values.length) return null
+	const lo = Math.min(...values)
+	const hi = Math.max(...values)
+	return {
+		min: (round ? Math.floor(lo) : lo) - 0.3,
+		max: (round ? Math.ceil(hi) : hi) + 0.3,
+	}
+}
+setToWindow("ratingAxisRange", ratingAxisRange)
+
+// Paired with ratingAxisRange: swaps a chart container's contents for a
+// simple "no data" message instead of building a chart out of an empty
+// dataset.
+export function renderChartEmptyState(element, message) {
+	element.innerHTML = ""
+	const p = document.createElement("p")
+	p.className = "chart-empty-state"
+	p.textContent = message || "No data for this range yet."
+	element.appendChild(p)
+}
+setToWindow("renderChartEmptyState", renderChartEmptyState)
+
+// Builds a { [rating.value]: rating.name } lookup so chart y-axis tick
+// labels reflect the actual Rating table instead of a hardcoded 5-point
+// scale that can silently drift from it.
+export function ratingLabelsByValue(ratings) {
+	const labels = {}
+	for (const rating of ratings || []) {
+		labels[rating.value] = rating.name
+	}
+	return labels
+}
+setToWindow("ratingLabelsByValue", ratingLabelsByValue)
+
 function isEmptyField(element) {
 	if (element.tagName !== "INPUT" && element.tagName !== "TEXTAREA") return false
 	return element.value === ""

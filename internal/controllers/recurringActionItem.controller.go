@@ -92,6 +92,10 @@ func (c *RecurringActionItemController) createActionItems() {
 			startsAtUnix := recurringActionItem.StartsAt.Unix()
 			nowUnix := now.Unix()
 			frequency := int64(recurringActionItem.Frequency.Seconds())
+			if frequency <= 0 {
+				logger.Warn("Recurring action item has a non-positive frequency, skipping", "id", recurringActionItem.ID)
+				continue
+			}
 			periodsSinceStart := (nowUnix - startsAtUnix) / frequency
 
 			previousScheduled := recurringActionItem.StartsAt.Add(time.Duration(periodsSinceStart) * recurringActionItem.Frequency)
@@ -243,6 +247,9 @@ func (c *RecurringActionItemController) parseRecurringActionItemFromBody(ctx *fi
 
 	var duration time.Duration
 	if body.Frequency == 0 {
+		if body.HourlyFrequency == 0 {
+			return errors.New("frequency is required")
+		}
 		duration = time.Duration(body.HourlyFrequency) * time.Hour
 	} else {
 		duration = time.Duration(body.Frequency) * time.Millisecond

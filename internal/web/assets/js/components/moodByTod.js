@@ -1,6 +1,14 @@
 function initMoodByTod() {
   const data = JSON.parse(document.getElementById("mood-by-tod-data").textContent);
+  const ratings = JSON.parse(document.getElementById("mood-by-tod-ratings-data").textContent) || [];
+  const ratingLabels = ratingLabelsByValue(ratings);
   const element = document.querySelector(".mood-by-tod");
+
+  const range = ratingAxisRange(data.map(item => item.value));
+  if (!range) {
+    renderChartEmptyState(element);
+    return;
+  }
 
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -46,8 +54,8 @@ function initMoodByTod() {
           },
         },
         y: {
-          min: Math.floor(Math.min(...data.map(item => item.value))) - .3,
-          max: Math.ceil(Math.max(...data.map(item => item.value))) + .3,
+          min: range.min,
+          max: range.max,
           grid: {
             display: false,
           },
@@ -55,14 +63,7 @@ function initMoodByTod() {
           ticks: {
             callback: function(value) {
               if (value % 1 !== 0) return;
-              if (value > 5) return value;
-              return [
-                "Awful",
-                "Bad",
-                "Fine",
-                "Good",
-                "Great",
-              ][value - 1]
+              return ratingLabels[value] ?? value;
             }
           }
         }

@@ -59,6 +59,7 @@ templ MoodByDayContent(c *fiber.Ctx) {
 	</fieldset>
 	<div class="mood-by-day">
 		@templ.JSONScript("mood-by-day-data", c.Locals("moodByDayData"))
+		@templ.JSONScript("mood-by-day-ratings-data", c.Locals("ratings"))
 		<script src="/assets/js/components/moodByDay.js" type="module" onload="document.dispatchEvent(new Event('load-mood-by-day'))"></script>
 	</div>
 }
