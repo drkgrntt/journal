@@ -119,6 +119,92 @@ export function ratingLabelsByValue(ratings) {
 }
 setToWindow("ratingLabelsByValue", ratingLabelsByValue)
 
+// Shared by the dashboard's rating charts (mood-by-day/tod/topic, the
+// month-view mood chart): these all build a single-dataset bar/line Chart.js
+// chart out of a `range` (from ratingAxisRange) and `ratingLabels` (from
+// ratingLabelsByValue), styled/gridded/legend-less the same way, and mount
+// it into a container element the same way (clear it, append a fresh
+// canvas). This factors that construction out; callers still own their own
+// chart-data mapping (e.g. converting a time-of-day string, filtering
+// zero/empty values before computing `range`), which Chart.js `type` they
+// need, dataset label/colors, and any extra top-level or per-dataset options
+// specific to that chart (e.g. `tension`, `spanGaps`).
+export function renderRatingChart(element, {
+	type,
+	labels,
+	values,
+	range,
+	ratingLabels,
+	datasetLabel = "Average Rating",
+	borderColor,
+	backgroundColor,
+	borderWidth,
+	dataset = {},
+	options = {},
+} = {}) {
+	const canvas = document.createElement("canvas")
+	const ctx = canvas.getContext("2d")
+	if (!ctx) {
+		throw new Error("Canvas not supported")
+	}
+
+	const chart = new Chart(ctx, {
+		type,
+		data: {
+			labels,
+			datasets: [
+				{
+					label: datasetLabel,
+					data: values,
+					borderColor,
+					backgroundColor,
+					...(borderWidth !== undefined ? { borderWidth } : {}),
+					...dataset,
+				},
+			],
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			...options,
+			plugins: {
+				legend: {
+					display: false,
+				},
+				...(options.plugins || {}),
+			},
+			scales: {
+				x: {
+					grid: {
+						display: false,
+					},
+				},
+				y: {
+					min: range.min,
+					max: range.max,
+					grid: {
+						display: false,
+					},
+					// beginAtZero: true,
+					ticks: {
+						callback: function(value) {
+							if (value % 1 !== 0) return;
+							return ratingLabels[value] ?? value;
+						}
+					},
+				},
+				...(options.scales || {}),
+			},
+		},
+	})
+
+	element.innerHTML = "";
+	element.appendChild(canvas);
+
+	return chart;
+}
+setToWindow("renderRatingChart", renderRatingChart)
+
 function isEmptyField(element) {
 	if (element.tagName !== "INPUT" && element.tagName !== "TEXTAREA") return false
 	return element.value === ""

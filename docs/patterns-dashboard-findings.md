@@ -4,10 +4,10 @@ Audit of the "Patterns" tab: `internal/controllers/dashboard.controller.go` and 
 `internal/web/dashboard/*.templ` chart views (Chart.js-driven), for bugs, inconsistencies,
 missing-but-helpful features, and inaccuracies.
 
-**Update (2026-09-20): items #1-#8 fixed.** See `dashboard.controller.go`,
+**Update (2026-09-20): all items fixed**, including #13 (found post-audit) and #9-#12
+(originally left open as missing-features/minor). See `dashboard.controller.go`,
 `recurringActionItem.controller.go`, `internal/web/assets/js/components/*.js`,
-`internal/web/assets/js/utils/index.js`, and the affected `.templ` files. #9-#12 (missing
-features / minor) are left open below.
+`internal/web/assets/js/utils/index.js`, and the affected `.templ` files.
 
 ## Bugs / inaccuracies
 
@@ -86,18 +86,28 @@ features / minor) are left open below.
 
 ## Minor
 
-11. `getTimeOfDayPatterns` (`dashboard.controller.go:570`) buckets by exact `HH:00`, not a
-    coarser morning/afternoon/evening bucket — fine, but sparse/jumpy for accounts with
-    irregular write times.
-12. **(Partially addressed, via #1)** `moodByDay.js`/`moodByTod.js`/`moodByTopic.js`/
-    `moodChart.js` share ~90% identical Chart.js boilerplate (the min/max/ticks block in
-    particular) duplicated four times rather than factored out. The min/max/empty-state and
-    rating-label lookup are now factored into shared `utils/index.js` helpers, but the
-    surrounding Chart.js dataset/options boilerplate is still duplicated per file.
+11. **(Fixed)** `getTimeOfDayPatterns` (`dashboard.controller.go:570`) buckets by exact `HH:00`,
+    not a coarser morning/afternoon/evening bucket — fine, but sparse/jumpy for accounts with
+    irregular write times. Rather than picking one granularity, added a "Granularity" radio
+    group (Hour / 3-hour blocks / Time of day) alongside the existing 7/30/90-day radios on
+    Mood by Time of Day, via a `granularity` query param and a new `timeOfDayBucket` helper.
+    Each radio preserves the other control's current selection when clicked.
+12. **(Fixed)** `moodByDay.js`/`moodByTod.js`/`moodByTopic.js`/`moodChart.js` shared ~90%
+    identical Chart.js boilerplate (the min/max/ticks block in particular) duplicated four
+    times rather than factored out. The min/max/empty-state and rating-label lookup were
+    already factored into shared `utils/index.js` helpers (`ratingAxisRange`,
+    `renderChartEmptyState`, `ratingLabelsByValue`); the remaining `new Chart(ctx, {...})`
+    construction (canvas/context creation, dataset styling, legend/grid conventions, the
+    shared x/y scale + tick-label shape, mounting the canvas into the container) is now
+    factored into a `renderRatingChart(element, options)` helper alongside them. Each of the
+    four files now only supplies its own chart type, data mapping, container selector, and
+    any chart-specific extras (e.g. `moodByTod.js`'s time-of-day label conversion,
+    `moodChart.js`'s `spanGaps`/`tension` and `"Rating Flow"` dataset label).
 
-## Suggested priority
+## Suggested priority (historical, pre-fix)
 
-#1 and #2 are the highest-value/lowest-risk first targets: #2 is an outright crash reachable
-from normal user input (a zero-frequency routine), and #1 hits any account with a sparse
-window (new users, or anyone on the 7-day filter). #3/#4 are quieter but mean the comparison
-charts have been silently undercounting since they shipped.
+#1 and #2 were the highest-value/lowest-risk first targets: #2 was an outright crash reachable
+from normal user input (a zero-frequency routine), and #1 hit any account with a sparse
+window (new users, or anyone on the 7-day filter). #3/#4 were quieter but meant the comparison
+charts had been silently undercounting since they shipped. All items are now fixed; kept here
+for context on how the work was sequenced.

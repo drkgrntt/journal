@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"journal/internal/middleware"
 	"journal/internal/models"
 	"journal/internal/utils"
@@ -578,6 +579,32 @@ func (c *DashboardController) getMoodByTopic(ctx *fiber.Ctx) error {
 	return utils.RenderComponent(dashboard.MoodByTopicContent(ctx), ctx)
 }
 
+// timeOfDayBucket returns the display label for a local time under the given
+// granularity ("hour", "3hour", or "period"), plus a sortKey that orders
+// buckets chronologically (needed because e.g. "Night" < "Morning" alphabetically
+// but should sort first).
+func timeOfDayBucket(t time.Time, granularity string) (label string, sortKey int) {
+	hour := t.Hour()
+	switch granularity {
+	case "3hour":
+		start := (hour / 3) * 3
+		return fmt.Sprintf("%02d:00", start), start
+	case "period":
+		switch {
+		case hour < 5:
+			return "Night", 0
+		case hour < 12:
+			return "Morning", 1
+		case hour < 17:
+			return "Afternoon", 2
+		default:
+			return "Evening", 3
+		}
+	default:
+		return t.Format("15:00"), hour
+	}
+}
+
 // Time of day patterns -- do morning entries rate differently than evening ones
 func (c *DashboardController) getTimeOfDayPatterns(ctx *fiber.Ctx) error {
 	tz := ctx.Cookies("tz", "UTC")
@@ -586,6 +613,7 @@ func (c *DashboardController) getTimeOfDayPatterns(ctx *fiber.Ctx) error {
 		loc = time.UTC
 	}
 	days := ctx.QueryInt("days", 30)
+	granularity := ctx.Query("granularity", "hour")
 	t := time.Now()
 	date := time.Date(
 		t.Year(),
@@ -604,15 +632,17 @@ func (c *DashboardController) getTimeOfDayPatterns(ctx *fiber.Ctx) error {
 		Find(&journals)
 
 	moodByTodTmp := map[string][]int{}
+	todSortKeys := map[string]int{}
 	for _, journal := range journals {
 		if journal.Rating == nil {
 			continue
 		}
-		tod := journal.Date.In(loc).Format("15:00")
+		tod, sortKey := timeOfDayBucket(journal.Date.In(loc), granularity)
 		if _, ok := moodByTodTmp[tod]; !ok {
 			moodByTodTmp[tod] = []int{}
 		}
 		moodByTodTmp[tod] = append(moodByTodTmp[tod], journal.Rating.Value)
+		todSortKeys[tod] = sortKey
 	}
 
 	type MoodByTodData struct {
@@ -631,7 +661,7 @@ func (c *DashboardController) getTimeOfDayPatterns(ctx *fiber.Ctx) error {
 		})
 	}
 	sort.Slice(moodByTodData, func(i, j int) bool {
-		return moodByTodData[i].Tod < moodByTodData[j].Tod
+		return todSortKeys[moodByTodData[i].Tod] < todSortKeys[moodByTodData[j].Tod]
 	})
 	ctx.Locals("moodByTodData", &moodByTodData)
 

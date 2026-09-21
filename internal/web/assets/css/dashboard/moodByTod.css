@@ -12,6 +12,10 @@
 		legend {
 			display: none;
 		}
+
+		& + .options {
+			margin-top: .5rem;
+		}
 	}
 
 	canvas {

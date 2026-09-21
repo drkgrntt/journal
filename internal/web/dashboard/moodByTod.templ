@@ -14,7 +14,7 @@ templ MoodByTodContent(c *fiber.Ctx) {
 				value="7"
 				name="tod-days"
 				id="tod-days-7"
-				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/time-of-day-patterns?days=%d", 7)) }
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/time-of-day-patterns?days=%d&granularity=%s", 7, c.Query("granularity", "hour"))) }
 				hx-trigger="click"
 				hx-target="#mood-by-tod"
 				hx-swap="innerHTML"
@@ -30,7 +30,7 @@ templ MoodByTodContent(c *fiber.Ctx) {
 				value="30"
 				name="tod-days"
 				id="tod-days-30"
-				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/time-of-day-patterns?days=%d", 30)) }
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/time-of-day-patterns?days=%d&granularity=%s", 30, c.Query("granularity", "hour"))) }
 				hx-trigger="click"
 				hx-target="#mood-by-tod"
 				hx-swap="innerHTML"
@@ -46,7 +46,7 @@ templ MoodByTodContent(c *fiber.Ctx) {
 				value="90"
 				name="tod-days"
 				id="tod-days-90"
-				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/time-of-day-patterns?days=%d", 90)) }
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/time-of-day-patterns?days=%d&granularity=%s", 90, c.Query("granularity", "hour"))) }
 				hx-trigger="click"
 				hx-target="#mood-by-tod"
 				hx-swap="innerHTML"
@@ -55,6 +55,57 @@ templ MoodByTodContent(c *fiber.Ctx) {
 				}
 			/>
 			<label for="tod-days-90">Last 90 days</label>
+		</div>
+	</fieldset>
+	<fieldset class="options">
+		<legend>Granularity</legend>
+		<div class="checkField">
+			<input
+				type="radio"
+				value="hour"
+				name="tod-granularity"
+				id="tod-granularity-hour"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/time-of-day-patterns?days=%d&granularity=hour", c.QueryInt("days", 30))) }
+				hx-trigger="click"
+				hx-target="#mood-by-tod"
+				hx-swap="innerHTML"
+				if c.Query("granularity", "hour") == "hour" {
+					checked
+				}
+			/>
+			<label for="tod-granularity-hour">Hour</label>
+		</div>
+		<div class="checkField">
+			<input
+				type="radio"
+				value="3hour"
+				name="tod-granularity"
+				id="tod-granularity-3hour"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/time-of-day-patterns?days=%d&granularity=3hour", c.QueryInt("days", 30))) }
+				hx-trigger="click"
+				hx-target="#mood-by-tod"
+				hx-swap="innerHTML"
+				if c.Query("granularity", "hour") == "3hour" {
+					checked
+				}
+			/>
+			<label for="tod-granularity-3hour">3-hour blocks</label>
+		</div>
+		<div class="checkField">
+			<input
+				type="radio"
+				value="period"
+				name="tod-granularity"
+				id="tod-granularity-period"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/time-of-day-patterns?days=%d&granularity=period", c.QueryInt("days", 30))) }
+				hx-trigger="click"
+				hx-target="#mood-by-tod"
+				hx-swap="innerHTML"
+				if c.Query("granularity", "hour") == "period" {
+					checked
+				}
+			/>
+			<label for="tod-granularity-period">Time of day</label>
 		</div>
 	</fieldset>
 	<div class="mood-by-tod">
