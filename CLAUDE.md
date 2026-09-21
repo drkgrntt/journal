@@ -4,7 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A server-rendered Go web app (module `journal`) for mental health journaling: journal entries, action items, "thankfuls", ratings, a blog, Stripe billing, and email notifications. Built on Fiber (HTTP), GORM/Postgres (data), and `templ` (HTML templates), with HTMX-style interactions (`HX-Redirect` headers, partial re-renders).
+A server-rendered Go web app (module `journal`), branded "Contour Journal", for mental health journaling: journal entries, action items, "thankfuls", ratings, a blog, Stripe billing, and email notifications. Built on Fiber (HTTP), GORM/Postgres (data), and `templ` (HTML templates), with HTMX-style interactions (`HX-Redirect` headers, partial re-renders).
+
+## Product philosophy
+
+The canonical statement of intent lives in the marketing/blog copy — `internal/web/landings/landing.templ`, `internal/web/landings/about.templ`, and `internal/blog/entries/*.md` — not in this file. Re-read those before proposing product or UX changes if unsure; this section is a summary, and the copy is source of truth.
+
+- **The point is to process and mostly leave it, not to analyze or revisit.** Derek built this after finding that other journals either wanted him to look back and mine his own writing, or nudge him toward outcomes. This one is explicitly the opposite: write it out, optionally highlight/bookmark the rare entry worth keeping, then move on. Don't design toward "insights," AI-generated summaries/analysis of entries, or surfacing old entries back at the user unprompted.
+- **No gamification, no streaks, no guilt.** Stated outright on the about page ("no streaks, no gamification... the point is to process and mostly leave it") and in the landing copy for routines ("Miss a day and it just waits. No streaks, no guilt."). Don't suggest streak counters, completion percentages framed as goals, notifications nagging about missed days, or anything that turns journaling/routines into a metric to hit.
+- **Patterns/charts are optional and non-directive, not a dashboard to optimize.** "There are no specific patterns this journal is trying to show you" — the Patterns tab exists so tendencies can surface if the user wants to notice them, not to drive behavior or present KPIs. Framing suggestions around "quick stats," summary tiles, or an "at a glance" score for the Today tab cuts against this — that's product-analytics thinking, not this app's thinking.
+- **Cozy over sleek.** Intentionally soft/low-contrast, not a hyper-optimized, sharp "product" feel. A suggestion that reads as conversion-rate-optimization (CTAs everywhere, urgency, engagement loops) is off-brand here.
+- **Privacy is foundational, not a feature.** Encryption at rest for entries/actions/thankfuls, no ads, no tracking, no social sharing, no third-party cookies, a blur mode for writing in public. Never treat "read the user's entries" (even for a feature like AI insights) as on the table.
+- **Built and used by one person, for himself first.** Derek is the primary user; the bar for a feature is "would I actually use this," not growth or engagement metrics. Paid features are optional "frills" (automation/customization) on top of a fully-functional free core — no subscriptions, pay once. Keep that framing in mind when weighing whether something belongs behind a paywall.
 
 ## Commands
 

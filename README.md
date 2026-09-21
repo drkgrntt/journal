@@ -1,6 +1,6 @@
-# Project journal
+# Contour Journal
 
-One Paragraph of project description goes here
+A server-rendered journaling app: write freely, rate your day, log small actions and things worth being grateful for. It's built to be a place to get thoughts out and mostly leave them there, not a tool for analyzing or revisiting what you wrote — no streaks, no gamification, no AI reading your entries. Patterns (a calendar + charts) surface on their own over time for anyone who wants to notice them, but nothing here is trying to optimize your mood or your habits. See `CLAUDE.md`'s "Product philosophy" section, the `/about` page (`internal/web/landings/about.templ`), and the blog entries under `internal/blog/entries/` for the full reasoning.
 
 ## Getting Started
 
