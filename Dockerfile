@@ -24,6 +24,7 @@ RUN apk add --no-cache ca-certificates tzdata postgresql-client \
     && adduser -D -H appuser
 WORKDIR /app
 COPY --from=build /out/app ./app
+COPY --from=build /src/internal/blog/entries ./internal/blog/entries
 USER appuser
 
 ENTRYPOINT ["./app"]
