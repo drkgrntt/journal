@@ -45,6 +45,8 @@ templ baseWithHead(c *fiber.Ctx, h *Head) {
 			<title>Contour Journal - { h.Title }</title>
 			<meta name="og:title" content={ fmt.Sprintf("Contour Journal - %s", h.Title) }/>
 			<meta name="description" content={ h.Description }/>
+			<meta name="theme-color" id="theme-color-meta" content="#ffffff"/>
+			<script src={ AssetURL("/assets/js/theme.js") }></script>
 			<link href={ AssetURL("/assets/fontawesome/css/fontawesome.css") } rel="stylesheet"/>
 			<link href={ AssetURL("/assets/fontawesome/css/solid.css") } rel="stylesheet"/>
 			<link href={ AssetURL("/assets/fontawesome/css/regular.css") } rel="stylesheet"/>
@@ -55,6 +57,18 @@ templ baseWithHead(c *fiber.Ctx, h *Head) {
 			<script src={ AssetURL("/assets/js/index.js") } type="module"></script>
 			<script src={ AssetURL("/assets/js/lib/htmx.min.js") }></script>
 			<script src={ AssetURL("/assets/js/lib/chart.min.js") }></script>
+			<script>
+				// Chart.js's own default tick/legend/grid color is a fixed dark
+				// gray, so it goes near-invisible on a dark surface. Match
+				// whichever theme is actually in effect (assets/js/theme.js,
+				// loaded above) - the chart components (assets/js/components/
+				// *Chart.js) only set per-dataset colors, not axis/legend text.
+				if (window.Chart && currentEffectiveTheme() === "dark") {
+					var themeStyle = getComputedStyle(document.documentElement);
+					Chart.defaults.color = themeStyle.getPropertyValue("--text-secondary-color").trim();
+					Chart.defaults.borderColor = themeStyle.getPropertyValue("--border-color").trim();
+				}
+			</script>
 		</head>
 		<body id={ id(c) }>
 			<a class="skip-link" href="#main-content">Skip to main content</a>

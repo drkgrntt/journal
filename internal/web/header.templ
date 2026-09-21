@@ -25,5 +25,15 @@ templ Header(c *fiber.Ctx) {
 				</span>
 			</a>
 		</h1>
+		<button
+			type="button"
+			class="theme-toggle"
+			onclick="toggleTheme()"
+			aria-label="Switch between light and dark theme"
+			title="Switch between light and dark theme"
+		>
+			<i class="fa-solid fa-sun" aria-hidden="true"></i>
+			<i class="fa-solid fa-moon" aria-hidden="true"></i>
+		</button>
 	</header>
 }

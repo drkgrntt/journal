@@ -52,4 +52,61 @@
 		font-style: italic;
 		color: var(--text-secondary-color);
 	}
+
+	.theme-toggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		margin-left: auto;
+		/* Clears components/nav.css's hamburger toggle (.toggle-button-border,
+		   position: fixed, top: .9rem right: .9rem, 2.5rem square) - that
+		   button floats above everything on every page independent of this
+		   in-flow header, so without a gap this would sit visually underneath
+		   it and lose click access. */
+		margin-right: 3.25rem;
+		width: var(--control-height);
+		height: var(--control-height);
+		border: none;
+		border-radius: var(--radius-full);
+		background: transparent;
+		color: var(--text-color);
+		font-size: var(--text-lg);
+		cursor: pointer;
+		transition: background-color var(--duration-fast) var(--ease-standard);
+	}
+
+	.theme-toggle:hover {
+		background-color: var(--surface-hover);
+	}
+
+	.theme-toggle:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+
+	/* Which icon shows is CSS-only, keyed off the same [data-theme]
+	   attribute/media query as theme/colors.css's palette flip (set by
+	   assets/js/theme.js) - never JS-driven, so it can't drift out of sync
+	   with the actual applied theme. */
+	.theme-toggle .fa-moon {
+		display: none;
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) .top-bar .theme-toggle .fa-sun {
+		display: none;
+	}
+
+	:root:not([data-theme="light"]) .top-bar .theme-toggle .fa-moon {
+		display: inline;
+	}
+}
+
+:root[data-theme="dark"] .top-bar .theme-toggle .fa-sun {
+	display: none;
+}
+
+:root[data-theme="dark"] .top-bar .theme-toggle .fa-moon {
+	display: inline;
 }

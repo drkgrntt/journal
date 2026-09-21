@@ -1,4 +1,9 @@
 :root {
+	/* Lets native chrome (scrollbars, form controls, the browser's own
+	   dark-mode UA styles) follow whichever theme is actually in effect
+	   instead of defaulting to light - overridden per-theme below. */
+	color-scheme: light dark;
+
 	--primary-color: #B0F8E8;
 	--secondary-color: #FFD1B4;
 
@@ -56,6 +61,118 @@
 	--fine-color:  #E0B84C;   /* warm amber */
 	--good-color:  #6FBF8F;   /* green */
 	--great-color: #2FA4A9;   /* teal */
+}
+
+/* Dark palette - applies under the OS-level color-scheme preference, and
+   under an explicit choice from the header's theme toggle (assets/js/
+   theme.js sets [data-theme] on <html> and persists it to localStorage;
+   :not([data-theme="light"]) lets an explicit "dark" pick apply even when
+   the OS is light, while leaving an explicit "light" pick alone). There's
+   no separate light override block: with nothing saved and the OS in
+   light mode, neither selector below matches, so the plain :root values
+   above are already what's showing.
+
+   Every value below is a role-preserving flip of its light-mode
+   counterpart rather than a literal light/dark swap: tokens that read as
+   text/borders/strokes against a light surface (--accent, --primary-color-
+   dark, the rating colors, ...) get pushed to a *higher* lightness so they
+   still clear ~4.5:1+ against the new dark surfaces, while tokens that were
+   pale background tints (--primary-color-lightest, ...) get pushed to a
+   *lower* lightness so they read as subtle dark tints instead of glowing
+   pastel boxes. Ratios below were computed the same way as the light-mode
+   comments above (WCAG relative-luminance contrast).
+   --awful/bad/fine/good/great-color must stay #RRGGBB (not hsl(...)) -
+   assets/js/components/ratingCalendar.js reads them via getComputedStyle
+   and hand-parses the string as hex to interpolate between rating colors.
+
+   The property list is intentionally duplicated between the @media block
+   and the [data-theme="dark"] block below rather than combined into one
+   selector - a media feature and an attribute selector can't be OR'd
+   together in plain CSS without a preprocessor. Keep both in sync. */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) {
+		color-scheme: dark;
+
+		--primary-color: #3FA690;
+		--secondary-color: #BE6B37;
+
+		--primary-color-light: #273F3A;
+		--primary-color-lightest: #1C2C28;
+		--primary-color-dark: #61D1B9;
+		--primary-color-darkest: #81DAC7;
+
+		--secondary-color-light: #453227;
+		--secondary-color-lightest: #30241D;
+		--secondary-color-dark: #DD8F5F;
+		--secondary-color-darkest: #E4A781;
+
+		/* ~9.9:1 on --background-color, ~8.6:1 on --surface. */
+		--accent: #69D3BC;
+		--accent-hover: #88DDCA;
+		--accent-subtle: var(--primary-color-lightest);
+
+		/* ~6.9:1 on --background-color. */
+		--accent-secondary: #DD8F5F;
+
+		--text-color: #E6E6E6;
+		--text-secondary-color: #A8A8A8;
+		/* Only ever paired with a solid --accent/--accent-hover fill (button-
+		   primary, filled badges) - stays dark since those fills are now
+		   light. ~9.6:1 on --accent, ~11:1 on --accent-hover. */
+		--text-color-inverse: #161B1D;
+		--background-color: #151819;
+		--border-color: #3A3E41;
+
+		--surface: #212526;
+		--surface-hover: var(--primary-color-lightest);
+		/* ~3.6:1 on --surface, ~4.1:1 on --background-color. */
+		--control-border: hsl(180deg 6% 46%);
+
+		--awful-color: #D46F63;
+		--bad-color:   #E79362;
+		--fine-color:  #E4C162;
+		--good-color:  #8BCCA5;
+		--great-color: #49C7CC;
+	}
+}
+
+:root[data-theme="dark"] {
+	color-scheme: dark;
+
+	--primary-color: #3FA690;
+	--secondary-color: #BE6B37;
+
+	--primary-color-light: #273F3A;
+	--primary-color-lightest: #1C2C28;
+	--primary-color-dark: #61D1B9;
+	--primary-color-darkest: #81DAC7;
+
+	--secondary-color-light: #453227;
+	--secondary-color-lightest: #30241D;
+	--secondary-color-dark: #DD8F5F;
+	--secondary-color-darkest: #E4A781;
+
+	--accent: #69D3BC;
+	--accent-hover: #88DDCA;
+	--accent-subtle: var(--primary-color-lightest);
+
+	--accent-secondary: #DD8F5F;
+
+	--text-color: #E6E6E6;
+	--text-secondary-color: #A8A8A8;
+	--text-color-inverse: #161B1D;
+	--background-color: #151819;
+	--border-color: #3A3E41;
+
+	--surface: #212526;
+	--surface-hover: var(--primary-color-lightest);
+	--control-border: hsl(180deg 6% 46%);
+
+	--awful-color: #D46F63;
+	--bad-color:   #E79362;
+	--fine-color:  #E4C162;
+	--good-color:  #8BCCA5;
+	--great-color: #49C7CC;
 }
 
 * {
