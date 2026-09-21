@@ -88,10 +88,13 @@ missing-but-helpful features, and inaccuracies.
 
 11. **(Fixed)** `getTimeOfDayPatterns` (`dashboard.controller.go:570`) buckets by exact `HH:00`,
     not a coarser morning/afternoon/evening bucket — fine, but sparse/jumpy for accounts with
-    irregular write times. Rather than picking one granularity, added a "Granularity" radio
-    group (Hour / 3-hour blocks / Time of day) alongside the existing 7/30/90-day radios on
-    Mood by Time of Day, via a `granularity` query param and a new `timeOfDayBucket` helper.
-    Each radio preserves the other control's current selection when clicked.
+    irregular write times. Rather than picking one granularity, added a "Granularity" control
+    (Hour / 3-hour blocks / Time of day) alongside the existing 7/30/90-day radios on Mood by
+    Time of Day, via a `granularity` query param and a new `timeOfDayBucket` helper. Two
+    stacked radio groups initially looked bulky, so Granularity is a `<select>` dropdown
+    (matching the app's existing `.select` styling) sitting in the same row as the Timespan
+    radios rather than a second radio row; both controls preserve each other's current
+    selection when changed.
 12. **(Fixed)** `moodByDay.js`/`moodByTod.js`/`moodByTopic.js`/`moodChart.js` shared ~90%
     identical Chart.js boilerplate (the min/max/ticks block in particular) duplicated four
     times rather than factored out. The min/max/empty-state and rating-label lookup were

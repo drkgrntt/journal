@@ -4,6 +4,14 @@
 	background-color: var(--primary-color-lightest);
 	box-shadow: var(--shadow-sm);
 
+	.mood-by-tod-controls {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: center;
+		gap: .5rem 1rem;
+	}
+
 	.options {
 		display: flex;
 		justify-content: space-between;
@@ -12,9 +20,23 @@
 		legend {
 			display: none;
 		}
+	}
 
-		& + .options {
-			margin-top: .5rem;
+	.granularity-control {
+		display: flex;
+		align-items: center;
+		gap: .5rem;
+		flex-shrink: 0;
+
+		label {
+			font-size: .875rem;
+			color: var(--text-secondary-color);
+			white-space: nowrap;
+		}
+
+		.select {
+			width: auto;
+			padding: .4rem 2rem .4rem .7rem;
 		}
 	}
 
