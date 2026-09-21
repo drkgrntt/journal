@@ -68,3 +68,59 @@
 	text-align: center;
 }
 
+/* Opt-out controls for the Patterns tab -- each chart can be hidden
+   individually and brought back from the manager below. Sized down from the
+   accordion/button defaults (meant for standalone use) so the two line up
+   as a single header row instead of the button looking oversized next to a
+   1.2rem accordion title. */
+.pattern-header {
+	display: flex;
+	align-items: center;
+	gap: .5rem;
+
+	.accordion {
+		flex: 1;
+
+		.accordion-summary {
+			padding: .5rem .75rem;
+
+			h5 {
+				font-size: 1rem;
+			}
+		}
+	}
+
+	> .button {
+		min-height: auto;
+		padding: .4rem .6rem;
+	}
+}
+
+.hidden-patterns {
+	margin: .5rem 0 1rem;
+	padding: .75rem 1rem;
+	border: 1px dashed var(--border-color);
+	border-radius: var(--radius-md);
+	color: var(--text-secondary-color);
+
+	summary {
+		cursor: pointer;
+	}
+
+	ul {
+		list-style: none;
+		margin: .75rem 0 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: .5rem;
+	}
+
+	li {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+	}
+}
+

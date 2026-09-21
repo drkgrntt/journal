@@ -2,11 +2,13 @@ package controllers
 
 import (
 	"fmt"
+	"journal/internal/logger"
 	"journal/internal/middleware"
 	"journal/internal/models"
 	"journal/internal/utils"
 	"journal/internal/web/dashboard"
 	"math"
+	"net/http"
 	"sort"
 	"time"
 
@@ -115,6 +117,78 @@ func (c *DashboardController) setOutstandingActionItems(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
+// dashboardPreferences is stored in the current user's Metadata jsonb column
+// (see models.EncodeMetadata/CastMetadata) -- HiddenPatterns holds the keys
+// (dashboard.PatternKeys) of Patterns-tab charts the user has opted out of.
+type dashboardPreferences struct {
+	HiddenPatterns []string `json:"hiddenPatterns"`
+}
+
+func hiddenPatternSet(user *models.User) map[string]bool {
+	hidden := map[string]bool{}
+	err, prefs := models.CastMetadata[dashboardPreferences](user.Metadata)
+	if err != nil {
+		return hidden
+	}
+	for _, key := range prefs.HiddenPatterns {
+		hidden[key] = true
+	}
+	return hidden
+}
+
+func (c *DashboardController) setHiddenPatterns(ctx *fiber.Ctx) error {
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	hidden := hiddenPatternSet(currentUser)
+	ctx.Locals("hiddenPatterns", &hidden)
+	return ctx.Next()
+}
+
+// setPatternHidden opts the current user in or out of a single Patterns-tab
+// chart, keyed by dashboard.PatternKeys, and persists it to User.Metadata.
+func (c *DashboardController) setPatternHidden(ctx *fiber.Ctx, hidden bool) error {
+	key := ctx.Params("key")
+	if !dashboard.IsValidPatternKey(key) {
+		return ctx.Status(http.StatusNotFound).JSON(fiber.Map{"message": "Unknown pattern"})
+	}
+
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	set := hiddenPatternSet(currentUser)
+	if hidden {
+		set[key] = true
+	} else {
+		delete(set, key)
+	}
+
+	updated := make([]string, 0, len(set))
+	for k := range set {
+		updated = append(updated, k)
+	}
+	sort.Strings(updated)
+
+	metadata, err := models.EncodeMetadata(dashboardPreferences{HiddenPatterns: updated})
+	if err != nil {
+		logger.Error(err.Error())
+		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error saving preference"})
+	}
+	currentUser.Metadata = metadata
+
+	if err := c.db.Save(currentUser).Error; err != nil {
+		logger.Error(err.Error())
+		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error saving preference"})
+	}
+
+	ctx.Set("HX-Redirect", "/dashboard?tab=patterns")
+	return ctx.SendStatus(http.StatusOK)
+}
+
+func (c *DashboardController) hidePattern(ctx *fiber.Ctx) error {
+	return c.setPatternHidden(ctx, true)
+}
+
+func (c *DashboardController) showPattern(ctx *fiber.Ctx) error {
+	return c.setPatternHidden(ctx, false)
+}
+
 func (c *DashboardController) RegisterViewRoutes() {
 	c.views.Use(middleware.RequireAuth)
 	c.views.Get("/",
@@ -122,6 +196,7 @@ func (c *DashboardController) RegisterViewRoutes() {
 		middleware.SetJournalTypes,
 		c.setJournals,
 		c.setOutstandingActionItems,
+		c.setHiddenPatterns,
 		utils.RenderPage(dashboard.DashboardPage),
 	)
 	c.views.Get("/calendar", middleware.SetRatings, c.getCalendar)
@@ -139,6 +214,10 @@ func (c *DashboardController) RegisterViewRoutes() {
 }
 
 func (c *DashboardController) RegisterApiRoutes() {
+	c.api.Use(middleware.RequireAuth)
+
+	c.api.Put("/patterns/:key/hide", c.hidePattern)
+	c.api.Put("/patterns/:key/show", c.showPattern)
 }
 
 func (c *DashboardController) getCalendar(ctx *fiber.Ctx) error {
