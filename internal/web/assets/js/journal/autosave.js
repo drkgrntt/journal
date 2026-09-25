@@ -81,6 +81,12 @@ function initAutosave() {
 
 		const formData = new FormData(form)
 		formData.set("autosave", "true")
+		// FormData's default multipart/form-data encoding doesn't get the
+		// actionItemIds[]/thankfulIds[] bracket-stripping the server only
+		// applies to url-encoded bodies, so those associations would
+		// silently never update via autosave. Send url-encoded instead,
+		// matching what the manual "Done" submit already sends via htmx.
+		const params = new URLSearchParams(formData)
 
 		const url = id ? `/api/journal/${id}` : "/api/journal"
 		const method = id ? "PUT" : "POST"
@@ -88,7 +94,7 @@ function initAutosave() {
 		inFlight = true
 		setStatus("Saving…")
 
-		fetch(url, { method, body: formData, credentials: "same-origin" })
+		fetch(url, { method, body: params, credentials: "same-origin" })
 			.then(async (res) => {
 				if (!res.ok) throw new Error(await res.text())
 				const journal = await res.json()

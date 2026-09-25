@@ -11,7 +11,10 @@ function initDiscard() {
 	// these original values rather than deleted - snapshot them now, before
 	// autosave or the user can change anything.
 	const isExisting = form.dataset.existing === "true"
-	const originalData = isExisting ? new FormData(form) : null
+	// url-encoded, not FormData's default multipart, so the reverted
+	// actionItemIds[]/thankfulIds[] fields actually get parsed - see
+	// autosave.js for the same fix and why.
+	const originalData = isExisting ? new URLSearchParams(new FormData(form)) : null
 
 	function currentId() {
 		const put = form.getAttribute("hx-put")

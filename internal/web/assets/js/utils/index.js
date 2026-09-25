@@ -41,22 +41,76 @@ export function setUnixValue(dateString, element) {
 }
 setToWindow("setUnixValue", setUnixValue);
 
-// Checking an action item OOB-appends it into #action-item-ids so a journal
-// entry submitted afterward picks it up. That queue otherwise survives for as
-// long as the dashboard page stays open, so a box checked hours ago still
-// attaches to an unrelated entry written later. Starting to type a brand-new
-// entry is treated as the start of a fresh session: it wipes anything queued
-// before that point, so only items checked while this entry is actively being
-// written still attach. Only fires once per draft (see draftStarted guard) so
-// later keystrokes don't wipe items checked mid-write.
+// Checking an action item/thankful off, editing one, or adding a new one
+// OOB-appends a hidden input into #action-item-ids/#thankful-ids (see
+// list.templ's hx-swap-oob) so a journal entry submitted afterward picks it
+// up. Both containers start out pre-seeded server-side with whatever this
+// entry already has (empty for a brand-new entry) - snapshot that starting
+// point on load so a reset can restore exactly it, instead of hardcoding
+// "wipe to empty" (which would also erase an existing entry's real,
+// already-saved associations).
+const PENDING_CONTAINER_IDS = ["action-item-ids", "thankful-ids"]
+
+function snapshotPendingContainers() {
+	for (const id of PENDING_CONTAINER_IDS) {
+		const container = document.getElementById(id)
+		if (!container || container.dataset.pendingSnapshot != null) continue
+		container.dataset.pendingSnapshot = container.innerHTML
+	}
+}
+htmx.onLoad(snapshotPendingContainers)
+
+const PAGE_LOAD_TIME = Date.now()
+const STALE_QUEUE_THRESHOLD_MS = 30 * 60 * 1000
+
+// A brand-new entry's containers start empty, so resetting means discarding
+// anything queued before this draft started - but only once the queue has
+// actually been sitting a while (this page staying open for a long stretch,
+// e.g. items checked off hours earlier). Something checked off seconds
+// before typing begins is presumably meant for this entry, so a fresh queue
+// is left alone. An existing entry's containers start pre-seeded with its
+// real, saved associations - there's no equivalent "session" there, so
+// editing it always resets back to that saved set, discarding anything
+// queued from interacting with unrelated items elsewhere on the page (e.g.
+// the Outstanding sidebar on an old entry you're just reviewing). Only fires
+// once per draft (see draftStarted guard) so later keystrokes don't reset
+// items checked mid-write.
 export function resetPendingActionItemIds(event) {
 	const textarea = event.target
 	if (textarea.dataset.draftStarted) return
 	textarea.dataset.draftStarted = "true"
-	const container = document.getElementById("action-item-ids")
-	if (container) container.innerHTML = ""
+
+	const isExistingEntry = textarea.form && textarea.form.dataset.existing === "true"
+	if (!isExistingEntry && Date.now() - PAGE_LOAD_TIME < STALE_QUEUE_THRESHOLD_MS) return
+
+	for (const id of PENDING_CONTAINER_IDS) {
+		const container = document.getElementById(id)
+		if (container) container.innerHTML = container.dataset.pendingSnapshot ?? ""
+	}
 }
 setToWindow("resetPendingActionItemIds", resetPendingActionItemIds)
+
+// Toggling the same action item/thankful complete and back queues it again -
+// list.templ's OOB append has no memory of what's already queued, so this
+// can leave duplicate hidden inputs with the same value. Harmless to the
+// save itself (duplicate ids just resolve to the same row), but clean it up
+// after every htmx swap so the queue reflects what's actually checked.
+function dedupePendingContainers() {
+	for (const id of PENDING_CONTAINER_IDS) {
+		const container = document.getElementById(id)
+		if (!container) continue
+		const seen = new Set()
+		const inputs = [...container.querySelectorAll("input[type=hidden]")].reverse()
+		for (const input of inputs) {
+			if (seen.has(input.value)) {
+				input.remove()
+			} else {
+				seen.add(input.value)
+			}
+		}
+	}
+}
+document.body.addEventListener("htmx:afterSettle", dedupePendingContainers)
 
 ;(function() {
 	const tz = Intl.DateTimeFormat().resolvedOptions().timeZone

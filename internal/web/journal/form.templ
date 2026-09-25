@@ -139,9 +139,7 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 				class="textarea"
 				id="entry"
 				placeholder="What's on your mind?"
-				if journal == nil {
-					hx-on:input="resetPendingActionItemIds(event)"
-				}
+				hx-on:input="resetPendingActionItemIds(event)"
 			>
 				if journal != nil {
 					{ journal.Entry }

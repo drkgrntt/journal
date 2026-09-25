@@ -122,13 +122,28 @@ templ loadMore(c *fiber.Ctx) {
 	</button>
 }
 
-templ List(c *fiber.Ctx, actionItems []*models.ActionItem) {
-	<ul id="action-item-list" action-item-list>
-		for _, actionItem := range actionItems {
-			@ListItem(c, actionItem)
-		}
-	</ul>
-	@loadMore(c)
+// isPrimary marks the one list on a page that newly-created action items
+// should append into and (if paginated) that "load more" should target -
+// the id and [action-item-list] attribute hx-target/hx-swap rely on, so
+// only one list per page may set it. Pages that show a second, contextual
+// list alongside it (e.g. an "Outstanding" sidebar) must pass false for
+// that one: it's never a valid append/pagination target, and giving it the
+// same id/attribute would make hx-target ambiguous.
+templ List(c *fiber.Ctx, actionItems []*models.ActionItem, isPrimary bool) {
+	if isPrimary {
+		<ul id="action-item-list" class="action-item-list" action-item-list>
+			for _, actionItem := range actionItems {
+				@ListItem(c, actionItem)
+			}
+		</ul>
+		@loadMore(c)
+	} else {
+		<ul class="action-item-list">
+			for _, actionItem := range actionItems {
+				@ListItem(c, actionItem)
+			}
+		</ul>
+	}
 }
 
 func getActionItems(c *fiber.Ctx) []*models.ActionItem {

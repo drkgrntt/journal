@@ -185,7 +185,7 @@ templ Today(c *fiber.Ctx) {
 	<h3 class="heading">Here's what's left.</h3>
 	@actionItems.Form(c, nil, nil)
 	<br/>
-	@actionItems.List(c, getOutstandingActionItems(c))
+	@actionItems.List(c, getOutstandingActionItems(c), true)
 }
 
 templ patternBlock(c *fiber.Ctx, p patternDef) {

@@ -16,10 +16,10 @@ templ Combined(c *fiber.Ctx, journal *models.Journal) {
 	<div id="action-items-combined">
 		<h3 class="heading">Actions</h3>
 		@Form(c, journal, nil)
-		@List(c, getActionItemsFromJournal(journal))
+		@List(c, getActionItemsFromJournal(journal), true)
 		if journal != nil && len(journal.OutstandingActionItems) > 0 {
 			<h4>Outstanding:</h4>
-			@List(c, journal.OutstandingActionItems)
+			@List(c, journal.OutstandingActionItems, false)
 		}
 	</div>
 }

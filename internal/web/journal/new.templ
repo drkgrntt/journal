@@ -33,11 +33,11 @@ templ NewPage(c *fiber.Ctx) {
 					<div class="action-items">
 						<h3 class="heading">Take Action</h3>
 						@actionItems.Form(c, nil, nil)
-						@actionItems.List(c, []*models.ActionItem{})
+						@actionItems.List(c, []*models.ActionItem{}, true)
 						<br/>
 						if len(getOutstandingActionItems(c)) > 0 {
 							<h4>Outstanding:</h4>
-							@actionItems.List(c, getOutstandingActionItems(c))
+							@actionItems.List(c, getOutstandingActionItems(c), false)
 						}
 					</div>
 					<div class="thankfuls">

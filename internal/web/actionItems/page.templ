@@ -27,7 +27,7 @@ templ Page(c *fiber.Ctx) {
 			<h2 class="heading">Actions</h2>
 			@listPageFilters(c)
 			@Form(c, nil, nil)
-			@List(c, getActionItems(c))
+			@List(c, getActionItems(c), true)
 		</div>
 	}
 }
