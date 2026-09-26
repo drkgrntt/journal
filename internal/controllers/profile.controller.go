@@ -9,6 +9,7 @@ import (
 	"journal/internal/web/profile"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -52,6 +53,127 @@ func (c *ProfileController) RegisterApiRoutes() {
 	c.api.Put("/password", c.updatePassword)
 	c.api.Put("/features", c.updateFeatures)
 	c.api.Put("/features/:id", c.buyFeature)
+	c.api.Get("/export", c.exportJournals)
+}
+
+type exportedActionItem struct {
+	Text      string `json:"text"`
+	Completed bool   `json:"completed"`
+}
+
+type exportedJournal struct {
+	Date         string               `json:"date"`
+	Topic        string               `json:"topic"`
+	Rating       string               `json:"rating,omitempty"`
+	IsBookmarked bool                 `json:"isBookmarked"`
+	Entry        string               `json:"entry"`
+	ActionItems  []exportedActionItem `json:"actionItems,omitempty"`
+	Thankfuls    []string             `json:"thankfuls,omitempty"`
+}
+
+func (c *ProfileController) exportJournals(ctx *fiber.Ctx) error {
+	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+
+	var journals []*models.Journal
+	err := c.db.
+		Where("creator_id = ?", currentUser.ID).
+		Preload("JournalType").
+		Preload("CustomJournalType").
+		Preload("Rating").
+		Preload("ActionItems", func(db *gorm.DB) *gorm.DB { return db.Order("created_at asc") }).
+		Preload("Thankfuls", func(db *gorm.DB) *gorm.DB { return db.Order("created_at asc") }).
+		Order("date asc").
+		Find(&journals).Error
+	if err != nil {
+		logger.Error(err.Error())
+		return ctx.Status(http.StatusInternalServerError).SendString("Error exporting journals")
+	}
+
+	exports := make([]exportedJournal, 0, len(journals))
+	for _, j := range journals {
+		topic := ""
+		if j.JournalType != nil && j.JournalType.IsCustom() && j.CustomJournalType != nil {
+			topic = j.CustomJournalType.Name
+		} else if j.JournalType != nil {
+			topic = j.JournalType.Name
+		}
+
+		rating := ""
+		if j.Rating != nil {
+			rating = j.Rating.Name
+		}
+
+		actionItems := make([]exportedActionItem, 0, len(j.ActionItems))
+		for _, a := range j.ActionItems {
+			actionItems = append(actionItems, exportedActionItem{Text: a.Text, Completed: a.IsComplete()})
+		}
+
+		thankfuls := make([]string, 0, len(j.Thankfuls))
+		for _, t := range j.Thankfuls {
+			thankfuls = append(thankfuls, t.Text)
+		}
+
+		date := ""
+		if j.Date != nil {
+			date = j.Date.UTC().Format("2006-01-02")
+		}
+
+		exports = append(exports, exportedJournal{
+			Date:         date,
+			Topic:        topic,
+			Rating:       rating,
+			IsBookmarked: j.BookmarkedAt != nil,
+			Entry:        j.Entry,
+			ActionItems:  actionItems,
+			Thankfuls:    thankfuls,
+		})
+	}
+
+	filename := fmt.Sprintf("contour-journal-export-%s", time.Now().UTC().Format("2006-01-02"))
+
+	if ctx.Query("format") == "json" {
+		ctx.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.json"`, filename))
+		return ctx.JSON(exports)
+	}
+
+	var sb strings.Builder
+	sb.WriteString("# Contour Journal Export\n\n")
+	for _, e := range exports {
+		sb.WriteString(fmt.Sprintf("## %s — %s", e.Date, e.Topic))
+		if e.Rating != "" {
+			sb.WriteString(fmt.Sprintf(" (%s)", e.Rating))
+		}
+		if e.IsBookmarked {
+			sb.WriteString(" ★")
+		}
+		sb.WriteString("\n\n")
+		sb.WriteString(e.Entry)
+		sb.WriteString("\n")
+
+		if len(e.ActionItems) > 0 {
+			sb.WriteString("\n**Action Items:**\n")
+			for _, a := range e.ActionItems {
+				mark := " "
+				if a.Completed {
+					mark = "x"
+				}
+				sb.WriteString(fmt.Sprintf("- [%s] %s\n", mark, a.Text))
+			}
+		}
+
+		if len(e.Thankfuls) > 0 {
+			sb.WriteString("\n**Thankful for:**\n")
+			for _, t := range e.Thankfuls {
+				sb.WriteString(fmt.Sprintf("- %s\n", t))
+			}
+		}
+
+		sb.WriteString("\n---\n\n")
+	}
+
+	ctx.Set("Content-Type", "text/markdown; charset=utf-8")
+	ctx.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.md"`, filename))
+	return ctx.SendString(sb.String())
 }
 
 func (c *ProfileController) buyFeature(ctx *fiber.Ctx) error {

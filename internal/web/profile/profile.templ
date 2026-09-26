@@ -156,6 +156,17 @@ templ blurTextToggle(c *fiber.Ctx) {
 	</div>
 }
 
+templ exportSection(c *fiber.Ctx) {
+	<div class="form">
+		<h4>Export Your Journal</h4>
+		<p>Download everything you've written — for backup, or to use elsewhere.</p>
+		<div class="field">
+			<a class="button" href="/api/profile/export?format=markdown" download>Export as Markdown</a>
+			<a class="button" href="/api/profile/export?format=json" download>Export as JSON</a>
+		</div>
+	</div>
+}
+
 templ customJournalTypeForm(c *fiber.Ctx) {
 	<div class="form">
 		<h4>Custom Topics</h4>
@@ -214,6 +225,7 @@ templ ProfilePage(c *fiber.Ctx) {
 			<div class="forms">
 				@infoForm(c)
 				@passwordForm(c)
+				@exportSection(c)
 				if len(web.CurrentUser(c).UserFeatures) > 0 {
 					@featureForm(c)
 				}
