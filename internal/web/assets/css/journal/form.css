@@ -38,10 +38,18 @@
 			gap: .75rem;
 			align-items: center;
 		}
+	}
+
+	.check-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
 
 		.autosave-status {
 			font-size: var(--text-sm);
 			color: var(--text-secondary-color);
+			text-align: right;
 		}
 	}
 

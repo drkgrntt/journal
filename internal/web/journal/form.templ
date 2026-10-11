@@ -146,14 +146,17 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 				}
 			</textarea>
 		</div>
-		<div class="checkField">
-			<input
-				type="checkbox"
-				name="addAnotherEntry"
-				id="addAnotherEntry"
-				value="true"
-			/>
-			<label class="label" for="addAnotherEntry">Add another entry</label>
+		<div class="check-row">
+			<div class="checkField">
+				<input
+					type="checkbox"
+					name="addAnotherEntry"
+					id="addAnotherEntry"
+					value="true"
+				/>
+				<label class="label" for="addAnotherEntry">Add another entry</label>
+			</div>
+			<span id="autosave-status" class="autosave-status" aria-live="polite"></span>
 		</div>
 		<div>
 			<div id="action-item-ids">
@@ -175,7 +178,6 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 					<button class="button" type="submit">Done</button>
 					<button class="button button-danger" type="button" id="discard-button">Discard</button>
 				</div>
-				<span id="autosave-status" class="autosave-status" aria-live="polite"></span>
 				<label
 					for="isBookmarked"
 					class="button bookmark-label"
