@@ -30,13 +30,13 @@ function initDiscard() {
 		window.location.href = res.headers.get("HX-Redirect") || "/journal"
 	}
 
-	discardBtn.addEventListener("click", function (event) {
+	discardBtn.addEventListener("click", async function (event) {
 		event.preventDefault()
 
 		const id = currentId()
 
 		if (isExisting) {
-			if (!confirm("Discard changes and revert to the last saved version?")) return
+			if (!(await confirmDialog("Discard changes and revert to the last saved version?", "Discard"))) return
 			fetch(`/api/journal/${id}`, {
 				method: "PUT",
 				body: originalData,
@@ -50,7 +50,7 @@ function initDiscard() {
 			return
 		}
 
-		if (!confirm("Discard this entry?")) return
+		if (!(await confirmDialog("Discard this entry?", "Discard"))) return
 		fetch(`/api/journal/${id}`, {
 			method: "DELETE",
 			credentials: "same-origin",

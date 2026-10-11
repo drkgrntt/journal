@@ -289,3 +289,4 @@ document.addEventListener("focusout", function(e) {
 	if (element.tagName !== "INPUT" && element.tagName !== "TEXTAREA") return
 	applyBlur(element)
 })
+export * from "./confirm.js"

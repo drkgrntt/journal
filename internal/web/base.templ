@@ -82,6 +82,15 @@ templ baseWithHead(c *fiber.Ctx, h *Head) {
 				{ children... }
 			</main>
 			@Footer(c)
+			<dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-message">
+				<form method="dialog">
+					<p id="confirm-message" confirm-message></p>
+					<div class="actions">
+						<button type="submit" value="cancel" confirm-cancel>Cancel</button>
+						<button type="submit" value="ok" confirm-ok>Confirm</button>
+					</div>
+				</form>
+			</dialog>
 		</body>
 	</html>
 }
