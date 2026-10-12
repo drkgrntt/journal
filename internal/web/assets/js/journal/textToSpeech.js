@@ -10,17 +10,24 @@ export function textToSpeech(button, inputQuery) {
 	}
 	const recognition = new SpeechRecognition();
 	recognition.continuous = true;
+	recognition.interimResults = false;
+
+	// Only the user pressing the button (or a fatal error) ends dictation;
+	// browsers end sessions on their own after pauses, so we restart those.
+	let stopped = false;
 
 	recognition.onresult = function(event) {
-		const current = event.resultIndex;
-		const transcript = event.results[current][0].transcript;
 		const input = document.querySelector(inputQuery)
-		input.value = input.value + transcript
+		for (let i = event.resultIndex; i < event.results.length; i++) {
+			if (!event.results[i].isFinal) continue
+			const transcript = event.results[i][0].transcript
+			const needsSpace = input.value && !/\s$/.test(input.value) && !/^\s/.test(transcript)
+			input.value = input.value + (needsSpace ? " " : "") + transcript
+		}
 	};
 
 	recognition.onstart = function() {
 		button.innerHTML = "<i class='fa fa-microphone-slash'></i>";
-		console.log('Voice recognition activated. Try speaking.');
 	};
 
 	function resetButton() {
@@ -31,18 +38,28 @@ export function textToSpeech(button, inputQuery) {
 		}
 	}
 
-	recognition.onspeechend = function() {
-		console.log('You have stopped speaking.');
-		resetButton()
+	recognition.onerror = function(event) {
+		// Silence and brief network hiccups shouldn't end the session.
+		if (event.error === "no-speech" || event.error === "aborted") return
+		console.log(event)
+		stopped = true
 	};
 
-	recognition.onerror = function(event) {
-		console.log(event)
-		resetButton()
+	recognition.onend = function() {
+		if (stopped) {
+			resetButton()
+			return
+		}
+		try {
+			recognition.start()
+		} catch (e) {
+			resetButton()
+		}
 	};
 
 	button.onclick = function(e) {
 		e.preventDefault()
+		stopped = true
 		recognition.stop()
 	};
 
