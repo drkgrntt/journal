@@ -2,11 +2,11 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"journal/internal/logger"
 	"journal/internal/models"
 	_ "journal/internal/stripe"
-	"journal/internal/utils"
 	"net/http"
 	"os"
 	"time"
@@ -100,16 +100,26 @@ func (c *StripeController) handlePaymentIntentSucceeded(event *stripe.Event) err
 		return err
 	}
 
-	err = c.db.Save(&models.UserFeature{
-		FeatureID: feature.ID,
-		EnabledAt: utils.Pointer(time.Now().UTC()),
-		Base: &models.Base{
-			CreatedAt:     time.Now().UTC(),
-			UpdatedAt:     time.Now().UTC(),
-			CreatorID:     &user.ID,
-			LastUpdaterID: &user.ID,
-		},
-	}).Error
+	// Webhooks can be delivered more than once, so grant idempotently
+	now := time.Now().UTC()
+	var userFeature models.UserFeature
+	err = c.db.Where("creator_id = ? AND feature_id = ?", user.ID, feature.ID).First(&userFeature).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		err = c.db.Create(&models.UserFeature{
+			FeatureID: feature.ID,
+			EnabledAt: &now,
+			Base: &models.Base{
+				CreatedAt:     now,
+				UpdatedAt:     now,
+				CreatorID:     &user.ID,
+				LastUpdaterID: &user.ID,
+			},
+		}).Error
+	} else if err == nil && userFeature.EnabledAt == nil {
+		userFeature.EnabledAt = &now
+		userFeature.UpdatedAt = now
+		err = c.db.Save(&userFeature).Error
+	}
 	if err != nil {
 		logger.Error("Error saving user feature", "error", err)
 		return err
