@@ -3,21 +3,11 @@ package dashboard
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"journal/internal/models"
 	"journal/internal/utils"
 	"journal/internal/web"
-	"journal/internal/web/actionItems"
 	"journal/internal/web/components"
 	"journal/internal/web/journal"
 )
-
-func getOutstandingActionItems(c *fiber.Ctx) []*models.ActionItem {
-	actionItems := utils.GetLocal[[]*models.ActionItem](c, "outstandingActionItems")
-	if actionItems != nil {
-		return *actionItems
-	}
-	return []*models.ActionItem{}
-}
 
 // patternDef is one entry on the Patterns tab: a title/description for its
 // accordion plus the chart component itself, keyed so a user can opt out of
@@ -180,12 +170,7 @@ templ Tabs(c *fiber.Ctx) {
 
 templ Today(c *fiber.Ctx) {
 	<h2 class="heading">How are you feeling?</h2>
-	@journal.Form(c, nil)
-	<br/>
-	<h3 class="heading">Here's what's left.</h3>
-	@actionItems.Form(c, nil, nil)
-	<br/>
-	@actionItems.List(c, getOutstandingActionItems(c), true)
+	@journal.EntryBody(c)
 }
 
 templ patternBlock(c *fiber.Ctx, p patternDef) {
@@ -242,7 +227,7 @@ templ Patterns(c *fiber.Ctx) {
 
 templ DashboardPage(c *fiber.Ctx) {
 	@web.Base(c, nil) {
-		<div id="dashboard-page">
+		<div id="dashboard-page" class={ templ.KV("wide", c.Query("tab", "today") == "today") }>
 			@Tabs(c)
 			if c.Query("tab", "today") == "today" {
 				@Today(c)

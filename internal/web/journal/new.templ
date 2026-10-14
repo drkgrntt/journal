@@ -17,6 +17,33 @@ func getOutstandingActionItems(c *fiber.Ctx) []*models.ActionItem {
 	return *actionItems
 }
 
+// EntryBody is the journal form plus the action item / thankful margin, shared by
+// the new-entry page and the dashboard Today tab.
+templ EntryBody(c *fiber.Ctx) {
+	<div class="body entry-body">
+		<div class="journal-form">
+			@Form(c, nil)
+		</div>
+		<div class="right-margin">
+			<div class="action-items">
+				<h3 class="heading">Take Action</h3>
+				@actionItems.Form(c, nil, nil)
+				@actionItems.List(c, []*models.ActionItem{}, true)
+				<br/>
+				if len(getOutstandingActionItems(c)) > 0 {
+					<h4>Outstanding:</h4>
+					@actionItems.List(c, getOutstandingActionItems(c), false)
+				}
+			</div>
+			<div class="thankfuls">
+				<h3 class="heading">Today I'm Thankful For</h3>
+				@thankful.Form(c, nil, nil)
+				@thankful.List(c, []*models.Thankful{})
+			</div>
+		</div>
+	</div>
+}
+
 templ NewPage(c *fiber.Ctx) {
 	@web.Base(c, nil) {
 		<div id="new-journal-page">
@@ -25,28 +52,7 @@ templ NewPage(c *fiber.Ctx) {
 				Back
 			</a>
 			<h1 class="heading">New Journal Entry</h1>
-			<div class="body">
-				<div class="journal-form">
-					@Form(c, nil)
-				</div>
-				<div class="right-margin">
-					<div class="action-items">
-						<h3 class="heading">Take Action</h3>
-						@actionItems.Form(c, nil, nil)
-						@actionItems.List(c, []*models.ActionItem{}, true)
-						<br/>
-						if len(getOutstandingActionItems(c)) > 0 {
-							<h4>Outstanding:</h4>
-							@actionItems.List(c, getOutstandingActionItems(c), false)
-						}
-					</div>
-					<div class="thankfuls">
-						<h3 class="heading">Today I'm Thankful For</h3>
-						@thankful.Form(c, nil, nil)
-						@thankful.List(c, []*models.Thankful{})
-					</div>
-				</div>
-			</div>
+			@EntryBody(c)
 		</div>
 	}
 }
