@@ -171,8 +171,8 @@ func (c *RecurringActionItemController) RegisterViewRoutes() {
 func (c *RecurringActionItemController) RegisterApiRoutes() {
 	c.api.Use(middleware.RequireAuth)
 
-	c.api.Post("/", c.createRecurringActionItem)
-	c.api.Put("/:id", c.getRecurringActionItem, c.updateRecurringActionItem)
+	c.api.Post("/", middleware.RequireFeature("routines"), c.createRecurringActionItem)
+	c.api.Put("/:id", middleware.RequireFeature("routines"), c.getRecurringActionItem, c.updateRecurringActionItem)
 	c.api.Delete("/:id", c.getRecurringActionItem, c.deleteRecurringActionItem)
 }
 
