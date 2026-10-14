@@ -17,6 +17,10 @@
 	max-width: 40rem;
 	margin: 0 auto;
 
+	&.wide {
+		max-width: 60rem;
+	}
+
 	.tabs {
 		display: flex;
 		margin: 0 auto 1rem;
