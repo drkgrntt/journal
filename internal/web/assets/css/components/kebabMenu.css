@@ -4,6 +4,39 @@
 	.button {
 		border-color: transparent;
 		background-color: transparent;
+		padding: .5rem .75rem;
+	}
+
+	.kebab-content {
+		display: grid;
+		grid-gap: 1rem;
+		width: 7rem;
+	}
+
+	/* Menu items are a mix of <a> and <button> (the latter for hx-get/
+	   hx-delete actions), so strip the global button chrome and make both
+	   read as the same plain text link. */
+	.action-link {
+		display: block;
+		min-height: auto;
+		padding: 0;
+		border: none;
+		background: none;
+		font: inherit;
+		font-weight: normal;
+		color: inherit;
+		text-align: left;
+		text-decoration: none;
+		cursor: pointer;
+
+		&:hover {
+			background: none;
+			text-decoration: underline;
+		}
+
+		&.danger {
+			color: var(--awful-color);
+		}
 	}
 
 	.dialog {

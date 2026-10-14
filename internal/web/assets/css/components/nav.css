@@ -39,8 +39,12 @@
 .toggle-button-border {
   position: fixed;
   z-index: calc(1000 + 1);
-  top: .9rem;
-  right: .9rem;
+  /* Centered on the hamburger lines, not on the .toggle-button box: the
+     lines are anchored at that box's top edge (the 2px middle bar sits 1px
+     below it), so its center is 1.625rem + 1px from the top and 1.525rem +
+     .875rem from the right. 1.25rem is half this circle. */
+  top: calc(1.625rem + 1px - 1.25rem);
+  right: calc(1.525rem + .875rem - 1.25rem);
   width: 2.5rem;
   height: 2.5rem;
   border-radius: var(--radius-full);

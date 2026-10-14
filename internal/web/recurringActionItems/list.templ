@@ -6,6 +6,7 @@ import (
 	"journal/internal/models"
 	"journal/internal/utils"
 	"journal/internal/web"
+	"journal/internal/web/components"
 )
 
 templ ListItem(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) {
@@ -35,24 +36,28 @@ templ ListItem(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) {
 			<p can-blur class="text">
 				{ recurringActionItem.Text }
 			</p>
-			<button
-				class="button"
-				aria-label="Edit recurring action item"
-				hx-get={ fmt.Sprintf("/recurring-action-items/%s/form", recurringActionItem.ID.String()) }
-				hx-swap="none"
-			>
-				<i class="fa fa-pen" aria-hidden="true"></i>
-			</button>
-			<button
-				class="button"
-				aria-label="Delete recurring action item"
-				hx-delete={ fmt.Sprintf("/api/recurring-action-items/%s", recurringActionItem.ID.String()) }
-				hx-swap="delete"
-				hx-confirm="Are you sure?"
-				hx-target="closest [recurring-action-item]"
-			>
-				<i class="fa fa-trash" aria-hidden="true"></i>
-			</button>
+			@components.KebabMenu() {
+				<div class="kebab-content">
+					<button
+						class="action-link"
+						aria-label="Edit recurring action item"
+						hx-get={ fmt.Sprintf("/recurring-action-items/%s/form", recurringActionItem.ID.String()) }
+						hx-swap="none"
+					>
+						Edit
+					</button>
+					<button
+						class="action-link danger"
+						aria-label="Delete recurring action item"
+						hx-delete={ fmt.Sprintf("/api/recurring-action-items/%s", recurringActionItem.ID.String()) }
+						hx-swap="delete"
+						hx-confirm="Are you sure?"
+						hx-target="closest [recurring-action-item]"
+					>
+						Delete
+					</button>
+				</div>
+			}
 		</div>
 	</li>
 	<div

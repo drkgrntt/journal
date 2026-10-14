@@ -51,19 +51,6 @@
 		margin-right: auto;
 	}
 
-	.kebab-content {
-		display: grid;
-		grid-gap: 1rem;
-		width: 7rem;
-	}
-
-	.action-link {
-		text-decoration: none;
-		&:hover {
-			text-decoration: underline;
-		}
-	}
-
 	.info {
 		display: flex;
 		justify-content: space-between;
