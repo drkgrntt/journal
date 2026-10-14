@@ -62,7 +62,7 @@ button,
 .button-danger {
 	border-color: var(--awful-color);
 	color: var(--awful-color);
-	background-color: var(--surface);
+	background-color: color-mix(in srgb, var(--awful-color) 10%, var(--surface));
 
 	/* border-color must be re-asserted here, not just background-color: it
 	   ties in specificity with the base `button, .button &:hover` rule's own
@@ -70,7 +70,7 @@ button,
 	   value here that base rule wins the tie by source order, turning the
 	   border mint on hover instead of staying red. */
 	&:hover {
-		background-color: color-mix(in srgb, var(--awful-color) 10%, var(--surface));
+		background-color: color-mix(in srgb, var(--awful-color) 20%, var(--surface));
 		border-color: var(--awful-color);
 	}
 }

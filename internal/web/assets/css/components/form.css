@@ -37,7 +37,7 @@
 	-webkit-appearance: none;
 	-moz-appearance: none;
 
-	background-image: url("/assets/fontawesome/svgs/solid/chevron-down.svg");
+	background-image: var(--select-chevron);
 	background-repeat: no-repeat;
 	background-position: right .9rem center;
 	background-size: 12px;

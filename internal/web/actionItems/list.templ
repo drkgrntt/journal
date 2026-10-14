@@ -6,6 +6,7 @@ import (
 	"journal/internal/models"
 	"journal/internal/utils"
 	"journal/internal/web"
+	"journal/internal/web/components"
 )
 
 func completedClass(actionItem *models.ActionItem) string {
@@ -67,24 +68,28 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 					<span class="journal-type">({ actionItem.Journal.JournalType.Name })</span>
 				}
 			</p>
-			<button
-				class="button"
-				aria-label="Edit action item"
-				hx-get={ fmt.Sprintf("/action-items/%s/form", actionItem.ID.String()) }
-				hx-swap="none"
-			>
-				<i class="fa fa-pen" aria-hidden="true"></i>
-			</button>
-			<button
-				class="button button-danger"
-				aria-label="Delete action item"
-				hx-delete={ fmt.Sprintf("/api/action-items/%s", actionItem.ID.String()) }
-				hx-swap="delete"
-				hx-confirm="Are you sure?"
-				hx-target="closest [action-item]"
-			>
-				<i class="fa fa-trash" aria-hidden="true"></i>
-			</button>
+			@components.KebabMenu() {
+				<div class="kebab-content">
+					<button
+						class="action-link"
+						aria-label="Edit action item"
+						hx-get={ fmt.Sprintf("/action-items/%s/form", actionItem.ID.String()) }
+						hx-swap="none"
+					>
+						Edit
+					</button>
+					<button
+						class="action-link danger"
+						aria-label="Delete action item"
+						hx-delete={ fmt.Sprintf("/api/action-items/%s", actionItem.ID.String()) }
+						hx-swap="delete"
+						hx-confirm="Are you sure?"
+						hx-target="closest [action-item]"
+					>
+						Delete
+					</button>
+				</div>
+			}
 		</div>
 		if actionItem.IsComplete() {
 			<div class="completed">

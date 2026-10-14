@@ -60,6 +60,13 @@ h2, h3 {
 	color: var(--accent);
 }
 
+/* The global `* { color: var(--text-color) }` (theme/colors.css) also hits
+   icon <i> elements directly, so they'd ignore the color of the button or
+   link they sit in - make them inherit it again. */
+:is(.fa, .fas, .far, .fa-solid, .fa-regular) {
+	color: inherit;
+}
+
 a {
 	color: var(--accent);
 }

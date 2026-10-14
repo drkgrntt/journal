@@ -10,10 +10,8 @@ templ KebabMenu() {
 				d.show();
 				setTimeout(function() {
 					function handler(e) {
-						if (!d.contains(e.target)) {
-							d.close();
-							document.removeEventListener('click', handler);
-						}
+						d.close();
+						document.removeEventListener('click', handler);
 					};
 					document.addEventListener('click', handler);
 				});
