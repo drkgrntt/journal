@@ -146,7 +146,7 @@ func (c *RecurringActionItemController) createActionItems() {
 }
 
 func (c *RecurringActionItemController) getRecurringActionItem(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	id := ctx.Params("id")
 	var recurringActionItem models.RecurringActionItem
@@ -157,7 +157,7 @@ func (c *RecurringActionItemController) getRecurringActionItem(ctx *fiber.Ctx) e
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(fiber.Map{"message": "RecurringActionItem not found"})
 	}
-	ctx.Locals("recurringActionItem", &recurringActionItem)
+	ctx.Locals(utils.LocalRecurringActionItem, &recurringActionItem)
 
 	return ctx.Next()
 }
@@ -217,7 +217,7 @@ func (c *RecurringActionItemController) parseRecurringActionItemFromBody(ctx *fi
 }
 
 func (c *RecurringActionItemController) getRecurringActionItemForm(ctx *fiber.Ctx) error {
-	recurringActionItem := utils.GetLocal[models.RecurringActionItem](ctx, "recurringActionItem")
+	recurringActionItem := utils.GetLocal[models.RecurringActionItem](ctx, utils.LocalRecurringActionItem)
 	component := recurringActionItems.Form(ctx, recurringActionItem)
 	return utils.RenderComponent(component, ctx)
 }
@@ -230,7 +230,7 @@ func (c *RecurringActionItemController) createRecurringActionItem(ctx *fiber.Ctx
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	user := utils.GetLocal[models.User](ctx, "currentUser")
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	recurringActionItem.Base = &models.Base{CreatorID: &user.ID, LastUpdaterID: &user.ID}
 
 	err = c.db.Create(&recurringActionItem).Error
@@ -248,14 +248,14 @@ func (c *RecurringActionItemController) createRecurringActionItem(ctx *fiber.Ctx
 }
 
 func (c *RecurringActionItemController) updateRecurringActionItem(ctx *fiber.Ctx) error {
-	recurringActionItem := utils.GetLocal[models.RecurringActionItem](ctx, "recurringActionItem")
+	recurringActionItem := utils.GetLocal[models.RecurringActionItem](ctx, utils.LocalRecurringActionItem)
 
 	err := c.parseRecurringActionItemFromBody(ctx, recurringActionItem)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	user := utils.GetLocal[models.User](ctx, "currentUser")
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	recurringActionItem.Base.LastUpdaterID = &user.ID
 
 	err = c.db.Save(recurringActionItem).Error
@@ -273,7 +273,7 @@ func (c *RecurringActionItemController) updateRecurringActionItem(ctx *fiber.Ctx
 }
 
 func (c *RecurringActionItemController) deleteRecurringActionItem(ctx *fiber.Ctx) error {
-	recurringActionItem := utils.GetLocal[models.RecurringActionItem](ctx, "recurringActionItem")
+	recurringActionItem := utils.GetLocal[models.RecurringActionItem](ctx, utils.LocalRecurringActionItem)
 
 	err := c.db.Delete(recurringActionItem).Error
 	if err != nil {

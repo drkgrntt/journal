@@ -9,7 +9,7 @@ import (
 )
 
 func getBlog(c *fiber.Ctx) *models.Blog {
-	blog := utils.GetLocal[models.Blog](c, "blog")
+	blog := utils.GetLocal[models.Blog](c, utils.LocalBlog)
 	return blog
 }
 

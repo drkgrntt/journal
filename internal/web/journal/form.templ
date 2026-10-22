@@ -18,12 +18,12 @@ func journalDate(c *fiber.Ctx, journal *models.Journal) *time.Time {
 }
 
 func getJournalTypes(c *fiber.Ctx) []*models.JournalType {
-	types := utils.GetLocal[[]*models.JournalType](c, "journalTypes")
+	types := utils.GetLocal[[]*models.JournalType](c, utils.LocalJournalTypes)
 	return *types
 }
 
 func getRatings(c *fiber.Ctx) []*models.Rating {
-	ratings := utils.GetLocal[[]*models.Rating](c, "ratings")
+	ratings := utils.GetLocal[[]*models.Rating](c, utils.LocalRatings)
 	return *ratings
 }
 

@@ -10,10 +10,10 @@ import (
 )
 
 // SetDailyReminder picks one of the user's reminders for today and stores it in
-// the "reminder" local. The pick is derived from the user and their local date, so
+// the LocalDailyReminder local. The pick is derived from the user and their local date, so
 // it stays the same across refreshes without anything being stored or tracked.
 func SetDailyReminder(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	if currentUser == nil {
 		return ctx.Next()
 	}
@@ -36,6 +36,6 @@ func SetDailyReminder(ctx *fiber.Ctx) error {
 	h.Write([]byte(currentUser.ID.String() + today))
 	reminder := reminders[int(h.Sum32()%uint32(len(reminders)))]
 
-	ctx.Locals("reminder", reminder)
+	ctx.Locals(utils.LocalDailyReminder, reminder)
 	return ctx.Next()
 }

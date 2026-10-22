@@ -3,6 +3,7 @@ package dashboard
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"journal/internal/utils"
 	"journal/internal/web/components"
 )
 
@@ -27,8 +28,8 @@ templ MoodByTodContent(c *fiber.Ctx) {
 		</div>
 	</div>
 	<div class="mood-by-tod">
-		@templ.JSONScript("mood-by-tod-data", c.Locals("moodByTodData"))
-		@templ.JSONScript("mood-by-tod-ratings-data", c.Locals("ratings"))
+		@templ.JSONScript("mood-by-tod-data", c.Locals(utils.LocalMoodByTodData))
+		@templ.JSONScript("mood-by-tod-ratings-data", c.Locals(utils.LocalRatings))
 		<script src="/assets/js/components/moodByTod.js" type="module" onload="document.dispatchEvent(new Event('load-mood-by-tod'))"></script>
 	</div>
 }

@@ -11,7 +11,7 @@ import (
 )
 
 func getOutstandingActionItems(c *fiber.Ctx) []*models.ActionItem {
-	actionItems := utils.GetLocal[[]*models.ActionItem](c, "outstandingActionItems")
+	actionItems := utils.GetLocal[[]*models.ActionItem](c, utils.LocalOutstandingActionItems)
 	if actionItems == nil {
 		return []*models.ActionItem{}
 	}

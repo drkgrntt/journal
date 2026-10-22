@@ -3,6 +3,7 @@ package middleware
 import (
 	"journal/internal/logger"
 	"journal/internal/models"
+	"journal/internal/utils"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,7 +17,7 @@ func SetJournalTypes(ctx *fiber.Ctx) error {
 		return ctx.Next()
 	}
 
-	ctx.Locals("journalTypes", &types)
+	ctx.Locals(utils.LocalJournalTypes, &types)
 	return ctx.Next()
 }
 
@@ -28,7 +29,7 @@ func SetRatings(ctx *fiber.Ctx) error {
 		return ctx.Next()
 	}
 
-	ctx.Locals("ratings", &ratings)
+	ctx.Locals(utils.LocalRatings, &ratings)
 	return ctx.Next()
 }
 
@@ -40,6 +41,6 @@ func SetFeatures(ctx *fiber.Ctx) error {
 		return ctx.Next()
 	}
 
-	ctx.Locals("features", &features)
+	ctx.Locals(utils.LocalFeatures, &features)
 	return ctx.Next()
 }

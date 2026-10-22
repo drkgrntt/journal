@@ -83,7 +83,7 @@ func (c *BlogController) getBlogs(ctx *fiber.Ctx) error {
 		return blogs[i].Date.After(*blogs[j].Date)
 	})
 
-	ctx.Locals("blogs", &blogs)
+	ctx.Locals(utils.LocalBlogs, &blogs)
 	return ctx.Next()
 }
 
@@ -112,6 +112,6 @@ func (c *BlogController) getBlog(ctx *fiber.Ctx) error {
 	}
 	blog.Content = buf.String()
 
-	ctx.Locals("blog", &blog)
+	ctx.Locals(utils.LocalBlog, &blog)
 	return ctx.Next()
 }

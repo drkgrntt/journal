@@ -2,13 +2,14 @@ package dashboard
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"journal/internal/utils"
 	"journal/internal/web/components"
 )
 
 templ FrequencyChartContent(c *fiber.Ctx) {
 	@components.MonthPager("/dashboard/entry-time-frequency", "#frequency-chart", current(c), monthYearLabel(c))
 	<div class="frequency-chart">
-		@templ.JSONScript("frequency-chart-data", c.Locals("frequencyChartData"))
+		@templ.JSONScript("frequency-chart-data", c.Locals(utils.LocalFrequencyChartData))
 		<script src="/assets/js/components/frequencyChart.js" type="module" onload="document.dispatchEvent(new Event('load-frequency-chart'))"></script>
 	</div>
 }

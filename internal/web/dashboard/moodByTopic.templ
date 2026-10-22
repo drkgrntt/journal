@@ -2,14 +2,15 @@ package dashboard
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"journal/internal/utils"
 	"journal/internal/web/components"
 )
 
 templ MoodByTopicContent(c *fiber.Ctx) {
 	@components.TimespanFieldset("/dashboard/mood-by-topic", "", "topic-days", "#mood-by-topic", c.QueryInt("days", 30))
 	<div class="mood-by-topic">
-		@templ.JSONScript("mood-by-topic-data", c.Locals("moodByTopicData"))
-		@templ.JSONScript("mood-by-topic-ratings-data", c.Locals("ratings"))
+		@templ.JSONScript("mood-by-topic-data", c.Locals(utils.LocalMoodByTopicData))
+		@templ.JSONScript("mood-by-topic-ratings-data", c.Locals(utils.LocalRatings))
 		<script src="/assets/js/components/moodByTopic.js" type="module" onload="document.dispatchEvent(new Event('load-mood-by-topic'))"></script>
 	</div>
 }

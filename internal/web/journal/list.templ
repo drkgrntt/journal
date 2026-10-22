@@ -10,7 +10,7 @@ import (
 )
 
 func getJournals(c *fiber.Ctx) []*models.Journal {
-	journals := utils.GetLocal[[]*models.Journal](c, "journals")
+	journals := utils.GetLocal[[]*models.Journal](c, utils.LocalJournals)
 	return *journals
 }
 

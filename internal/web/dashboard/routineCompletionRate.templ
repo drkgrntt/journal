@@ -2,13 +2,14 @@ package dashboard
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"journal/internal/utils"
 	"journal/internal/web/components"
 )
 
 templ RoutineCompletionRateContent(c *fiber.Ctx) {
 	@components.TimespanFieldset("/dashboard/routine-completion-rate", "", "routine-completion-rate-days", "#routine-completion-rate", c.QueryInt("days", 30))
 	<div class="routine-completion-rate">
-		@templ.JSONScript("routine-completion-rate-data", c.Locals("routineCompletionRateData"))
+		@templ.JSONScript("routine-completion-rate-data", c.Locals(utils.LocalRoutineCompletionRateData))
 		<script src="/assets/js/components/routineCompletionRate.js" type="module" onload="document.dispatchEvent(new Event('load-routine-completion-rate'))"></script>
 	</div>
 }

@@ -31,7 +31,7 @@ func (c *ReminderController) Init(db *gorm.DB, app *fiber.App) {
 }
 
 func (c *ReminderController) getReminder(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	id := ctx.Params("id")
 	var reminder models.Reminder
@@ -42,27 +42,27 @@ func (c *ReminderController) getReminder(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(fiber.Map{"message": "Reminder not found"})
 	}
-	ctx.Locals("reminder", &reminder)
+	ctx.Locals(utils.LocalReminder, &reminder)
 
 	return ctx.Next()
 }
 
 func (c *ReminderController) getReminders(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	var allReminders []*models.Reminder
 	c.db.
 		Where("creator_id = ?", currentUser.ID).
 		Order("created_at desc").
 		Find(&allReminders)
-	ctx.Locals("reminders", &allReminders)
+	ctx.Locals(utils.LocalReminders, &allReminders)
 
 	return ctx.Next()
 }
 
 // shuffleReminder swaps the displayed reminder for a different random one.
 func (c *ReminderController) shuffleReminder(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	var reminder models.Reminder
 	err := c.db.
@@ -114,7 +114,7 @@ func (c *ReminderController) parseReminderFromBody(ctx *fiber.Ctx, reminder *mod
 }
 
 func (c *ReminderController) getReminderForm(ctx *fiber.Ctx) error {
-	reminder := utils.GetLocal[models.Reminder](ctx, "reminder")
+	reminder := utils.GetLocal[models.Reminder](ctx, utils.LocalReminder)
 	return utils.RenderComponent(reminders.Form(ctx, reminder), ctx)
 }
 
@@ -126,7 +126,7 @@ func (c *ReminderController) createReminder(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	user := utils.GetLocal[models.User](ctx, "currentUser")
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	reminder.Base = &models.Base{CreatorID: &user.ID, LastUpdaterID: &user.ID}
 
 	err = c.db.Create(&reminder).Error
@@ -144,14 +144,14 @@ func (c *ReminderController) createReminder(ctx *fiber.Ctx) error {
 }
 
 func (c *ReminderController) updateReminder(ctx *fiber.Ctx) error {
-	reminder := utils.GetLocal[models.Reminder](ctx, "reminder")
+	reminder := utils.GetLocal[models.Reminder](ctx, utils.LocalReminder)
 
 	err := c.parseReminderFromBody(ctx, reminder)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	user := utils.GetLocal[models.User](ctx, "currentUser")
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	reminder.Base.LastUpdaterID = &user.ID
 
 	err = c.db.Save(reminder).Error
@@ -169,7 +169,7 @@ func (c *ReminderController) updateReminder(ctx *fiber.Ctx) error {
 }
 
 func (c *ReminderController) deleteReminder(ctx *fiber.Ctx) error {
-	reminder := utils.GetLocal[models.Reminder](ctx, "reminder")
+	reminder := utils.GetLocal[models.Reminder](ctx, utils.LocalReminder)
 
 	err := c.db.Delete(reminder).Error
 	if err != nil {

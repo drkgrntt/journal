@@ -34,7 +34,7 @@ func (c *JournalController) Init(db *gorm.DB, app *fiber.App) {
 }
 
 func (c *JournalController) setOutstandingActionItems(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	var actionItems []*models.ActionItem
 	c.db.
@@ -45,12 +45,12 @@ func (c *JournalController) setOutstandingActionItems(ctx *fiber.Ctx) error {
 		Order("created_at desc").
 		Find(&actionItems)
 
-	ctx.Locals("outstandingActionItems", &actionItems)
+	ctx.Locals(utils.LocalOutstandingActionItems, &actionItems)
 	return ctx.Next()
 }
 
 func (c *JournalController) getJournal(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	id := ctx.Params("id")
 	var journal models.Journal
 	err := c.db.Where("id = ?", id).
@@ -79,13 +79,13 @@ func (c *JournalController) getJournal(ctx *fiber.Ctx) error {
 		Order("created_at desc").
 		Find(&journal.OutstandingActionItems)
 
-	ctx.Locals("journal", &journal)
+	ctx.Locals(utils.LocalJournal, &journal)
 	return ctx.Next()
 }
 
 func (c *JournalController) getSurroundingJournals(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
-	journal := utils.GetLocal[models.Journal](ctx, "journal")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
+	journal := utils.GetLocal[models.Journal](ctx, utils.LocalJournal)
 
 	err := c.db.Where("creator_id = ?", currentUser.ID).
 		Where("created_at < ?", journal.CreatedAt).
@@ -110,7 +110,7 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 	page := ctx.QueryInt("page")
 	pageSize := 10
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	journals := []*models.Journal{}
 	tx := c.db.Where("creator_id = ?", currentUser.ID).
 		Preload("JournalType").
@@ -256,7 +256,7 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 				loc,
 			)
 			prevDate := t.Format("2006-01-02")
-			ctx.Locals("prevDate", &prevDate)
+			ctx.Locals(utils.LocalPrevDate, &prevDate)
 		}
 
 		var next time.Time
@@ -289,7 +289,7 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 				loc,
 			)
 			nextDate := t.Format("2006-01-02")
-			ctx.Locals("nextDate", &nextDate)
+			ctx.Locals(utils.LocalNextDate, &nextDate)
 		}
 	}
 
@@ -322,19 +322,19 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 			nextDaySubquery,
 		).Scan(&hasMore)
 
-		ctx.Locals("hasMore", &hasMore)
-		ctx.Locals("nextPage", &nextPage)
+		ctx.Locals(utils.LocalHasMore, &hasMore)
+		ctx.Locals(utils.LocalNextPage, &nextPage)
 	} else {
 		if len(journals) > pageSize {
 			journals = journals[:pageSize]
 			hasMore := true
 			nextPage := page + 1
-			ctx.Locals("hasMore", &hasMore)
-			ctx.Locals("nextPage", &nextPage)
+			ctx.Locals(utils.LocalHasMore, &hasMore)
+			ctx.Locals(utils.LocalNextPage, &nextPage)
 		}
 	}
 
-	ctx.Locals("journals", &journals)
+	ctx.Locals(utils.LocalJournals, &journals)
 	return ctx.Next()
 }
 
@@ -350,7 +350,7 @@ type JournalBody struct {
 }
 
 func (c *JournalController) parseJournalFromBody(ctx *fiber.Ctx, journal *models.Journal) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	if currentUser == nil {
 		return errors.New("missing current user")
 	}
@@ -460,7 +460,7 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	user := utils.GetLocal[models.User](ctx, "currentUser")
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	journal.Base = &models.Base{CreatorID: &user.ID, LastUpdaterID: &user.ID}
 
 	tx := c.db.Begin()
@@ -529,14 +529,14 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 }
 
 func (c *JournalController) updateJournal(ctx *fiber.Ctx) error {
-	journal := utils.GetLocal[models.Journal](ctx, "journal")
+	journal := utils.GetLocal[models.Journal](ctx, utils.LocalJournal)
 
 	err := c.parseJournalFromBody(ctx, journal)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	user := utils.GetLocal[models.User](ctx, "currentUser")
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	journal.Base.LastUpdaterID = &user.ID
 
 	err = c.db.Save(journal).Error
@@ -558,7 +558,7 @@ func (c *JournalController) updateJournal(ctx *fiber.Ctx) error {
 }
 
 func (c *JournalController) deleteJournal(ctx *fiber.Ctx) error {
-	journal := utils.GetLocal[models.Journal](ctx, "journal")
+	journal := utils.GetLocal[models.Journal](ctx, utils.LocalJournal)
 	err := c.db.Delete(journal).Error
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting journal"})

@@ -97,7 +97,7 @@ templ List(c *fiber.Ctx, recurringActionItems []*models.RecurringActionItem) {
 }
 
 func getRecurringActionItems(c *fiber.Ctx) []*models.RecurringActionItem {
-	recurringActionItems := utils.GetLocal[[]*models.RecurringActionItem](c, "recurringActionItems")
+	recurringActionItems := utils.GetLocal[[]*models.RecurringActionItem](c, utils.LocalRecurringActionItems)
 	if recurringActionItems == nil {
 		return []*models.RecurringActionItem{}
 	}
