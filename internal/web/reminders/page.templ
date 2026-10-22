@@ -1,0 +1,17 @@
+package reminders
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/web"
+)
+
+templ Page(c *fiber.Ctx) {
+	@web.Base(c, nil) {
+		<div id="reminders-page">
+			<h2 class="heading">Reminders</h2>
+			<p class="blurb">Words you want to feed yourself: affirmations, verses, prayers. One shows up each day when you write. Nothing to check off.</p>
+			@List(c, getReminders(c))
+			@Form(c, nil)
+		</div>
+	}
+}

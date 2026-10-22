@@ -1,0 +1,64 @@
+package reminders
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/models"
+	"journal/internal/utils"
+	"journal/internal/web/components"
+)
+
+templ ListItem(c *fiber.Ctx, reminder *models.Reminder) {
+	<li
+		reminder
+		id={ fmt.Sprintf("reminder-%s", reminder.ID.String()) }
+		if c.Method() != "POST" && c.Method() != "GET" {
+			hx-swap-oob={ fmt.Sprintf("outerHTML:#reminder-%s", reminder.ID.String()) }
+		}
+		class="item"
+	>
+		<div class="info">
+			<p can-blur class="text">
+				{ reminder.Text }
+			</p>
+			@components.KebabMenu() {
+				<div class="kebab-content">
+					<button
+						class="action-link"
+						aria-label="Edit reminder"
+						hx-get={ fmt.Sprintf("/reminders/%s/form", reminder.ID.String()) }
+						hx-swap="none"
+					>
+						Edit
+					</button>
+					<button
+						class="action-link danger"
+						aria-label="Delete reminder"
+						hx-delete={ fmt.Sprintf("/api/reminders/%s", reminder.ID.String()) }
+						hx-swap="delete"
+						hx-confirm="Are you sure?"
+						hx-target="closest [reminder]"
+					>
+						Delete
+					</button>
+				</div>
+			}
+		</div>
+	</li>
+}
+
+templ List(c *fiber.Ctx, allReminders []*models.Reminder) {
+	<ul id="reminder-list" reminder-list>
+		for _, reminder := range allReminders {
+			@ListItem(c, reminder)
+		}
+	</ul>
+}
+
+func getReminders(c *fiber.Ctx) []*models.Reminder {
+	allReminders := utils.GetLocal[[]*models.Reminder](c, "reminders")
+	if allReminders == nil {
+		return []*models.Reminder{}
+	}
+	return *allReminders
+}

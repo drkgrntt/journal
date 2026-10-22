@@ -1,0 +1,27 @@
+.reminder-card {
+	position: relative;
+	margin-bottom: 1rem;
+	/* Equal side padding keeps the text centered; the shuffle button sits in the right gutter */
+	padding: 0 2.5rem;
+	font-style: italic;
+	font-size: 1.15rem;
+	line-height: 1.5;
+	text-align: center;
+
+	.text {
+		white-space: pre-wrap;
+		cursor: pointer;
+	}
+
+	.shuffle {
+		position: absolute;
+		top: 50%;
+		right: 0;
+		transform: translateY(-50%);
+		border: none;
+		background: none;
+		cursor: pointer;
+		color: inherit;
+		opacity: .5;
+	}
+}

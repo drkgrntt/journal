@@ -437,7 +437,7 @@ func (c *JournalController) RegisterViewRoutes() {
 	c.views.Use(middleware.RequireAuth)
 
 	c.views.Get("/", middleware.SetJournalTypes, c.getJournals, utils.RenderPage(journal.ListPage))
-	c.views.Get("/new", middleware.SetJournalTypes, middleware.SetRatings, c.setOutstandingActionItems, utils.RenderPage(journal.NewPage))
+	c.views.Get("/new", middleware.SetJournalTypes, middleware.SetRatings, c.setOutstandingActionItems, middleware.SetDailyReminder, utils.RenderPage(journal.NewPage))
 	c.views.Get("/list", c.getJournals, utils.RenderPage(journal.ListItems))
 
 	c.views.Get("/:id", c.getJournal, c.getSurroundingJournals, utils.RenderPage(journal.ViewPage))
