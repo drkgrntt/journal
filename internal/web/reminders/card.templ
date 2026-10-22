@@ -1,0 +1,35 @@
+package reminders
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/models"
+)
+
+// DailyReminder is the optional card on the new-entry page and the Today tab. It
+// renders nothing when the user has no reminders.
+func DailyReminder(c *fiber.Ctx) *models.Reminder {
+	reminder, _ := c.Locals("reminder").(*models.Reminder)
+	return reminder
+}
+
+templ Card(c *fiber.Ctx, reminder *models.Reminder, swap bool) {
+	<div
+		id="daily-reminder"
+		class="reminder-card"
+		if swap {
+			hx-swap-oob="outerHTML:#daily-reminder"
+		}
+	>
+		<p can-blur can-reveal tabindex="0" title="Click to show or hide" class="text">{ reminder.Text }</p>
+		<button
+			class="shuffle"
+			type="button"
+			aria-label="Show a different reminder"
+			hx-get={ fmt.Sprintf("/reminders/shuffle?current=%s", reminder.ID.String()) }
+			hx-swap="none"
+		>
+			<i class="fa fa-shuffle" aria-hidden="true"></i>
+		</button>
+	</div>
+}

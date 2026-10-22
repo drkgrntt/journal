@@ -1,0 +1,42 @@
+package reminders
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/models"
+)
+
+func reminderText(reminder *models.Reminder) string {
+	if reminder == nil {
+		return ""
+	}
+	return reminder.Text
+}
+
+templ Form(c *fiber.Ctx, reminder *models.Reminder) {
+	<form
+		id="reminder-form"
+		class="form"
+		if reminder != nil {
+			hx-put={ fmt.Sprintf("/api/reminders/%s", reminder.ID.String()) }
+		} else {
+			hx-post="/api/reminders"
+		}
+		hx-swap="beforeend"
+		hx-target="[reminder-list]"
+		hx-trigger="submit"
+		hx-swap-oob="outerHTML"
+	>
+		<div class="field">
+			<textarea
+				can-blur
+				placeholder="An affirmation, a verse, a prayer..."
+				class="input"
+				name="text"
+				id="reminder-text"
+				rows="3"
+			>{ reminderText(reminder) }</textarea>
+		</div>
+		<button class="button" type="submit">Submit</button>
+	</form>
+}

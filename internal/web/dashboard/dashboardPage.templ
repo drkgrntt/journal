@@ -169,6 +169,7 @@ templ Tabs(c *fiber.Ctx) {
 }
 
 templ Today(c *fiber.Ctx) {
+	@journal.DailyReminder(c)
 	<h2 class="heading">How are you feeling?</h2>
 	@journal.EntryBody(c)
 }

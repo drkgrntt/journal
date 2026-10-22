@@ -6,6 +6,7 @@ import (
 	"journal/internal/utils"
 	"journal/internal/web"
 	"journal/internal/web/actionItems"
+	"journal/internal/web/reminders"
 	"journal/internal/web/thankful"
 )
 
@@ -44,6 +45,13 @@ templ EntryBody(c *fiber.Ctx) {
 	</div>
 }
 
+// DailyReminder renders the day's reminder, if the user has any, above a page's heading.
+templ DailyReminder(c *fiber.Ctx) {
+	if reminder := reminders.DailyReminder(c); reminder != nil {
+		@reminders.Card(c, reminder, false)
+	}
+}
+
 templ NewPage(c *fiber.Ctx) {
 	@web.Base(c, nil) {
 		<div id="new-journal-page">
@@ -51,6 +59,7 @@ templ NewPage(c *fiber.Ctx) {
 				<i class="fas fa-chevron-left" aria-hidden="true"></i>
 				Back
 			</a>
+			@DailyReminder(c)
 			<h1 class="heading">New Journal Entry</h1>
 			@EntryBody(c)
 		</div>

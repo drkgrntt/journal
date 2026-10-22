@@ -296,7 +296,8 @@ function isEmptyField(element) {
 }
 
 function applyBlur(element) {
-	const blur = shouldBlurText() && !isEmptyField(element)
+	const revealed = element.dataset.revealed === "true"
+	const blur = shouldBlurText() && !isEmptyField(element) && !revealed
 	element.style.filter = blur ? "blur(3px)" : "none"
 }
 
@@ -312,6 +313,27 @@ document.addEventListener("focusin", function(e) {
 	if (!element) return
 	if (element.tagName !== "INPUT" && element.tagName !== "TEXTAREA") return
 	element.style.filter = "none"
+})
+
+// [can-reveal] marks text that is meant to be read even with blur on (e.g. the
+// daily reminder): a click or Enter/Space toggles it instead of the user having
+// to turn the whole setting off.
+function toggleReveal(element) {
+	element.dataset.revealed = element.dataset.revealed === "true" ? "false" : "true"
+	applyBlur(element)
+}
+
+document.addEventListener("click", function(e) {
+	const element = e.target.closest("[can-reveal]")
+	if (element) toggleReveal(element)
+})
+
+document.addEventListener("keydown", function(e) {
+	if (e.key !== "Enter" && e.key !== " ") return
+	const element = e.target.closest("[can-reveal]")
+	if (!element) return
+	e.preventDefault()
+	toggleReveal(element)
 })
 
 document.addEventListener("focusout", function(e) {

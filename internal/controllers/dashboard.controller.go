@@ -196,6 +196,7 @@ func (c *DashboardController) RegisterViewRoutes() {
 		middleware.SetJournalTypes,
 		c.setJournals,
 		c.setOutstandingActionItems,
+		middleware.SetDailyReminder,
 		c.setHiddenPatterns,
 		utils.RenderPage(dashboard.DashboardPage),
 	)
