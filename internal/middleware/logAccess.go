@@ -14,7 +14,7 @@ func LogAccess(ctx *fiber.Ctx) error {
 	userAgent := ctx.Context().UserAgent()
 	method := ctx.Method()
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	now := time.Now().UTC()
 
 	base := models.Base{

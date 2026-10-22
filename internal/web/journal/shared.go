@@ -8,6 +8,6 @@ import (
 )
 
 func getJournal(c *fiber.Ctx) *models.Journal {
-	journal := utils.GetLocal[models.Journal](c, "journal")
+	journal := utils.GetLocal[models.Journal](c, utils.LocalJournal)
 	return journal
 }

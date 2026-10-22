@@ -9,7 +9,7 @@ import (
 )
 
 func RequireAuth(ctx *fiber.Ctx) error {
-	user := utils.GetLocal[models.User](ctx, "currentUser")
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	if user == nil {
 		logger.Warn("No current user found")
 		return ctx.Redirect("/auth/login")

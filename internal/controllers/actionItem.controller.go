@@ -2,11 +2,11 @@ package controllers
 
 import (
 	"errors"
-	"journal/internal/web/actionItems"
 	"journal/internal/logger"
 	"journal/internal/middleware"
 	"journal/internal/models"
 	"journal/internal/utils"
+	"journal/internal/web/actionItems"
 	"net/http"
 	"time"
 
@@ -33,7 +33,7 @@ func (c *ActionItemController) Init(db *gorm.DB, app *fiber.App) {
 }
 
 func (c *ActionItemController) getActionItem(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	id := ctx.Params("id")
 	var actionItem models.ActionItem
@@ -45,13 +45,13 @@ func (c *ActionItemController) getActionItem(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(fiber.Map{"message": "ActionItem not found"})
 	}
-	ctx.Locals("actionItem", &actionItem)
+	ctx.Locals(utils.LocalActionItem, &actionItem)
 
 	return ctx.Next()
 }
 
 func (c *ActionItemController) getRecurringActionItems(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	var recurringActionItems []*models.RecurringActionItem
 	tx := c.db.
@@ -59,13 +59,13 @@ func (c *ActionItemController) getRecurringActionItems(ctx *fiber.Ctx) error {
 		Order("created_at desc")
 
 	tx.Find(&recurringActionItems)
-	ctx.Locals("recurringActionItems", &recurringActionItems)
+	ctx.Locals(utils.LocalRecurringActionItems, &recurringActionItems)
 
 	return ctx.Next()
 }
 
 func (c *ActionItemController) getActionItems(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	var actionItems []*models.ActionItem
 	tx := c.db.
@@ -93,14 +93,14 @@ func (c *ActionItemController) getActionItems(ctx *fiber.Ctx) error {
 	tx = tx.Limit(pageSize + 1).Offset(page * pageSize)
 
 	tx.Find(&actionItems)
-	ctx.Locals("actionItems", &actionItems)
+	ctx.Locals(utils.LocalActionItems, &actionItems)
 
 	if len(actionItems) > pageSize {
 		actionItems = actionItems[:pageSize]
 		hasMore := true
 		nextPage := page + 1
-		ctx.Locals("hasMore", &hasMore)
-		ctx.Locals("nextPage", &nextPage)
+		ctx.Locals(utils.LocalHasMore, &hasMore)
+		ctx.Locals(utils.LocalNextPage, &nextPage)
 	}
 
 	return ctx.Next()
@@ -167,7 +167,7 @@ func (c *ActionItemController) parseActionItemFromBody(ctx *fiber.Ctx, actionIte
 			return err
 		}
 
-		user := utils.GetLocal[models.User](ctx, "currentUser")
+		user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 		var journal models.Journal
 		err = c.db.Where("id = ? AND creator_id = ?", journalUuid, user.ID).First(&journal).Error
 		if err != nil {
@@ -181,7 +181,7 @@ func (c *ActionItemController) parseActionItemFromBody(ctx *fiber.Ctx, actionIte
 }
 
 func (c *ActionItemController) getActionItemForm(ctx *fiber.Ctx) error {
-	actionItem := utils.GetLocal[models.ActionItem](ctx, "actionItem")
+	actionItem := utils.GetLocal[models.ActionItem](ctx, utils.LocalActionItem)
 	component := actionItems.Form(ctx, actionItem.Journal, actionItem)
 	return utils.RenderComponent(component, ctx)
 }
@@ -194,7 +194,7 @@ func (c *ActionItemController) createActionItem(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	user := utils.GetLocal[models.User](ctx, "currentUser")
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	actionItem.Base = &models.Base{CreatorID: &user.ID, LastUpdaterID: &user.ID}
 
 	err = c.db.Create(&actionItem).Error
@@ -216,14 +216,14 @@ func (c *ActionItemController) createActionItem(ctx *fiber.Ctx) error {
 }
 
 func (c *ActionItemController) updateActionItem(ctx *fiber.Ctx) error {
-	actionItem := utils.GetLocal[models.ActionItem](ctx, "actionItem")
+	actionItem := utils.GetLocal[models.ActionItem](ctx, utils.LocalActionItem)
 
 	err := c.parseActionItemFromBody(ctx, actionItem)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	user := utils.GetLocal[models.User](ctx, "currentUser")
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	actionItem.Base.LastUpdaterID = &user.ID
 
 	err = c.db.Save(actionItem).Error
@@ -245,7 +245,7 @@ func (c *ActionItemController) updateActionItem(ctx *fiber.Ctx) error {
 }
 
 func (c *ActionItemController) deleteActionItem(ctx *fiber.Ctx) error {
-	actionItem := utils.GetLocal[models.ActionItem](ctx, "actionItem")
+	actionItem := utils.GetLocal[models.ActionItem](ctx, utils.LocalActionItem)
 
 	err := c.db.Delete(actionItem).Error
 	if err != nil {

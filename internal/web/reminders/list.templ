@@ -56,7 +56,7 @@ templ List(c *fiber.Ctx, allReminders []*models.Reminder) {
 }
 
 func getReminders(c *fiber.Ctx) []*models.Reminder {
-	allReminders := utils.GetLocal[[]*models.Reminder](c, "reminders")
+	allReminders := utils.GetLocal[[]*models.Reminder](c, utils.LocalReminders)
 	if allReminders == nil {
 		return []*models.Reminder{}
 	}

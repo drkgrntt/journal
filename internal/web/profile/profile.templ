@@ -103,7 +103,7 @@ templ passwordForm(c *fiber.Ctx) {
 }
 
 func getFeatures(c *fiber.Ctx) []*models.Feature {
-	features := utils.GetLocal[[]*models.Feature](c, "features")
+	features := utils.GetLocal[[]*models.Feature](c, utils.LocalFeatures)
 	return *features
 }
 

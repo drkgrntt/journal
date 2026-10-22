@@ -125,7 +125,7 @@ func allPatternDefs(c *fiber.Ctx) []patternDef {
 }
 
 func getHiddenPatterns(c *fiber.Ctx) map[string]bool {
-	hidden := utils.GetLocal[map[string]bool](c, "hiddenPatterns")
+	hidden := utils.GetLocal[map[string]bool](c, utils.LocalHiddenPatterns)
 	if hidden == nil {
 		return map[string]bool{}
 	}

@@ -152,7 +152,7 @@ templ List(c *fiber.Ctx, actionItems []*models.ActionItem, isPrimary bool) {
 }
 
 func getActionItems(c *fiber.Ctx) []*models.ActionItem {
-	actionItems := utils.GetLocal[[]*models.ActionItem](c, "actionItems")
+	actionItems := utils.GetLocal[[]*models.ActionItem](c, utils.LocalActionItems)
 	if actionItems == nil {
 		return []*models.ActionItem{}
 	}
@@ -167,7 +167,7 @@ templ ListItems(c *fiber.Ctx) {
 }
 
 func getJournalTypes(c *fiber.Ctx) []*models.JournalType {
-	journalTypes := utils.GetLocal[[]*models.JournalType](c, "journalTypes")
+	journalTypes := utils.GetLocal[[]*models.JournalType](c, utils.LocalJournalTypes)
 	if journalTypes == nil {
 		return []*models.JournalType{}
 	}

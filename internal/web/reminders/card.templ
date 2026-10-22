@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"journal/internal/models"
+	"journal/internal/utils"
 )
 
 // DailyReminder is the optional card on the new-entry page and the Today tab. It
 // renders nothing when the user has no reminders.
 func DailyReminder(c *fiber.Ctx) *models.Reminder {
-	reminder, _ := c.Locals("reminder").(*models.Reminder)
+	// Absent is normal here (no reminders), so skip GetLocal's missing-key warning.
+	reminder, _ := c.Locals(utils.LocalDailyReminder).(*models.Reminder)
 	return reminder
 }
 

@@ -85,7 +85,7 @@ func bucketDaysByRating(daysToValues map[string][]int, min, max int) map[int]int
 }
 
 func (c *DashboardController) setJournals(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	var journals []*models.Journal
 
 	c.db.
@@ -96,13 +96,13 @@ func (c *DashboardController) setJournals(ctx *fiber.Ctx) error {
 		Order("created_at DESC").
 		Find(&journals)
 
-	ctx.Locals("journals", &journals)
+	ctx.Locals(utils.LocalJournals, &journals)
 
 	return ctx.Next()
 }
 
 func (c *DashboardController) setOutstandingActionItems(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	var actionItems []*models.ActionItem
 	c.db.
@@ -113,7 +113,7 @@ func (c *DashboardController) setOutstandingActionItems(ctx *fiber.Ctx) error {
 		Order("created_at DESC").
 		Find(&actionItems)
 
-	ctx.Locals("outstandingActionItems", &actionItems)
+	ctx.Locals(utils.LocalOutstandingActionItems, &actionItems)
 	return ctx.Next()
 }
 
@@ -137,9 +137,9 @@ func hiddenPatternSet(user *models.User) map[string]bool {
 }
 
 func (c *DashboardController) setHiddenPatterns(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	hidden := hiddenPatternSet(currentUser)
-	ctx.Locals("hiddenPatterns", &hidden)
+	ctx.Locals(utils.LocalHiddenPatterns, &hidden)
 	return ctx.Next()
 }
 
@@ -151,7 +151,7 @@ func (c *DashboardController) setPatternHidden(ctx *fiber.Ctx, hidden bool) erro
 		return ctx.Status(http.StatusNotFound).JSON(fiber.Map{"message": "Unknown pattern"})
 	}
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	set := hiddenPatternSet(currentUser)
 	if hidden {
 		set[key] = true
@@ -240,7 +240,7 @@ func (c *DashboardController) getCalendar(ctx *fiber.Ctx) error {
 		0,
 		loc,
 	)
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	var journals []*models.Journal
 
 	c.db.
@@ -251,7 +251,7 @@ func (c *DashboardController) getCalendar(ctx *fiber.Ctx) error {
 		Order("created_at DESC").
 		Find(&journals)
 
-	ctx.Locals("journals", &journals)
+	ctx.Locals(utils.LocalJournals, &journals)
 
 	return utils.RenderComponent(dashboard.RatingCalendar(ctx), ctx)
 }
@@ -265,7 +265,7 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 		loc = time.UTC
 	}
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	var journals []*models.Journal
 
 	tx := c.db.
@@ -343,7 +343,7 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 	sort.Slice(moodChartData, func(i, j int) bool {
 		return moodChartData[i].DateTime.Before(moodChartData[j].DateTime)
 	})
-	ctx.Locals("moodChartData", &moodChartData)
+	ctx.Locals(utils.LocalMoodChartData, &moodChartData)
 
 	return utils.RenderComponent(dashboard.MoodChartContent(ctx), ctx)
 }
@@ -364,7 +364,7 @@ func (c *DashboardController) getMoodByDay(ctx *fiber.Ctx) error {
 		loc,
 	).AddDate(0, 0, -days)
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	var journals []*models.Journal
 
 	c.db.Where("creator_id = ?", currentUser.ID).
@@ -404,7 +404,7 @@ func (c *DashboardController) getMoodByDay(ctx *fiber.Ctx) error {
 	sort.Slice(moodByDayData, func(i, j int) bool {
 		return moodByDayData[i].Weekday < moodByDayData[j].Weekday
 	})
-	ctx.Locals("moodByDayData", &moodByDayData)
+	ctx.Locals(utils.LocalMoodByDayData, &moodByDayData)
 
 	return utils.RenderComponent(dashboard.MoodByDayContent(ctx), ctx)
 }
@@ -425,7 +425,7 @@ func (c *DashboardController) getMoodVsActionCompletion(ctx *fiber.Ctx) error {
 		loc,
 	).AddDate(0, 0, -days)
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	var journals []*models.Journal
 
 	c.db.Where("creator_id = ?", currentUser.ID).
@@ -495,7 +495,7 @@ func (c *DashboardController) getMoodVsActionCompletion(ctx *fiber.Ctx) error {
 			WithoutCompletions: withoutCompletionsByRating[rating.Value],
 		})
 	}
-	ctx.Locals("moodVsActionCompletionData", &moodVsActionCompletionData)
+	ctx.Locals(utils.LocalMoodVsActionCompletionData, &moodVsActionCompletionData)
 
 	return utils.RenderComponent(dashboard.MoodVsActionCompletionContent(ctx), ctx)
 }
@@ -516,7 +516,7 @@ func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
 		loc,
 	).AddDate(0, 0, -days)
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	var journals []*models.Journal
 
 	c.db.Where("creator_id = ?", currentUser.ID).
@@ -525,7 +525,7 @@ func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
 		Preload("Thankfuls").
 		Find(&journals)
 
-	ctx.Locals("journals", &journals)
+	ctx.Locals(utils.LocalJournals, &journals)
 
 	var ratings []*models.Rating
 	c.db.Order("value DESC").
@@ -589,7 +589,7 @@ func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
 		})
 	}
 
-	ctx.Locals("moodVsThankfulData", &moodVsThankfulData)
+	ctx.Locals(utils.LocalMoodVsThankfulData, &moodVsThankfulData)
 
 	return utils.RenderComponent(dashboard.MoodVsThankfulnessContent(ctx), ctx)
 }
@@ -611,7 +611,7 @@ func (c *DashboardController) getMoodByTopic(ctx *fiber.Ctx) error {
 		loc,
 	).AddDate(0, 0, -days)
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	var journals []*models.Journal
 
 	c.db.Where("creator_id = ?", currentUser.ID).
@@ -654,7 +654,7 @@ func (c *DashboardController) getMoodByTopic(ctx *fiber.Ctx) error {
 	sort.Slice(moodByTopicData, func(i, j int) bool {
 		return moodByTopicData[i].Topic < moodByTopicData[j].Topic
 	})
-	ctx.Locals("moodByTopicData", &moodByTopicData)
+	ctx.Locals(utils.LocalMoodByTopicData, &moodByTopicData)
 
 	return utils.RenderComponent(dashboard.MoodByTopicContent(ctx), ctx)
 }
@@ -703,7 +703,7 @@ func (c *DashboardController) getTimeOfDayPatterns(ctx *fiber.Ctx) error {
 		loc,
 	).AddDate(0, 0, -days)
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	var journals []*models.Journal
 
 	c.db.Where("creator_id = ?", currentUser.ID).
@@ -743,7 +743,7 @@ func (c *DashboardController) getTimeOfDayPatterns(ctx *fiber.Ctx) error {
 	sort.Slice(moodByTodData, func(i, j int) bool {
 		return todSortKeys[moodByTodData[i].Tod] < todSortKeys[moodByTodData[j].Tod]
 	})
-	ctx.Locals("moodByTodData", &moodByTodData)
+	ctx.Locals(utils.LocalMoodByTodData, &moodByTodData)
 
 	return utils.RenderComponent(dashboard.MoodByTodContent(ctx), ctx)
 }
@@ -758,7 +758,7 @@ func (c *DashboardController) getEntryTimeFrequency(ctx *fiber.Ctx) error {
 		loc = time.UTC
 	}
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	var journals []*models.Journal
 
 	tx := c.db.
@@ -848,7 +848,7 @@ func (c *DashboardController) getEntryTimeFrequency(ctx *fiber.Ctx) error {
 	sort.Slice(frequencyChartData, func(i, j int) bool {
 		return frequencyChartData[i].DateTime.Before(frequencyChartData[j].DateTime)
 	})
-	ctx.Locals("frequencyChartData", &frequencyChartData)
+	ctx.Locals(utils.LocalFrequencyChartData, &frequencyChartData)
 
 	return utils.RenderComponent(dashboard.FrequencyChartContent(ctx), ctx)
 }
@@ -863,7 +863,7 @@ func (c *DashboardController) getThankfulFrequency(ctx *fiber.Ctx) error {
 		loc = time.UTC
 	}
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	var thankfuls []*models.Thankful
 
 	tx := c.db.
@@ -930,7 +930,7 @@ func (c *DashboardController) getThankfulFrequency(ctx *fiber.Ctx) error {
 	sort.Slice(thankfulFrequencyChartData, func(i, j int) bool {
 		return thankfulFrequencyChartData[i].DateTime.Before(thankfulFrequencyChartData[j].DateTime)
 	})
-	ctx.Locals("thankfulFrequencyChartData", &thankfulFrequencyChartData)
+	ctx.Locals(utils.LocalThankfulFrequencyChartData, &thankfulFrequencyChartData)
 
 	return utils.RenderComponent(dashboard.ThankfulFrequencyChartContent(ctx), ctx)
 }
@@ -952,7 +952,7 @@ func (c *DashboardController) getRoutineCompletionRate(ctx *fiber.Ctx) error {
 		loc,
 	).AddDate(0, 0, -days)
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	var routines []*models.RecurringActionItem
 
 	c.db.Where("creator_id = ?", currentUser.ID).
@@ -988,7 +988,7 @@ func (c *DashboardController) getRoutineCompletionRate(ctx *fiber.Ctx) error {
 	sort.Slice(routineCompletionRates, func(i, j int) bool {
 		return routineCompletionRates[i].Routine < routineCompletionRates[j].Routine
 	})
-	ctx.Locals("routineCompletionRateData", &routineCompletionRates)
+	ctx.Locals(utils.LocalRoutineCompletionRateData, &routineCompletionRates)
 
 	return utils.RenderComponent(dashboard.RoutineCompletionRateContent(ctx), ctx)
 }
@@ -1010,7 +1010,7 @@ func (c *DashboardController) getTopicDistribution(ctx *fiber.Ctx) error {
 		loc,
 	).AddDate(0, 0, -days)
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	var journals []*models.Journal
 
 	c.db.Where("creator_id = ?", currentUser.ID).
@@ -1045,7 +1045,7 @@ func (c *DashboardController) getTopicDistribution(ctx *fiber.Ctx) error {
 	sort.Slice(distByTopicData, func(i, j int) bool {
 		return distByTopicData[i].Topic < distByTopicData[j].Topic
 	})
-	ctx.Locals("distByTopicData", &distByTopicData)
+	ctx.Locals(utils.LocalDistByTopicData, &distByTopicData)
 
 	return utils.RenderComponent(dashboard.DistByTopicContent(ctx), ctx)
 }

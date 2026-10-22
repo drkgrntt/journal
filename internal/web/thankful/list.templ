@@ -91,7 +91,7 @@ templ List(c *fiber.Ctx, thankfuls []*models.Thankful) {
 }
 
 func getThankfuls(c *fiber.Ctx) []*models.Thankful {
-	thankfuls := utils.GetLocal[[]*models.Thankful](c, "thankfuls")
+	thankfuls := utils.GetLocal[[]*models.Thankful](c, utils.LocalThankfuls)
 	if thankfuls == nil {
 		return []*models.Thankful{}
 	}

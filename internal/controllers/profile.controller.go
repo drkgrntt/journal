@@ -72,7 +72,7 @@ type exportedJournal struct {
 }
 
 func (c *ProfileController) exportJournals(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	var journals []*models.Journal
 	err := c.db.
@@ -183,7 +183,7 @@ func (c *ProfileController) buyFeature(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusNotFound).SendString("Feature not found")
 	}
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	if feature.StripePriceID == "" {
 		err := c.db.Save(&models.UserFeature{
@@ -253,7 +253,7 @@ func (c *ProfileController) updateFeatures(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).SendString("Bad request reading body")
 	}
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	userFeaturesToUpdate := []*models.UserFeature{}
 
@@ -351,7 +351,7 @@ func (c *ProfileController) updateUser(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).SendString("Bad request reading body")
 	}
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	currentUser.FirstName = body.FirstName
 	currentUser.LastName = body.LastName
@@ -378,7 +378,7 @@ func (c *ProfileController) updatePassword(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).SendString("Bad request reading body")
 	}
 
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	err = currentUser.ComparePasswords(body.CurrentPassword)
 	if err != nil {
 		logger.Warn(err.Error())

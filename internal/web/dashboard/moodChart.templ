@@ -2,14 +2,15 @@ package dashboard
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"journal/internal/utils"
 	"journal/internal/web/components"
 )
 
 templ MoodChartContent(c *fiber.Ctx) {
 	@components.MonthPager("/dashboard/mood-chart", "#mood-chart", current(c), monthYearLabel(c))
 	<div class="mood-chart">
-		@templ.JSONScript("mood-chart-data", c.Locals("moodChartData"))
-		@templ.JSONScript("mood-chart-ratings-data", c.Locals("ratings"))
+		@templ.JSONScript("mood-chart-data", c.Locals(utils.LocalMoodChartData))
+		@templ.JSONScript("mood-chart-ratings-data", c.Locals(utils.LocalRatings))
 		<script src="/assets/js/components/moodChart.js" type="module" onload="document.dispatchEvent(new Event('load-mood-chart'))"></script>
 	</div>
 }

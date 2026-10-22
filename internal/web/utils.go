@@ -8,7 +8,7 @@ import (
 )
 
 func HasMore(c *fiber.Ctx) bool {
-	hasMore := utils.GetLocal[bool](c, "hasMore")
+	hasMore := utils.GetLocal[bool](c, utils.LocalHasMore)
 	if hasMore == nil {
 		return false
 	}
@@ -16,7 +16,7 @@ func HasMore(c *fiber.Ctx) bool {
 }
 
 func NextPage(c *fiber.Ctx) int {
-	nextPage := utils.GetLocal[int](c, "nextPage")
+	nextPage := utils.GetLocal[int](c, utils.LocalNextPage)
 	if nextPage == nil {
 		return 0
 	}
@@ -24,7 +24,7 @@ func NextPage(c *fiber.Ctx) int {
 }
 
 func NextDate(c *fiber.Ctx) string {
-	nextDate := utils.GetLocal[string](c, "nextDate")
+	nextDate := utils.GetLocal[string](c, utils.LocalNextDate)
 	if nextDate == nil {
 		return ""
 	}
@@ -32,7 +32,7 @@ func NextDate(c *fiber.Ctx) string {
 }
 
 func PrevDate(c *fiber.Ctx) string {
-	prevDate := utils.GetLocal[string](c, "prevDate")
+	prevDate := utils.GetLocal[string](c, utils.LocalPrevDate)
 	if prevDate == nil {
 		return ""
 	}
@@ -40,7 +40,7 @@ func PrevDate(c *fiber.Ctx) string {
 }
 
 func CurrentUser(c *fiber.Ctx) *models.User {
-	return utils.GetLocal[models.User](c, "currentUser")
+	return utils.GetLocal[models.User](c, utils.LocalCurrentUser)
 }
 
 type LabelValue[T any] struct {

@@ -31,6 +31,6 @@ func DeserializeToken(ctx *fiber.Ctx) error {
 		return ctx.Next()
 	}
 
-	ctx.Locals("currentUser", &user)
+	ctx.Locals(utils.LocalCurrentUser, &user)
 	return ctx.Next()
 }

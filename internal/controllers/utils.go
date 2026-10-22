@@ -24,7 +24,7 @@ func GetControllers() []Controller {
 }
 
 func GetJournalTypes(ctx *fiber.Ctx) []*models.JournalType {
-	types := utils.GetLocal[[]*models.JournalType](ctx, "journalTypes")
+	types := utils.GetLocal[[]*models.JournalType](ctx, utils.LocalJournalTypes)
 	if types == nil {
 		return nil
 	}
@@ -32,7 +32,7 @@ func GetJournalTypes(ctx *fiber.Ctx) []*models.JournalType {
 }
 
 func GetRatings(ctx *fiber.Ctx) []*models.Rating {
-	ratings := utils.GetLocal[[]*models.Rating](ctx, "ratings")
+	ratings := utils.GetLocal[[]*models.Rating](ctx, utils.LocalRatings)
 	if ratings == nil {
 		return nil
 	}

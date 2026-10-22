@@ -31,7 +31,7 @@ func (c *CustomJournalTypeController) Init(db *gorm.DB, app *fiber.App) {
 }
 
 func (c *CustomJournalTypeController) getCustomJournalType(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	id := ctx.Params("id")
 	var customJournalType models.CustomJournalType
@@ -42,20 +42,20 @@ func (c *CustomJournalTypeController) getCustomJournalType(ctx *fiber.Ctx) error
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(fiber.Map{"message": "Custom Journal Type not found"})
 	}
-	ctx.Locals("customJournalType", &customJournalType)
+	ctx.Locals(utils.LocalCustomJournalType, &customJournalType)
 
 	return ctx.Next()
 }
 
 func (c *CustomJournalTypeController) getCustomJournalTypes(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, "currentUser")
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
 	var customJournalTypes []*models.CustomJournalType
 	tx := c.db.
 		Where("creator_id = ?", currentUser.ID).
 		Order("created_at desc")
 	tx.Find(&customJournalTypes)
-	ctx.Locals("customJournalTypes", &customJournalTypes)
+	ctx.Locals(utils.LocalCustomJournalTypes, &customJournalTypes)
 
 	return ctx.Next()
 }
@@ -94,7 +94,7 @@ func (c *CustomJournalTypeController) parseCustomJournalTypeFromBody(ctx *fiber.
 }
 
 func (c *CustomJournalTypeController) getCustomJournalTypeForm(ctx *fiber.Ctx) error {
-	customJournalType := utils.GetLocal[models.CustomJournalType](ctx, "customJournalType")
+	customJournalType := utils.GetLocal[models.CustomJournalType](ctx, utils.LocalCustomJournalType)
 	component := customJournalTypeViews.Form(ctx, customJournalType)
 	return utils.RenderComponent(component, ctx)
 }
@@ -107,7 +107,7 @@ func (c *CustomJournalTypeController) createCustomJournalType(ctx *fiber.Ctx) er
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	user := utils.GetLocal[models.User](ctx, "currentUser")
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	customJournalType.Base = &models.Base{CreatorID: &user.ID, LastUpdaterID: &user.ID}
 
 	err = c.db.Create(&customJournalType).Error
@@ -125,14 +125,14 @@ func (c *CustomJournalTypeController) createCustomJournalType(ctx *fiber.Ctx) er
 }
 
 func (c *CustomJournalTypeController) updateCustomJournalType(ctx *fiber.Ctx) error {
-	customJournalType := utils.GetLocal[models.CustomJournalType](ctx, "customJournalType")
+	customJournalType := utils.GetLocal[models.CustomJournalType](ctx, utils.LocalCustomJournalType)
 
 	err := c.parseCustomJournalTypeFromBody(ctx, customJournalType)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	user := utils.GetLocal[models.User](ctx, "currentUser")
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	customJournalType.Base.LastUpdaterID = &user.ID
 
 	err = c.db.Save(customJournalType).Error
@@ -150,7 +150,7 @@ func (c *CustomJournalTypeController) updateCustomJournalType(ctx *fiber.Ctx) er
 }
 
 func (c *CustomJournalTypeController) deleteCustomJournalType(ctx *fiber.Ctx) error {
-	customJournalType := utils.GetLocal[models.CustomJournalType](ctx, "customJournalType")
+	customJournalType := utils.GetLocal[models.CustomJournalType](ctx, utils.LocalCustomJournalType)
 
 	err := c.db.Delete(customJournalType).Error
 	if err != nil {
