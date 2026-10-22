@@ -153,6 +153,7 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 					name="addAnotherEntry"
 					id="addAnotherEntry"
 					value="true"
+					checked?={ journal == nil && c.Query("addAnother") == "true" }
 				/>
 				<label class="label" for="addAnotherEntry">Add another entry</label>
 			</div>
