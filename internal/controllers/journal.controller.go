@@ -519,7 +519,7 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 	if !isAutosave {
 		addAnotherEntry := ctx.FormValue("addAnotherEntry")
 		if addAnotherEntry == "true" {
-			ctx.Set("HX-Redirect", "/journal/new")
+			ctx.Set("HX-Redirect", "/journal/new?addAnother=true")
 		} else {
 			ctx.Set("HX-Redirect", fmt.Sprintf("/journal/%s", journal.ID.String()))
 		}
@@ -548,7 +548,7 @@ func (c *JournalController) updateJournal(ctx *fiber.Ctx) error {
 	if !isAutosave {
 		addAnotherEntry := ctx.FormValue("addAnotherEntry")
 		if addAnotherEntry == "true" {
-			ctx.Set("HX-Redirect", "/journal/new")
+			ctx.Set("HX-Redirect", "/journal/new?addAnother=true")
 		} else {
 			ctx.Set("HX-Redirect", fmt.Sprintf("/journal/%s", journal.ID.String()))
 		}
