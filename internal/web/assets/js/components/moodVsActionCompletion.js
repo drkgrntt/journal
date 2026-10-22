@@ -16,15 +16,13 @@
         {
           label: "Completed Action",
           data: data.map(item => item.withCompletions),
-          borderColor: getCssValue("--primary-color-dark"),
-          backgroundColor: getCssValue("--primary-color-light"),
+          ...themedColors("--primary-color-dark", "--primary-color-light"),
           borderWidth: 2,
         },
         {
           label: "No Completed Action",
           data: data.map(item => item.withoutCompletions),
-          borderColor: getCssValue("--secondary-color-dark"),
-          backgroundColor: getCssValue("--secondary-color-light"),
+          ...themedColors("--secondary-color-dark", "--secondary-color-light"),
           borderWidth: 2,
         },
       ],

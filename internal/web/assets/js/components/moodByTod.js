@@ -25,8 +25,7 @@ function initMoodByTod() {
     values: data.map(item => item.value),
     range,
     ratingLabels,
-    borderColor: getCssValue("--secondary-color-dark"),
-    backgroundColor: getCssValue("--secondary-color-light"),
+    ...themedColors("--secondary-color-dark", "--secondary-color-light"),
     borderWidth: 2,
     options: {
       tension: 0.4,

@@ -16,8 +16,7 @@ function initDistByTopic() {
         {
           label: "Quantity",
           data: data.map(item => item.quantity),
-          borderColor: getCssValue("--secondary-color-dark"),
-          backgroundColor: getCssValue("--secondary-color-light"),
+          ...themedColors("--secondary-color-dark", "--secondary-color-light"),
           borderWidth: 2,
         },
       ],
