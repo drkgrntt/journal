@@ -124,6 +124,37 @@ export function getCssValue(variable) {
 }
 setToWindow("getCssValue", getCssValue)
 
+// Chart dataset colors are resolved once, when the chart is built, so they
+// would stay frozen at whichever theme was active then. This returns the
+// resolved colors plus the CSS variables they came from (`themeVars`, ignored
+// by Chart.js), so refreshChartTheme can re-resolve them after a theme switch.
+export function themedColors(borderVar, backgroundVar) {
+	return {
+		borderColor: getCssValue(borderVar),
+		backgroundColor: getCssValue(backgroundVar),
+		themeVars: { borderColor: borderVar, backgroundColor: backgroundVar },
+	}
+}
+setToWindow("themedColors", themedColors)
+
+// Re-colors every chart currently on the page for the now-active theme: the
+// Chart.js defaults (axis text/grid, see applyChartDefaults in theme.js) and
+// each dataset's own colors.
+export function refreshChartTheme() {
+	if (!window.Chart) return
+	applyChartDefaults()
+	for (const chart of Object.values(Chart.instances)) {
+		for (const dataset of chart.data.datasets) {
+			if (!dataset.themeVars) continue
+			for (const [prop, variable] of Object.entries(dataset.themeVars)) {
+				dataset[prop] = getCssValue(variable)
+			}
+		}
+		chart.update()
+	}
+}
+document.addEventListener("themechange", refreshChartTheme)
+
 export function shouldBlurText() {
 	return localStorage.getItem(`blur-text-${document.body.id}`) === "true"
 }

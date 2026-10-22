@@ -16,8 +16,7 @@ function initThankfulFrequencyChart() {
         {
           label: "Thankfuls",
           data: data.map(item => item.quantity),
-          borderColor: getCssValue("--primary-color-dark"),
-          backgroundColor: getCssValue("--primary-color"),
+          ...themedColors("--primary-color-dark", "--primary-color"),
         },
       ],
     },

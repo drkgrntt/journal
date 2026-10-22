@@ -48,4 +48,18 @@ function toggleTheme() {
 	document.documentElement.setAttribute("data-theme", next);
 	localStorage.setItem("theme", next);
 	applyThemeColorMeta(next);
+	// Charts bake their colors in when built, so they need to be told.
+	document.dispatchEvent(new Event("themechange"));
+}
+
+// Chart.js's own default tick/legend/grid color is a fixed dark gray, so it
+// goes near-invisible on a dark surface. Points the defaults at the active
+// theme's palette; called on load (base.templ) and on every theme switch.
+// Chart.js re-reads the defaults on its next update(), so live charts follow
+// once refreshChartTheme (utils/index.js) updates them.
+function applyChartDefaults() {
+	if (!window.Chart) return;
+	var themeStyle = getComputedStyle(document.documentElement);
+	Chart.defaults.color = themeStyle.getPropertyValue("--text-secondary-color").trim();
+	Chart.defaults.borderColor = themeStyle.getPropertyValue("--border-color").trim();
 }

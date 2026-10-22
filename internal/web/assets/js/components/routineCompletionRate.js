@@ -21,8 +21,7 @@ function initRoutineCompletionRate() {
           // (not the old .toFixed(2) string) so Chart.js treats it as data
           // like every other chart here, not a category label.
           data: data.map(item => Math.min(item.percent, 100)),
-          borderColor: getCssValue("--secondary-color-dark"),
-          backgroundColor: getCssValue("--secondary-color-light"),
+          ...themedColors("--secondary-color-dark", "--secondary-color-light"),
           borderWidth: 2,
         },
       ],
