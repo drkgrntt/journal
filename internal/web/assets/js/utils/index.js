@@ -21,7 +21,9 @@ export function showElement(event, element) {
 setToWindow("showElement", showElement)
 
 export function handleHtmxError(event) {
-	if (event.detail.failed) {
+	// Status 0 means the request never reached the server (offline) - there's
+	// no response to show, and the journal form reports it in its own status.
+	if (event.detail.failed && event.detail.xhr.status !== 0) {
 		alert(event.detail.xhr.response)
 	}
 }

@@ -38,6 +38,13 @@ type Journal struct {
 	PreviousJournal        *Journal      `gorm:"-" json:"previousJournal,omitempty"`
 }
 
+// JournalMetadata is the typed shape of a Journal's Metadata column.
+type JournalMetadata struct {
+	// DraftID is the client-generated id of the on-device draft this entry was
+	// created from, so a retried create can be recognized as the same entry.
+	DraftID string `json:"draftId,omitempty"`
+}
+
 func (j *Journal) EncryptEntry() error {
 	encrypted, err := utils.Encrypt(j.Entry)
 	if err != nil {

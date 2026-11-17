@@ -1,4 +1,8 @@
+import { currentUserId } from "../utils/index.js"
+import { loadDraft, markDraftActive, newDraftId, removeDraft, saveDraft, sendEntry } from "../utils/drafts.js"
+
 const AUTOSAVE_DELAY_MS = 1500
+const RETRY_DELAY_MS = 30 * 1000
 const SAVED_STATUS_DISPLAY_MS = 3000
 
 function initAutosave() {
@@ -12,8 +16,28 @@ function initAutosave() {
 
 	let debounceTimer = null
 	let statusTimer = null
+	let retryTimer = null
 	let inFlight = false
 	let dirty = false
+	// Set while the last save couldn't reach the server (offline, 5xx, expired
+	// session); the text is safe in an on-device draft until it can.
+	let needsRetry = false
+
+	// A brand-new entry gets a client-generated id, sent with every save, so
+	// an on-device draft can be retried without ever creating the entry twice
+	// (the server recognizes the id - see createJournal). Existing entries
+	// aren't drafted: they save straight to the server.
+	const isNewEntry = form.dataset.existing !== "true" && form.hasAttribute("hx-post")
+	const draftId = isNewEntry ? newDraftId() : null
+	if (draftId) {
+		const hidden = document.createElement("input")
+		hidden.type = "hidden"
+		hidden.name = "draftId"
+		hidden.value = draftId
+		form.appendChild(hidden)
+		form.dataset.draftId = draftId
+		markDraftActive(draftId, form)
+	}
 
 	function setStatus(text) {
 		clearTimeout(statusTimer)
@@ -69,6 +93,36 @@ function initAutosave() {
 		updatePageChrome(id)
 	}
 
+	function snapshotBody() {
+		const formData = new FormData(form)
+		formData.set("autosave", "true")
+		// url-encoded, not FormData's default multipart - see below.
+		return new URLSearchParams(formData).toString()
+	}
+
+	// Written on every input, ahead of the debounced server save, so even a
+	// tab closed mid-sentence leaves the text behind.
+	function persistDraft() {
+		if (!draftId) return
+		const id = currentId()
+		if (!id && (!entryEl || entryEl.value.trim() === "")) {
+			removeDraft(currentUserId(), draftId)
+			return
+		}
+		saveDraft({ id: draftId, userId: currentUserId(), serverId: id, body: snapshotBody() })
+	}
+
+	function scheduleRetry() {
+		clearTimeout(retryTimer)
+		retryTimer = setTimeout(retryIfNeeded, RETRY_DELAY_MS)
+	}
+
+	function retryIfNeeded() {
+		if (!form.isConnected) return
+		if (needsRetry && !inFlight && document.visibilityState === "visible") runSave()
+		else if (needsRetry) scheduleRetry()
+	}
+
 	function runSave() {
 		if (inFlight) {
 			dirty = true
@@ -79,29 +133,37 @@ function initAutosave() {
 		const entryEmpty = !entryEl || entryEl.value.trim() === ""
 		if (!id && entryEmpty) return
 
-		const formData = new FormData(form)
-		formData.set("autosave", "true")
 		// FormData's default multipart/form-data encoding doesn't get the
 		// actionItemIds[]/thankfulIds[] bracket-stripping the server only
 		// applies to url-encoded bodies, so those associations would
 		// silently never update via autosave. Send url-encoded instead,
 		// matching what the manual "Done" submit already sends via htmx.
-		const params = new URLSearchParams(formData)
-
-		const url = id ? `/api/journal/${id}` : "/api/journal"
-		const method = id ? "PUT" : "POST"
+		const body = snapshotBody()
+		persistDraft()
 
 		inFlight = true
 		setStatus("Saving…")
 
-		fetch(url, { method, body: params, credentials: "same-origin" })
-			.then(async (res) => {
-				if (!res.ok) throw new Error(await res.text())
-				const journal = await res.json()
-				if (!id) promoteFormToEditMode(journal.id)
-				showSavedStatus()
+		sendEntry(id, body)
+			.then((result) => {
+				if (result.status === "saved") {
+					needsRetry = false
+					if (!id) promoteFormToEditMode(result.entry.id)
+					settleDraft(body, result.entry.id)
+					showSavedStatus()
+				} else if (result.status === "rejected") {
+					needsRetry = false
+					setStatus("Error saving")
+				} else {
+					needsRetry = true
+					setStatus(
+						result.status === "auth"
+							? "Saved on this device. Log in to sync"
+							: "Saved on this device. Will sync when you're back online",
+					)
+					scheduleRetry()
+				}
 			})
-			.catch(() => setStatus("Error saving"))
 			.finally(() => {
 				inFlight = false
 				if (dirty) {
@@ -111,14 +173,51 @@ function initAutosave() {
 			})
 	}
 
+	// The server has `body`. Drop the on-device copy unless typing has moved
+	// past it in the meantime, in which case keep it (now pointing at the saved
+	// entry) for the save that follows.
+	function settleDraft(body, serverId) {
+		if (!draftId) return
+		const userId = currentUserId()
+		const draft = loadDraft(userId, draftId)
+		if (!draft || draft.body === body) {
+			removeDraft(userId, draftId)
+		} else {
+			saveDraft({ ...draft, serverId })
+		}
+	}
+
 	function scheduleSave() {
 		clearTimeout(debounceTimer)
 		debounceTimer = setTimeout(runSave, AUTOSAVE_DELAY_MS)
 	}
 
-	form.addEventListener("input", scheduleSave)
-	form.addEventListener("change", scheduleSave)
+	function onEdit() {
+		persistDraft()
+		scheduleSave()
+	}
+
+	form.addEventListener("input", onEdit)
+	form.addEventListener("change", onEdit)
 	form.addEventListener("submit", () => clearTimeout(debounceTimer))
+
+	// "Done" goes through htmx rather than autosave. Once the server has it
+	// the draft is redundant; if the request never got there, the draft stays
+	// and the form keeps retrying like any other save.
+	form.addEventListener("htmx:afterRequest", (event) => {
+		if (event.target !== form || !draftId) return
+		if (event.detail.successful) removeDraft(currentUserId(), draftId)
+	})
+	form.addEventListener("htmx:sendError", (event) => {
+		if (event.target !== form) return
+		persistDraft()
+		needsRetry = true
+		setStatus("Saved on this device. Will sync when you're back online")
+		scheduleRetry()
+	})
+
+	window.addEventListener("online", retryIfNeeded)
+	document.addEventListener("visibilitychange", retryIfNeeded)
 }
 
 htmx.onLoad(initAutosave)

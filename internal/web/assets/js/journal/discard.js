@@ -1,3 +1,6 @@
+import { currentUserId } from "../utils/index.js"
+import { removeDraft } from "../utils/drafts.js"
+
 function initDiscard() {
 	const form = document.getElementById("journal-form")
 	if (!form) return
@@ -22,11 +25,17 @@ function initDiscard() {
 		return put.split("/").pop()
 	}
 
+	// A discarded new entry must not come back from its on-device draft.
+	function forgetDraft() {
+		if (form.dataset.draftId) removeDraft(currentUserId(), form.dataset.draftId)
+	}
+
 	function redirectFrom(res) {
 		if (!res.ok) {
 			alert("Error discarding entry")
 			return
 		}
+		forgetDraft()
 		window.location.href = res.headers.get("HX-Redirect") || "/journal"
 	}
 
@@ -46,6 +55,7 @@ function initDiscard() {
 		}
 
 		if (!id) {
+			forgetDraft()
 			window.location.href = "/journal"
 			return
 		}

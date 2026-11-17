@@ -127,3 +127,16 @@ type versionedFileInfo struct {
 
 func (i versionedFileInfo) Size() int64        { return i.size }
 func (i versionedFileInfo) ModTime() time.Time { return i.FileInfo.ModTime() }
+
+// ServiceWorkerSource returns assets/sw.js with the build's AssetVersion
+// stamped in. That makes the script's bytes change on every deploy, which is
+// what prompts browsers to install the new worker (and drop the old caches).
+// It's served from /sw.js rather than under /assets/ because a worker's scope
+// is capped at the directory it's served from.
+func ServiceWorkerSource() ([]byte, error) {
+	src, err := Files.ReadFile("assets/sw.js")
+	if err != nil {
+		return nil, err
+	}
+	return bytes.ReplaceAll(src, []byte("__ASSET_VERSION__"), []byte(AssetVersion)), nil
+}

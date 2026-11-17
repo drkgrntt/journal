@@ -10,6 +10,7 @@ import (
 	"journal/internal/web/journal"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -49,18 +50,24 @@ func (c *JournalController) setOutstandingActionItems(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
-func (c *JournalController) getJournal(ctx *fiber.Ctx) error {
-	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
-	id := ctx.Params("id")
+// loadJournal fetches one of the user's journals with the associations the
+// edit/update paths need.
+func (c *JournalController) loadJournal(userID uuid.UUID, id string) (models.Journal, error) {
 	var journal models.Journal
 	err := c.db.Where("id = ?", id).
-		Where("creator_id = ?", currentUser.ID).
+		Where("creator_id = ?", userID).
 		Preload("JournalType").
 		Preload("CustomJournalType").
 		Preload("Rating").
 		Preload("ActionItems", c.db.Order("created_at desc")).
 		Preload("Thankfuls", c.db.Order("created_at desc")).
 		First(&journal).Error
+	return journal, err
+}
+
+func (c *JournalController) getJournal(ctx *fiber.Ctx) error {
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
+	journal, err := c.loadJournal(currentUser.ID, ctx.Params("id"))
 
 	if err != nil {
 		ctx.Set("HX-Redirect", "/journal")
@@ -347,6 +354,11 @@ type JournalBody struct {
 	IsBookmarked  bool     `form:"isBookmarked"`
 	ActionItemIDs []string `form:"actionItemIds"`
 	ThankfulIDs   []string `form:"thankfulIds"`
+	// DraftID is a client-generated id for a brand-new entry, sent with every
+	// save of it. The client keeps unsynced drafts on-device and retries them,
+	// and a retry after a lost response must not create a second entry - see
+	// createJournal.
+	DraftID string `form:"draftId"`
 }
 
 func (c *JournalController) parseJournalFromBody(ctx *fiber.Ctx, journal *models.Journal) error {
@@ -453,6 +465,27 @@ func (c *JournalController) RegisterApiRoutes() {
 }
 
 func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
+
+	// A draft the server has already created an entry for (the first attempt
+	// reached us but its response was lost) becomes an update of that entry.
+	draftID := strings.TrimSpace(ctx.FormValue("draftId"))
+	if draftID != "" {
+		var existingID string
+		err := c.db.Model(&models.Journal{}).
+			Where("creator_id = ?", user.ID).
+			Where("metadata->>'draftId' = ?", draftID).
+			Limit(1).
+			Pluck("id", &existingID).Error
+		if err == nil && existingID != "" {
+			existing, err := c.loadJournal(user.ID, existingID)
+			if err == nil {
+				ctx.Locals(utils.LocalJournal, &existing)
+				return c.updateJournal(ctx)
+			}
+		}
+	}
+
 	var journal models.Journal
 	err := c.parseJournalFromBody(ctx, &journal)
 	if err != nil {
@@ -460,8 +493,14 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	journal.Base = &models.Base{CreatorID: &user.ID, LastUpdaterID: &user.ID}
+	if draftID != "" {
+		journal.Metadata, err = models.EncodeMetadata(models.JournalMetadata{DraftID: draftID})
+		if err != nil {
+			logger.Error(err.Error())
+			return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating journal"})
+		}
+	}
 
 	tx := c.db.Begin()
 	defer tx.Rollback()
