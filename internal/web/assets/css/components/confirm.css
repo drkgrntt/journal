@@ -23,4 +23,8 @@
 		justify-content: flex-end;
 		gap: .75rem;
 	}
+
+	& [hidden] {
+		display: none !important;
+	}
 }

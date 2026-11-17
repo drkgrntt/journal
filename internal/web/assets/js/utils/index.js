@@ -24,14 +24,14 @@ export function handleHtmxError(event) {
 	// Status 0 means the request never reached the server (offline) - there's
 	// no response to show, and the journal form reports it in its own status.
 	if (event.detail.failed && event.detail.xhr.status !== 0) {
-		alert(event.detail.xhr.response)
+		window.alertDialog(event.detail.xhr.response)
 	}
 }
 setToWindow("handleHtmxError", handleHtmxError)
 
 export function handleHtmxSuccess(event, message) {
 	if (!event.detail.failed) {
-		alert(message)
+		return window.alertDialog(message)
 	}
 }
 setToWindow("handleHtmxSuccess", handleHtmxSuccess)

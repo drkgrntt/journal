@@ -29,11 +29,11 @@ function initTemplatePicker() {
 		})
 		.catch(() => {})
 
-	select.addEventListener("change", () => {
+	select.addEventListener("change", async () => {
 		const template = templates.find((item) => item.id === select.value)
 		if (!template) return
 
-		if (entryEl.value.trim() !== "" && !window.confirm("Replace what you've written with this template?")) {
+		if (entryEl.value.trim() !== "" && !(await window.confirmDialog("Replace what you've written with this template?", "Replace"))) {
 			select.value = ""
 			return
 		}

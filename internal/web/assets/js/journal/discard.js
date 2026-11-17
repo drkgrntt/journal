@@ -32,7 +32,7 @@ function initDiscard() {
 
 	function redirectFrom(res) {
 		if (!res.ok) {
-			alert("Error discarding entry")
+			window.alertDialog("Error discarding entry")
 			return
 		}
 		forgetDraft()

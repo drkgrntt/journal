@@ -8,6 +8,7 @@ export function confirmDialog(message, confirmLabel = "Confirm") {
 
 	dialog.querySelector("[confirm-message]").textContent = message
 	dialog.querySelector("[confirm-ok]").textContent = confirmLabel
+	dialog.querySelector("[confirm-cancel]").hidden = false
 
 	return new Promise((resolve) => {
 		dialog.addEventListener(
@@ -21,6 +22,29 @@ export function confirmDialog(message, confirmLabel = "Confirm") {
 	})
 }
 window.confirmDialog = confirmDialog
+
+// Styled replacement for window.alert: the same dialog with just an OK button.
+// Resolves once it's dismissed.
+export function alertDialog(message) {
+	const dialog = document.getElementById("confirm-dialog")
+	if (!dialog) {
+		window.alert(message)
+		return Promise.resolve()
+	}
+
+	dialog.querySelector("[confirm-message]").textContent = message
+	dialog.querySelector("[confirm-ok]").textContent = "OK"
+	const cancel = dialog.querySelector("[confirm-cancel]")
+	cancel.hidden = true
+
+	return new Promise((resolve) => {
+		dialog.addEventListener("close", () => resolve(), { once: true })
+		dialog.returnValue = ""
+		dialog.showModal()
+		dialog.querySelector("[confirm-ok]").focus()
+	})
+}
+window.alertDialog = alertDialog
 
 document.addEventListener("click", (event) => {
 	const dialog = event.target
