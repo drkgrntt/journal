@@ -2,7 +2,7 @@
 
 ## Status
 
-- Branch 1 (`subscription-schema-stripe`) is committed. Branches 3-5 (themes, entry templates, reminder email) are in progress in parallel; branch 6 (copy) is not started.
+- Everything is implemented as a stack of commits (not merged, not deployed): `subscription-schema-stripe` -> `subscription-gating` -> `themes` -> `entry-templates` -> `reminder-email` -> `subscription-copy`. Each branch is cut from the previous one, so merging the last one brings in all of them.
 - Branch 2 (gating) is implemented: `RequireSubscription`/`IsSubscribed()` replace `RequireFeature`/`HasFeature`; the grace banner and lapse behavior are in. The old feature tables are unread but not yet dropped.
 - Prod prerequisites before deploying branch 1: run `cmd/stripesetup` with the live key (`CONFIRM_LIVE=yes go run cmd/stripesetup/stripesetup.go`), and create a live webhook endpoint (`/api/stripe/webhook`) subscribed to `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`. Then run the migration.
 
