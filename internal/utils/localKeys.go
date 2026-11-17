@@ -10,7 +10,6 @@ const (
 	LocalJournals               = "journals"
 	LocalJournalTypes           = "journalTypes"
 	LocalRatings                = "ratings"
-	LocalFeatures               = "features"
 	LocalOutstandingActionItems = "outstandingActionItems"
 
 	LocalActionItem           = "actionItem"

@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -16,6 +18,12 @@ type User struct {
 	LastName         string `gorm:"not null" json:"lastName,omitempty"`
 	Password         string `gorm:"not null" json:"-"`
 	StripeCustomerID string `gorm:"type:text" json:"stripeCustomerId,omitempty"`
+
+	// Subscription state; see subscription.go for how it's interpreted.
+	SubscriptionStatus   string     `gorm:"type:text;not null;default:''" json:"subscriptionStatus,omitempty"`
+	TrialEndsAt          *time.Time `gorm:"type:timestamptz" json:"trialEndsAt,omitempty"`
+	CurrentPeriodEnd     *time.Time `gorm:"type:timestamptz" json:"currentPeriodEnd,omitempty"`
+	StripeSubscriptionID string     `gorm:"type:text;not null;default:''" json:"-"`
 
 	Journals             []*Journal             `gorm:"foreignKey:CreatorID" json:"journals,omitempty"`
 	ActionItems          []*ActionItem          `gorm:"foreignKey:CreatorID" json:"actionItems,omitempty"`
@@ -54,6 +62,7 @@ func (u *User) ComparePasswords(candidatePassword string) error {
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
 	u.Password = u.hashPassword(u.Password)
+	u.startTrial(time.Now().UTC())
 	return nil
 }
 
