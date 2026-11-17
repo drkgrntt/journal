@@ -158,7 +158,7 @@ templ planSection(c *fiber.Ctx) {
 			<p>Thank you. It can take a moment for your plan to show up here.</p>
 		}
 		<p>{ planStatus(web.CurrentUser(c)) }</p>
-		<p>The plan includes Routines and Custom Topics.</p>
+		<p>The plan includes Routines, Custom Topics, Themes, Entry Templates, and a daily reminder email.</p>
 		if hasPlanToManage(web.CurrentUser(c)) {
 			<div class="field">
 				<button class="button" hx-post="/api/profile/billing/portal" hx-swap="none">Manage plan</button>
