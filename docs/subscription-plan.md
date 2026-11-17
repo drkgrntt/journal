@@ -2,9 +2,12 @@
 
 ## Status
 
-- Everything is implemented as a stack of commits (not merged, not deployed): `subscription-schema-stripe` -> `subscription-gating` -> `themes` -> `entry-templates` -> `reminder-email` -> `subscription-copy`. Each branch is cut from the previous one, so merging the last one brings in all of them.
-- Branch 2 (gating) is implemented: `RequireSubscription`/`IsSubscribed()` replace `RequireFeature`/`HasFeature`; the grace banner and lapse behavior are in. The old feature tables are unread but not yet dropped.
-- Prod prerequisites before deploying branch 1: run `cmd/stripesetup` with the live key (`CONFIRM_LIVE=yes go run cmd/stripesetup/stripesetup.go`), and create a live webhook endpoint (`/api/stripe/webhook`) subscribed to `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`. Then run the migration.
+Shipped to production on 2026-11-17 (merged to `main`, migrations 000004-000008 applied, live Stripe prices and portal created with `cmd/stripesetup`, the live webhook endpoint set to the four event types below, and the owner account comped).
+
+- The old `features` / `user_features` tables are unread but not yet dropped; a later migration should drop them.
+- Email confirmation (migration 000008) was added after the original plan: reminder emails only go to a confirmed address, nothing else is gated on it. See the Email confirmation bullet in `CLAUDE.md`.
+- Active subscribers can switch to Lifetime from the profile (no credit for unused time), and the Stripe portal is configured to switch between monthly and annual. The portal switching was not confirmed in the hosted portal UI, so check it with a real subscription.
+- The live webhook endpoint must stay subscribed to `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`.
 
 Replaces the per-feature "products" model (Routines, Custom Topics bought one-time) with a single subscription that unlocks a fixed set of paid features.
 
