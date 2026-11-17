@@ -155,8 +155,15 @@ export function refreshChartTheme() {
 }
 document.addEventListener("themechange", refreshChartTheme)
 
+// The user id lives on <main data-user-id> rather than <body id>: login/logout
+// swap only the body's *contents* (hx-target="body"), so body attributes go
+// stale across those transitions while <main> is always freshly rendered.
+export function currentUserId() {
+	return document.querySelector("[data-user-id]")?.dataset.userId ?? ""
+}
+
 export function shouldBlurText() {
-	return localStorage.getItem(`blur-text-${document.body.id}`) === "true"
+	return localStorage.getItem(`blur-text-${currentUserId()}`) === "true"
 }
 setToWindow("shouldBlurText", shouldBlurText)
 

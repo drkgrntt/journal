@@ -63,12 +63,13 @@ templ baseWithHead(c *fiber.Ctx, h *Head) {
 				applyChartDefaults();
 			</script>
 		</head>
-		<body id={ id(c) }>
+		<body>
 			<a class="skip-link" href="#main-content">Skip to main content</a>
 			@Header(c)
 			<main
 				id="main-content"
 				class="main"
+				data-user-id={ id(c) }
 				hx-on:htmx:after-request="handleHtmxError?.(event)"
 			>
 				@Nav(c)
