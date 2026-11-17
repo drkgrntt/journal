@@ -69,8 +69,10 @@ func (c *CustomJournalTypeController) RegisterViewRoutes() {
 func (c *CustomJournalTypeController) RegisterApiRoutes() {
 	c.api.Use(middleware.RequireAuth)
 
-	c.api.Post("/", middleware.RequireFeature("custom-topics"), c.createCustomJournalType)
-	c.api.Put("/:id", middleware.RequireFeature("custom-topics"), c.getCustomJournalType, c.updateCustomJournalType)
+	// Creating needs an active plan; existing topics stay editable and
+	// deletable so entries tagged with them never break.
+	c.api.Post("/", middleware.RequireSubscription, c.createCustomJournalType)
+	c.api.Put("/:id", c.getCustomJournalType, c.updateCustomJournalType)
 	c.api.Delete("/:id", c.getCustomJournalType, c.deleteCustomJournalType)
 }
 

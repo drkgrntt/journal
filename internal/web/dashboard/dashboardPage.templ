@@ -112,7 +112,7 @@ func allPatternDefs(c *fiber.Ctx) []patternDef {
 			Chart: DistByTopic(c),
 		},
 	}
-	if web.CurrentUser(c).HasFeature("routines") {
+	if web.CurrentUser(c).IsSubscribed() {
 		defs = append(defs, patternDef{
 			Key:   "routineCompletion",
 			Title: "Routine Completion",

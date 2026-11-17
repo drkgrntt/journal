@@ -30,7 +30,6 @@ type User struct {
 	RecurringActionItems []*RecurringActionItem `gorm:"foreignKey:CreatorID" json:"recurringActionItems,omitempty"`
 	Thankfuls            []*Thankful            `gorm:"foreignKey:CreatorID" json:"thankfuls,omitempty"`
 	CustomJournalTypes   []*CustomJournalType   `gorm:"foreignKey:CreatorID" json:"customJournalTypes,omitempty"`
-	UserFeatures         []*UserFeature         `gorm:"foreignKey:CreatorID" json:"userFeatures,omitempty"`
 	// Features             []*Feature             `gorm:"many2many:user_features;" json:"features"`
 }
 
@@ -73,13 +72,4 @@ func (u *User) BeforeUpdate(tx *gorm.DB) error {
 		tx.Statement.SetColumn("Password", hashedPassword)
 	}
 	return nil
-}
-
-func (u *User) HasFeature(feature string) bool {
-	for _, userFeature := range u.UserFeatures {
-		if userFeature.Feature.Code == feature && userFeature.EnabledAt != nil {
-			return true
-		}
-	}
-	return false
 }

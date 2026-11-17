@@ -220,7 +220,9 @@ templ exportSection(c *fiber.Ctx) {
 templ customJournalTypeForm(c *fiber.Ctx) {
 	<div class="form">
 		<h4>Custom Topics</h4>
-		@customJournalTypes.Form(c, nil)
+		if web.CurrentUser(c).IsSubscribed() {
+			@customJournalTypes.Form(c, nil)
+		}
 		@customJournalTypes.List(c, web.CurrentUser(c).CustomJournalTypes)
 	</div>
 }
@@ -235,7 +237,7 @@ templ ProfilePage(c *fiber.Ctx) {
 				@passwordForm(c)
 				@exportSection(c)
 				@planSection(c)
-				if web.CurrentUser(c).HasFeature("custom-topics") {
+				if web.CurrentUser(c).IsSubscribed() || len(web.CurrentUser(c).CustomJournalTypes) > 0 {
 					@customJournalTypeForm(c)
 				}
 			</div>

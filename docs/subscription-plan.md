@@ -2,8 +2,8 @@
 
 ## Status
 
-- Branch 1 (`subscription-schema-stripe`) is implemented in the working tree, not yet committed. Branches 2-6 are not started.
-- Gating still uses the old `HasFeature`/`UserFeature` path until branch 2.
+- Branch 1 (`subscription-schema-stripe`) is committed. Branches 3-5 (themes, entry templates, reminder email) are in progress in parallel; branch 6 (copy) is not started.
+- Branch 2 (gating) is implemented: `RequireSubscription`/`IsSubscribed()` replace `RequireFeature`/`HasFeature`; the grace banner and lapse behavior are in. The old feature tables are unread but not yet dropped.
 - Prod prerequisites before deploying branch 1: run `cmd/stripesetup` with the live key (`CONFIRM_LIVE=yes go run cmd/stripesetup/stripesetup.go`), and create a live webhook endpoint (`/api/stripe/webhook`) subscribed to `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`. Then run the migration.
 
 Replaces the per-feature "products" model (Routines, Custom Topics bought one-time) with a single subscription that unlocks a fixed set of paid features.

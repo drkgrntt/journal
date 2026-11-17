@@ -1,0 +1,25 @@
+.grace-banner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-3);
+	padding: var(--space-3) var(--space-4);
+	background-color: var(--surface);
+	border-bottom: 1px solid var(--border-color);
+	color: var(--text-secondary-color);
+	font-size: var(--text-sm);
+
+	a {
+		color: inherit;
+		text-decoration: underline;
+		margin-left: var(--space-2);
+	}
+}
+
+.grace-banner-dismiss {
+	background: none;
+	border: none;
+	color: inherit;
+	cursor: pointer;
+	padding: var(--space-1);
+}

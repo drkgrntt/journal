@@ -14,6 +14,7 @@ import (
 	"github.com/a-h/templ"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -72,8 +73,16 @@ func (c *RecurringActionItemController) createActionItems() {
 		Where("starts_at <= ?", now).
 		Find(&recurringActionItems)
 
+	subscribed := c.subscribedCreators(recurringActionItems)
+
 	var actionItems []*models.ActionItem
 	for _, recurringActionItem := range recurringActionItems {
+		// A routine whose owner's plan has lapsed just waits; it picks up
+		// again whenever the plan does.
+		if !subscribed[*recurringActionItem.CreatorID] {
+			continue
+		}
+
 		// Exit if it hasn't started yet
 		if recurringActionItem.StartsAt.After(now) {
 			// logger.Info("Recurring action item has not started yet", "id", recurringActionItem.ID)
@@ -145,6 +154,38 @@ func (c *RecurringActionItemController) createActionItems() {
 	}
 }
 
+// subscribedCreators reports which of the routines' owners currently have the
+// paid features on. Only the subscription columns are loaded.
+func (c *RecurringActionItemController) subscribedCreators(routines []*models.RecurringActionItem) map[uuid.UUID]bool {
+	seen := map[uuid.UUID]bool{}
+	var ids []uuid.UUID
+	for _, r := range routines {
+		if r.CreatorID != nil && !seen[*r.CreatorID] {
+			seen[*r.CreatorID] = true
+			ids = append(ids, *r.CreatorID)
+		}
+	}
+
+	result := map[uuid.UUID]bool{}
+	if len(ids) == 0 {
+		return result
+	}
+	var users []*models.User
+	err := c.db.
+		Session(&gorm.Session{Logger: gormlogger.Default.LogMode(gormlogger.Error), SkipHooks: true}).
+		Select("id", "subscription_status", "trial_ends_at", "current_period_end").
+		Where("id IN ?", ids).
+		Find(&users).Error
+	if err != nil {
+		logger.Error("Error loading routine owners", "error", err.Error())
+		return result
+	}
+	for _, u := range users {
+		result[u.ID] = u.IsSubscribed()
+	}
+	return result
+}
+
 func (c *RecurringActionItemController) getRecurringActionItem(ctx *fiber.Ctx) error {
 	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 
@@ -171,8 +212,10 @@ func (c *RecurringActionItemController) RegisterViewRoutes() {
 func (c *RecurringActionItemController) RegisterApiRoutes() {
 	c.api.Use(middleware.RequireAuth)
 
-	c.api.Post("/", middleware.RequireFeature("routines"), c.createRecurringActionItem)
-	c.api.Put("/:id", middleware.RequireFeature("routines"), c.getRecurringActionItem, c.updateRecurringActionItem)
+	// Creating needs an active plan; editing or deleting what already exists
+	// never does.
+	c.api.Post("/", middleware.RequireSubscription, c.createRecurringActionItem)
+	c.api.Put("/:id", c.getRecurringActionItem, c.updateRecurringActionItem)
 	c.api.Delete("/:id", c.getRecurringActionItem, c.deleteRecurringActionItem)
 }
 
