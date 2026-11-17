@@ -164,6 +164,18 @@ templ planSection(c *fiber.Ctx) {
 				<button class="button" hx-post="/api/profile/billing/portal" hx-swap="none">Manage plan</button>
 			</div>
 		}
+		if hasPlanToManage(web.CurrentUser(c)) {
+			<div class="field">
+				<button
+					class="button"
+					hx-post={ fmt.Sprintf("/api/profile/billing/checkout/%s", stripe.PlanLifetime) }
+					hx-swap="none"
+					hx-confirm="Switch to a lifetime plan? Your current plan ends once the payment goes through, and the time left on it isn't credited."
+				>
+					Switch to Lifetime &middot; { stripe.PlanLabel(stripe.PlanLifetime) }
+				</button>
+			</div>
+		}
 		if canChoosePlan(web.CurrentUser(c)) {
 			<div class="field plan-options">
 				for _, plan := range stripe.Plans {
@@ -222,6 +234,8 @@ templ customJournalTypeForm(c *fiber.Ctx) {
 		<h4>Custom Topics</h4>
 		if web.CurrentUser(c).IsSubscribed() {
 			@customJournalTypes.Form(c, nil)
+		} else {
+			<p>Creating new topics is part of the plan; the ones you have stay as they are.</p>
 		}
 		@customJournalTypes.List(c, web.CurrentUser(c).CustomJournalTypes)
 	</div>
@@ -285,10 +299,26 @@ var appearanceThemes = []web.LabelValue[string]{
 	{Label: "Sand", Value: "sand"},
 }
 
+templ routinesSection(c *fiber.Ctx) {
+	<div class="form">
+		<h4>Routines</h4>
+		<p>Action items that appear on a schedule, like a weekly check-in.</p>
+		if !web.CurrentUser(c).IsSubscribed() {
+			<p>Creating routines is part of the plan; the ones you have wait quietly until it's back.</p>
+		}
+		<div class="field">
+			<a class="button" href="/action-items">Manage routines</a>
+		</div>
+	</div>
+}
+
 templ entryTemplatesSection(c *fiber.Ctx) {
 	<div class="form">
 		<h4>Entry Templates</h4>
 		<p>Your own starting text for a new entry, like a gentle structure to fill in.</p>
+		if !web.CurrentUser(c).IsSubscribed() {
+			<p>Using and creating templates is part of the plan; the ones you've saved are kept.</p>
+		}
 		<div class="field">
 			<a class="button" href="/entry-templates">Manage templates</a>
 		</div>
@@ -296,7 +326,20 @@ templ entryTemplatesSection(c *fiber.Ctx) {
 }
 
 templ reminderEmailSection(c *fiber.Ctx) {
-	if web.CurrentUser(c).IsSubscribed() {
+	if web.CurrentUser(c).IsSubscribed() && !web.CurrentUser(c).EmailConfirmed() {
+		<div class="form">
+			<h4>Reminder Email</h4>
+			<p>A quiet daily email that says your reminder is waiting. To turn it on, confirm your email first, so it only goes to an address you've confirmed.</p>
+			<div class="field">
+				<button
+					class="button"
+					hx-post="/api/profile/confirm-email"
+					hx-swap="none"
+					hx-on::after-request="if (event.detail.failed) { handleHtmxError(event) } else { handleHtmxSuccess(event, event.detail.xhr.response) }"
+				>Send confirmation email</button>
+			</div>
+		</div>
+	} else if web.CurrentUser(c).IsSubscribed() {
 		<form
 			class="form"
 			id="reminder-email-form"
@@ -348,14 +391,18 @@ templ reminderEmailSection(c *fiber.Ctx) {
 			class="form"
 			hx-put="/api/profile/reminder-email"
 			hx-swap="none"
-			hx-on::after-request="handleHtmxSuccess(event, 'Turned off');window.location.reload()"
+			hx-on::after-request="Promise.resolve(handleHtmxSuccess(event, 'Turned off')).then(() => { if (!event.detail.failed) window.location.reload() })"
 		>
 			<h4>Reminder Email</h4>
 			<p>Reminder emails are paused while your plan is inactive. You can turn them off here.</p>
 			<div class="field">
 				<button type="submit" class="button">Turn off</button>
 			</div>
-		</form>
+		</form>	} else {
+		<div class="form">
+			<h4>Reminder Email</h4>
+			<p>A quiet daily email that says your reminder is waiting. It's part of the plan, which isn't active right now.</p>
+		</div>
 	}
 }
 
@@ -364,18 +411,30 @@ templ ProfilePage(c *fiber.Ctx) {
 		<div id="profile-page">
 			<h1 class="heading">Profile</h1>
 			@blurTextToggle(c)
-			<div class="forms">
-				@infoForm(c)
-				@passwordForm(c)
-				@exportSection(c)
-				@planSection(c)
-				@appearanceSection(c)
-				@entryTemplatesSection(c)
-				@reminderEmailSection(c)
-				if web.CurrentUser(c).IsSubscribed() || len(web.CurrentUser(c).CustomJournalTypes) > 0 {
+			<section class="group">
+				<h2 class="group-heading">Account</h2>
+				<div class="forms">
+					@infoForm(c)
+					@passwordForm(c)
+					@planSection(c)
+				</div>
+			</section>
+			<section class="group">
+				<h2 class="group-heading">Extras</h2>
+				<div class="forms">
+					@appearanceSection(c)
+					@routinesSection(c)
+					@entryTemplatesSection(c)
+					@reminderEmailSection(c)
 					@customJournalTypeForm(c)
-				}
-			</div>
+				</div>
+			</section>
+			<section class="group">
+				<h2 class="group-heading">Your data</h2>
+				<div class="forms">
+					@exportSection(c)
+				</div>
+			</section>
 		</div>
 	}
 }

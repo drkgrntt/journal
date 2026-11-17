@@ -54,6 +54,7 @@ func (c *ProfileController) RegisterApiRoutes() {
 	c.api.Put("/password", c.updatePassword)
 	c.api.Put("/appearance", middleware.RequireSubscription, c.updateAppearance)
 	c.api.Put("/reminder-email", c.updateReminderEmail)
+	c.api.Post("/confirm-email", c.resendEmailConfirmation)
 	c.api.Post("/billing/checkout/:plan", c.startCheckout)
 	c.api.Post("/billing/portal", c.openPortal)
 	c.api.Get("/export", c.exportJournals)
@@ -215,7 +216,12 @@ func (c *ProfileController) startCheckout(ctx *fiber.Ctx) error {
 	case models.SubscriptionLifetime, models.SubscriptionComped:
 		return ctx.Status(http.StatusBadRequest).SendString("You don't need a plan")
 	case models.SubscriptionActive, models.SubscriptionPastDue:
-		return ctx.Status(http.StatusBadRequest).SendString("You already have a plan; manage it from your profile")
+		// Switching between monthly and annual happens in the Stripe portal.
+		// Going lifetime is a separate one-time payment; the webhook cancels
+		// the recurring subscription once it's paid.
+		if plan != appstripe.PlanLifetime {
+			return ctx.Status(http.StatusBadRequest).SendString("You already have a plan; manage it from your profile")
+		}
 	}
 
 	price, err := appstripe.GetPlanPrice(plan)

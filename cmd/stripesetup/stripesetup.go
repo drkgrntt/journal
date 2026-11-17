@@ -47,6 +47,7 @@ func main() {
 	}
 
 	var productID string
+	recurringPrices := []string{}
 	for _, s := range specs {
 		iter := price.List(&stripego.PriceListParams{
 			Active:     stripego.Bool(true),
@@ -55,6 +56,9 @@ func main() {
 		if iter.Next() {
 			fmt.Printf("exists   %-18s %s\n", s.key, iter.Price().ID)
 			productID = iter.Price().Product.ID
+			if s.interval != "" {
+				recurringPrices = append(recurringPrices, iter.Price().ID)
+			}
 			continue
 		}
 		if err := iter.Err(); err != nil {
@@ -87,21 +91,40 @@ func main() {
 			fail(err)
 		}
 		fmt.Printf("created  %-18s %s\n", s.key, created.ID)
+		if s.interval != "" {
+			recurringPrices = append(recurringPrices, created.ID)
+		}
+	}
+
+	// Let the portal switch between the recurring plans (monthly <-> annual).
+	// Lifetime is a one-time payment, so it can't be a subscription update.
+	subscriptionUpdate := &stripego.BillingPortalConfigurationFeaturesSubscriptionUpdateParams{
+		Enabled:               stripego.Bool(true),
+		DefaultAllowedUpdates: stripego.StringSlice([]string{"price"}),
+		ProrationBehavior:     stripego.String("create_prorations"),
+		Products: []*stripego.BillingPortalConfigurationFeaturesSubscriptionUpdateProductParams{
+			{Product: stripego.String(productID), Prices: stripego.StringSlice(recurringPrices)},
+		},
 	}
 
 	// The portal needs a configuration; Stripe has none by default.
 	cfgs := bpconfig.List(&stripego.BillingPortalConfigurationListParams{Active: stripego.Bool(true)})
-	hasDefault := false
+	defaultID := ""
 	for cfgs.Next() {
 		if cfgs.BillingPortalConfiguration().IsDefault {
-			hasDefault = true
+			defaultID = cfgs.BillingPortalConfiguration().ID
 		}
 	}
 	if err := cfgs.Err(); err != nil {
 		fail(err)
 	}
-	if hasDefault {
-		fmt.Println("exists   customer portal default configuration")
+	if defaultID != "" {
+		if _, err := bpconfig.Update(defaultID, &stripego.BillingPortalConfigurationParams{
+			Features: &stripego.BillingPortalConfigurationFeaturesParams{SubscriptionUpdate: subscriptionUpdate},
+		}); err != nil {
+			fail(err)
+		}
+		fmt.Printf("updated  customer portal default configuration %s (plan switching on)\n", defaultID)
 		return
 	}
 	cfg, err := bpconfig.New(&stripego.BillingPortalConfigurationParams{
@@ -115,6 +138,7 @@ func main() {
 				Enabled: stripego.Bool(true),
 				Mode:    stripego.String("at_period_end"),
 			},
+			SubscriptionUpdate: subscriptionUpdate,
 		},
 	})
 	if err != nil {
