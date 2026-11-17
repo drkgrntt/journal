@@ -30,6 +30,9 @@ const (
 	LocalDailyReminder = "dailyReminder"
 	LocalReminders     = "reminders"
 
+	LocalEntryTemplate  = "entryTemplate"
+	LocalEntryTemplates = "entryTemplates"
+
 	LocalHasMore  = "hasMore"
 	LocalNextPage = "nextPage"
 	LocalPrevDate = "prevDate"

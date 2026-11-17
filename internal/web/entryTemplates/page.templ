@@ -1,0 +1,25 @@
+package entryTemplates
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/web"
+)
+
+templ Page(c *fiber.Ctx) {
+	@web.Base(c, nil) {
+		<div id="entry-templates-page">
+			<a class="back" href={ templ.SafeURL("/profile") }>
+				<i class="fas fa-chevron-left" aria-hidden="true"></i>
+				Back
+			</a>
+			<h2 class="heading">Entry Templates</h2>
+			<p class="blurb">Your own starting points for a new entry. Pick one when you sit down to write, or don't.</p>
+			@List(c, getEntryTemplates(c), web.CurrentUser(c).IsSubscribed())
+			if web.CurrentUser(c).IsSubscribed() {
+				@Form(c, nil)
+			} else {
+				<p class="blurb">Adding or changing templates is part of the subscription. Your existing ones are yours to keep or delete.</p>
+			}
+		</div>
+	}
+}
