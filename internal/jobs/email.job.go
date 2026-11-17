@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 const EMAIL_JOB_TYPE = "email"
@@ -22,6 +23,17 @@ type EmailData struct {
 }
 
 func ScheduleEmailJob(
+	userId uuid.UUID,
+	data *EmailData,
+	scheduledAt time.Time,
+) (*models.Job, error) {
+	return scheduleEmailJobTx(db, userId, data, scheduledAt)
+}
+
+// scheduleEmailJobTx is ScheduleEmailJob against a specific handle, so callers
+// can create the job inside their own transaction.
+func scheduleEmailJobTx(
+	tx *gorm.DB,
 	userId uuid.UUID,
 	data *EmailData,
 	scheduledAt time.Time,
@@ -42,7 +54,7 @@ func ScheduleEmailJob(
 		ScheduledAt: &scheduledAt,
 	}
 
-	err = db.Save(&job).Error
+	err = tx.Save(&job).Error
 	if err != nil {
 		logger.Error("Unable to save email job: ", "error", err.Error())
 		return nil, err
@@ -72,8 +84,16 @@ func sendEmail(job *models.Job) error {
 		},
 	}
 
-	err = data.getContentAndSubject(&config)
-	if err != nil {
+	if data.Name == emails.REMINDER_EMAIL {
+		skip, err := prepareReminderEmail(job, &data, &config)
+		if err != nil {
+			return err
+		}
+		if skip {
+			job.Notes = "Reminder email skipped (disabled or lapsed since scheduling)"
+			return nil
+		}
+	} else if err = data.getContentAndSubject(&config); err != nil {
 		return err
 	}
 

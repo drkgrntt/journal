@@ -295,6 +295,70 @@ templ entryTemplatesSection(c *fiber.Ctx) {
 	</div>
 }
 
+templ reminderEmailSection(c *fiber.Ctx) {
+	if web.CurrentUser(c).IsSubscribed() {
+		<form
+			class="form"
+			id="reminder-email-form"
+			hx-put="/api/profile/reminder-email"
+			hx-swap="none"
+			hx-on::after-request="handleHtmxSuccess(event, 'Saved!')"
+		>
+			<h4>Reminder Email</h4>
+			<p>A quiet daily email that says your reminder is waiting. Your reminder itself is never included. Off unless you turn it on.</p>
+			<div class="checkField">
+				<input
+					type="checkbox"
+					id="reminderEmailEnabled"
+					name="enabled"
+					value="true"
+					checked?={ web.CurrentUser(c).ReminderEmailEnabled }
+				/>
+				<label for="reminderEmailEnabled">Send me a reminder email</label>
+			</div>
+			<div class="field">
+				<label for="reminderEmailTime" class="label">Time (your local time)</label>
+				<input
+					class="input"
+					type="time"
+					name="time"
+					id="reminderEmailTime"
+					value={ web.CurrentUser(c).ReminderEmailTime }
+					required
+				/>
+			</div>
+			<div class="field">
+				<label for="reminderEmailMessage" class="label">Your own message (optional)</label>
+				<textarea
+					class="input"
+					name="message"
+					id="reminderEmailMessage"
+					maxlength="280"
+					rows="2"
+					placeholder="Your reminder is waiting."
+				>{ web.CurrentUser(c).ReminderEmailMessageText() }</textarea>
+				<small>This message is sent by email in plain text, up to 280 characters.</small>
+			</div>
+			<div class="field">
+				<button type="submit" class="button">Save</button>
+			</div>
+		</form>
+	} else if web.CurrentUser(c).ReminderEmailEnabled {
+		<form
+			class="form"
+			hx-put="/api/profile/reminder-email"
+			hx-swap="none"
+			hx-on::after-request="handleHtmxSuccess(event, 'Turned off');window.location.reload()"
+		>
+			<h4>Reminder Email</h4>
+			<p>Reminder emails are paused while your plan is inactive. You can turn them off here.</p>
+			<div class="field">
+				<button type="submit" class="button">Turn off</button>
+			</div>
+		</form>
+	}
+}
+
 templ ProfilePage(c *fiber.Ctx) {
 	@web.Base(c, nil) {
 		<div id="profile-page">
@@ -307,6 +371,7 @@ templ ProfilePage(c *fiber.Ctx) {
 				@planSection(c)
 				@appearanceSection(c)
 				@entryTemplatesSection(c)
+				@reminderEmailSection(c)
 				if web.CurrentUser(c).IsSubscribed() || len(web.CurrentUser(c).CustomJournalTypes) > 0 {
 					@customJournalTypeForm(c)
 				}

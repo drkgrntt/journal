@@ -53,6 +53,7 @@ func (c *ProfileController) RegisterApiRoutes() {
 	c.api.Put("/", c.updateUser)
 	c.api.Put("/password", c.updatePassword)
 	c.api.Put("/appearance", middleware.RequireSubscription, c.updateAppearance)
+	c.api.Put("/reminder-email", c.updateReminderEmail)
 	c.api.Post("/billing/checkout/:plan", c.startCheckout)
 	c.api.Post("/billing/portal", c.openPortal)
 	c.api.Get("/export", c.exportJournals)
