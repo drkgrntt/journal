@@ -19,10 +19,14 @@ func getRecurringActionItems(c *fiber.Ctx) []*models.RecurringActionItem {
 templ Page(c *fiber.Ctx) {
 	@web.Base(c, nil) {
 		<div id="action-item-list-page">
-			if web.CurrentUser(c).HasFeature("routines") {
+			if web.CurrentUser(c).IsSubscribed() || len(getRecurringActionItems(c)) > 0 {
 				<h2 class="heading">Routines</h2>
 				@recurringActionItems.List(c, getRecurringActionItems(c))
-				@recurringActionItems.Form(c, nil)
+				if web.CurrentUser(c).IsSubscribed() {
+					@recurringActionItems.Form(c, nil)
+				} else {
+					<p>Routines are resting. They'll pick up where they left off whenever your plan does.</p>
+				}
 			}
 			<h2 class="heading">Actions</h2>
 			@listPageFilters(c)

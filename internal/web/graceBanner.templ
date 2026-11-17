@@ -1,0 +1,47 @@
+package web
+
+import (
+	"github.com/gofiber/fiber/v2"
+)
+
+// GraceBanner is the one calm note a signed-in user sees after their trial or
+// plan has ended but the paid features are still on for the grace period. It
+// can be dismissed, and stays dismissed for that particular end date.
+templ GraceBanner(c *fiber.Ctx) {
+	if user := CurrentUser(c); user != nil && user.InGracePeriod() && user.AccessEndsAt() != nil {
+		<aside
+			id="grace-banner"
+			class="grace-banner"
+			data-ends={ user.AccessEndsAt().Format("2006-01-02") }
+			role="note"
+		>
+			<p>
+				Your plan ended on { user.AccessEndsAt().Format("January 2") }.
+				Everything stays on for a couple more weeks, then the extras rest. What you've written is never touched.
+				<a href="/profile">See your plan</a>
+			</p>
+			<button
+				type="button"
+				class="grace-banner-dismiss"
+				aria-label="Dismiss"
+				onclick="dismissGraceBanner()"
+			>
+				<i class="fas fa-xmark" aria-hidden="true"></i>
+			</button>
+		</aside>
+		<script>
+			function dismissGraceBanner() {
+				const banner = document.getElementById('grace-banner')
+				try { localStorage.setItem('grace-banner-dismissed', banner.dataset.ends) } catch (e) {}
+				banner.remove()
+			}
+			(function () {
+				const banner = document.getElementById('grace-banner')
+				try {
+					if (banner && localStorage.getItem('grace-banner-dismissed') === banner.dataset.ends) banner.remove()
+				} catch (e) {}
+			})()
+		</script>
+	}
+}
+
