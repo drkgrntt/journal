@@ -1,0 +1,22 @@
+package auth
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/utils"
+	"journal/internal/web"
+)
+
+templ ConfirmEmailPage(c *fiber.Ctx) {
+	@web.Base(c, nil) {
+		<div id="confirm-email-page">
+			if confirmed := utils.GetLocal[bool](c, utils.LocalEmailConfirmed); confirmed != nil && *confirmed {
+				<h1 class="heading">Email confirmed</h1>
+				<p>Thank you. You can now turn on emails like the daily reminder from your profile.</p>
+			} else {
+				<h1 class="heading">That link didn't work</h1>
+				<p>It may have expired or been used for a different address. You can send a new one from your profile.</p>
+			}
+			<a class="button" href="/profile">Go to profile</a>
+		</div>
+	}
+}

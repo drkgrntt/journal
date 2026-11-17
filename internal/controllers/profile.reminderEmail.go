@@ -45,6 +45,9 @@ func (c *ProfileController) updateReminderEmail(ctx *fiber.Ctx) error {
 	if !currentUser.IsSubscribed() {
 		return ctx.Status(http.StatusForbidden).SendString("This is part of the plan, and your plan isn't active right now")
 	}
+	if !currentUser.EmailConfirmed() {
+		return ctx.Status(http.StatusForbidden).SendString("Confirm your email first, so reminders only go to an address you've confirmed")
+	}
 	if !models.ValidReminderEmailTime(body.Time) {
 		return ctx.Status(http.StatusBadRequest).SendString("Time must look like 08:00")
 	}

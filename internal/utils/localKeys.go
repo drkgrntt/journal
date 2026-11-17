@@ -6,6 +6,9 @@ package utils
 const (
 	LocalCurrentUser = "currentUser"
 
+	// LocalEmailConfirmed is the *bool result of following a confirmation link.
+	LocalEmailConfirmed = "emailConfirmed"
+
 	LocalJournal                = "journal"
 	LocalJournals               = "journals"
 	LocalJournalTypes           = "journalTypes"

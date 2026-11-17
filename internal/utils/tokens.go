@@ -115,6 +115,58 @@ func ValidateToken(token string) (*TokenData, error) {
 	return &tokenData, nil
 }
 
+const confirmEmailPurpose = "confirm-email"
+
+// CreateEmailConfirmToken makes a link token for confirming one address. It
+// deliberately has no "sub" claim, so ValidateToken rejects it and it can never
+// be used as a login cookie. It carries the address it was issued for, so a
+// later change of address invalidates it.
+func CreateEmailConfirmToken(userId uuid.UUID, email string) (string, error) {
+	return CreateToken(time.Hour*48, map[string]any{
+		"purpose": confirmEmailPurpose,
+		"uid":     userId.String(),
+		"email":   strings.ToLower(email),
+	})
+}
+
+// ValidateEmailConfirmToken returns the user ID and (lowercased) address a
+// confirmation token was issued for.
+func ValidateEmailConfirmToken(token string) (uuid.UUID, string, error) {
+	decodedPublicKey, err := base64.StdEncoding.DecodeString(accessTokenPublicKey)
+	if err != nil {
+		return uuid.Nil, "", fmt.Errorf("could not decode: %w", err)
+	}
+	key, err := jwt.ParseRSAPublicKeyFromPEM(decodedPublicKey)
+	if err != nil {
+		return uuid.Nil, "", fmt.Errorf("validate: parse key: %w", err)
+	}
+
+	parsed, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected method: %s", t.Header["alg"])
+		}
+		return key, nil
+	})
+	if err != nil {
+		return uuid.Nil, "", fmt.Errorf("validate: %w", err)
+	}
+	claims, ok := parsed.Claims.(jwt.MapClaims)
+	if !ok || !parsed.Valid {
+		return uuid.Nil, "", fmt.Errorf("validate: invalid token")
+	}
+	purpose, _ := claims["purpose"].(string)
+	uid, _ := claims["uid"].(string)
+	email, _ := claims["email"].(string)
+	if purpose != confirmEmailPurpose || uid == "" || email == "" {
+		return uuid.Nil, "", fmt.Errorf("validate: not a confirmation token")
+	}
+	userId, err := uuid.Parse(uid)
+	if err != nil {
+		return uuid.Nil, "", fmt.Errorf("validate: bad user id")
+	}
+	return userId, email, nil
+}
+
 func DaysTokenValid(token string) int {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {

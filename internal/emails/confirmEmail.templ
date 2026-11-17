@@ -1,0 +1,31 @@
+package emails
+
+import "fmt"
+
+const (
+	CONFIRM_EMAIL = "confirm-email"
+)
+
+type ConfirmEmailVariables struct {
+	RootUrl string
+	Token   string
+}
+
+templ ConfirmEmail(vars *ConfirmEmailVariables) {
+	<div style="font-family: sans-serif; text-align: center">
+		<p>Confirm this address so Contour Journal can send you the emails you ask for, like a daily reminder.</p>
+		<p>If you didn't create an account, you can ignore this.</p>
+		<br/>
+		<!-- templ.SafeURL: RootUrl is server config and Token is a server-signed JWT -->
+		<a
+			href={ templ.SafeURL(fmt.Sprintf("%s/auth/confirm-email?token=%s", vars.RootUrl, vars.Token)) }
+			style="
+			text-decoration: none;
+			color: #fff;
+			background-color: #000;
+			padding: 10px 20px;
+			border-radius: 5px;
+			"
+		>Confirm email</a>
+	</div>
+}

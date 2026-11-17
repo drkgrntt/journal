@@ -39,6 +39,7 @@ func (c *AuthController) RegisterViewRoutes() {
 	c.views.Get("/login", utils.RenderPage(auth.LoginPage))
 	c.views.Get("/forgot", utils.RenderPage(auth.ForgotPage))
 	c.views.Get("/reset", utils.RenderPage(auth.ResetPage))
+	c.views.Get("/confirm-email", c.confirmEmail, utils.RenderPage(auth.ConfirmEmailPage))
 }
 
 func (c *AuthController) RegisterApiRoutes() {
@@ -91,7 +92,10 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusInternalServerError).SendString("Error committing the transaction")
 	}
 
-	// utils.SendVerificationEmail(body.Email, userStatus.ID.String())
+	// Best effort: signing up never depends on the email going out.
+	if err := sendEmailConfirmation(c.db, &user); err != nil {
+		logger.Error("Error sending email confirmation", "error", err.Error())
+	}
 
 	token, err := utils.CreateAccessToken(user.ID)
 	if err != nil {

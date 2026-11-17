@@ -90,7 +90,7 @@ func sendEmail(job *models.Job) error {
 			return err
 		}
 		if skip {
-			job.Notes = "Reminder email skipped (disabled or lapsed since scheduling)"
+			job.Notes = "Reminder email skipped (disabled, lapsed or unconfirmed since scheduling)"
 			return nil
 		}
 	} else if err = data.getContentAndSubject(&config); err != nil {
@@ -130,6 +130,13 @@ func (data *EmailData) getContentAndSubject(config *emails.EmailConfig) error {
 		}
 		config.Content = emails.General(&vars)
 		config.Subject = vars.Subject
+	case emails.CONFIRM_EMAIL:
+		err, vars := utils.CastToType[emails.ConfirmEmailVariables](data.Variables)
+		if err != nil {
+			return err
+		}
+		config.Content = emails.ConfirmEmail(&vars)
+		config.Subject = "Confirm your email"
 	case emails.FEEDBACK:
 		err, vars := utils.CastToType[emails.FeedbackVariables](data.Variables)
 		if err != nil {

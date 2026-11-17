@@ -65,7 +65,7 @@ func SendEmail(emailConfig *EmailConfig) (mes string, id string, err error) {
 		emailConfig.Recipients = []*EmailRecipient{
 			{
 				Name:  "Derek Garnett",
-				Email: "derekgarnett@hey.com",
+				Email: "drkgrntt@gmail.com",
 			},
 		}
 	}

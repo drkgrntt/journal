@@ -1,0 +1,11 @@
+#confirm-email-page {
+	display: grid;
+	gap: 1rem;
+	align-items: center;
+	justify-items: start;
+
+	.heading {
+		font-size: 1.5rem;
+		font-weight: 600;
+	}
+}

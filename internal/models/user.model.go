@@ -34,6 +34,9 @@ type User struct {
 	ReminderEmailTime       string     `gorm:"type:text;not null;default:'08:00'" json:"-"`
 	ReminderEmailMessage    *string    `gorm:"type:text" json:"-"`
 	ReminderEmailLastSentOn *time.Time `gorm:"type:date" json:"-"`
+	EmailConfirmedAt        *time.Time `gorm:"type:timestamptz" json:"-"`
+	// EmailConfirmationSentAt throttles resends of the confirmation email.
+	EmailConfirmationSentAt *time.Time `gorm:"type:timestamptz" json:"-"`
 
 	Journals             []*Journal             `gorm:"foreignKey:CreatorID" json:"journals,omitempty"`
 	ActionItems          []*ActionItem          `gorm:"foreignKey:CreatorID" json:"actionItems,omitempty"`

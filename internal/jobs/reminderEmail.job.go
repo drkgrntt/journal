@@ -24,6 +24,7 @@ func scheduleDueReminderEmails() {
 	var users []*models.User
 	err := db.
 		Where("reminder_email_enabled = ?", true).
+		Where("email_confirmed_at IS NOT NULL").
 		Find(&users).Error
 	if err != nil {
 		logger.Error("Error finding reminder email users", "error", err.Error())
@@ -51,6 +52,7 @@ func queueReminderEmail(user *models.User, today string) error {
 		res := tx.Model(&models.User{}).
 			Where("id = ?", user.ID).
 			Where("reminder_email_enabled = ?", true).
+			Where("email_confirmed_at IS NOT NULL").
 			Where("reminder_email_last_sent_on IS NULL OR reminder_email_last_sent_on <> ?", today).
 			Update("reminder_email_last_sent_on", today)
 		if res.Error != nil {
@@ -75,7 +77,7 @@ func queueReminderEmail(user *models.User, today string) error {
 }
 
 // prepareReminderEmail fills in the content at send time. skip is true when
-// the user has since turned the email off or lapsed.
+// the user has since turned the email off, lapsed, or has no confirmed address.
 func prepareReminderEmail(job *models.Job, data *EmailData, config *emails.EmailConfig) (skip bool, err error) {
 	if job.CreatorID == nil {
 		return false, errors.New("reminder email job has no user")
@@ -85,7 +87,7 @@ func prepareReminderEmail(job *models.Job, data *EmailData, config *emails.Email
 	if err != nil {
 		return false, err
 	}
-	if !user.ReminderEmailEnabled || !user.IsSubscribed() {
+	if !user.ReminderEmailEnabled || !user.IsSubscribed() || !user.EmailConfirmed() {
 		return true, nil
 	}
 
