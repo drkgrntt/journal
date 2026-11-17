@@ -107,6 +107,10 @@ export async function sendEntry(serverId, body) {
 		// login page, which must not be mistaken for a successful save.
 		res = await fetch(serverId ? `/api/journal/${serverId}` : "/api/journal", {
 			method: serverId ? "PUT" : "POST",
+			// body is a string, which fetch would send as text/plain - the
+			// server only parses form bodies (a URLSearchParams object would
+			// set this itself).
+			headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
 			body,
 			credentials: "same-origin",
 			redirect: "manual",
@@ -127,6 +131,10 @@ export async function sendEntry(serverId, body) {
 }
 
 let flushing = false
+// A draft the server rejected is retried once per page load (not on every
+// flush), so a bad draft can't loop but one rejected for a since-fixed
+// reason still gets another chance.
+const attempted = new Set()
 
 // Sends every draft that no live autosave is handling. Returns how many are
 // still waiting afterward.
@@ -138,7 +146,8 @@ export async function flushDrafts() {
 	// One tab at a time, so two tabs can't both POST the same draft.
 	const run = async () => {
 		for (const draft of listDrafts(userId)) {
-			if (isActive(draft.id) || draft.rejected) continue
+			if (isActive(draft.id) || (draft.rejected && attempted.has(draft.id))) continue
+			attempted.add(draft.id)
 
 			const result = await sendEntry(draft.serverId, draft.body)
 			// Offline, a server error, or a lapsed session: stop, and the
@@ -173,10 +182,10 @@ export async function flushDrafts() {
 	return pendingDrafts().length
 }
 
-// Drafts that will be retried (not ones the server rejected outright).
+// Every draft the server doesn't have yet, including ones it rejected.
 export function pendingDrafts() {
 	const userId = currentUserId()
-	return userId ? listDrafts(userId).filter((draft) => !draft.rejected) : []
+	return userId ? listDrafts(userId) : []
 }
 
 function flushWhenPossible() {
