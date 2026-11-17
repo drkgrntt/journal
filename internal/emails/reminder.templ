@@ -1,0 +1,38 @@
+package emails
+
+const (
+	REMINDER_EMAIL = "reminder-email"
+)
+
+const DefaultReminderEmailLine = "Your reminder is waiting."
+
+type ReminderEmailVariables struct {
+	RootUrl string
+	// Message is the user's own short note; empty means the default line.
+	Message string
+}
+
+func (v *ReminderEmailVariables) Line() string {
+	if v.Message == "" {
+		return DefaultReminderEmailLine
+	}
+	return v.Message
+}
+
+templ ReminderEmail(vars *ReminderEmailVariables) {
+	<div style="font-family: sans-serif; text-align: center; white-space: pre-line">
+		<p>{ vars.Line() }</p>
+		<br/>
+		<!-- templ.SafeURL: RootUrl is server config, not user input -->
+		<a
+			href={ templ.SafeURL(vars.RootUrl + "/dashboard") }
+			style="
+			text-decoration: none;
+			color: #fff;
+			background-color: #000;
+			padding: 10px 20px;
+			border-radius: 5px;
+			"
+		>Open Contour Journal</a>
+	</div>
+}

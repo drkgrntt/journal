@@ -28,6 +28,13 @@ type User struct {
 	CurrentPeriodEnd     *time.Time `gorm:"type:timestamptz" json:"currentPeriodEnd,omitempty"`
 	StripeSubscriptionID string     `gorm:"type:text;not null;default:''" json:"-"`
 
+	// Reminder email (paid). Message is stored encrypted; see user_reminderEmail.go.
+	Timezone                string     `gorm:"type:text;not null;default:''" json:"-"`
+	ReminderEmailEnabled    bool       `gorm:"not null;default:false" json:"-"`
+	ReminderEmailTime       string     `gorm:"type:text;not null;default:'08:00'" json:"-"`
+	ReminderEmailMessage    *string    `gorm:"type:text" json:"-"`
+	ReminderEmailLastSentOn *time.Time `gorm:"type:date" json:"-"`
+
 	Journals             []*Journal             `gorm:"foreignKey:CreatorID" json:"journals,omitempty"`
 	ActionItems          []*ActionItem          `gorm:"foreignKey:CreatorID" json:"actionItems,omitempty"`
 	RecurringActionItems []*RecurringActionItem `gorm:"foreignKey:CreatorID" json:"recurringActionItems,omitempty"`

@@ -38,6 +38,15 @@ func init() {
 		logger.Error("Error starting scheduler", "error", err.Error())
 	}
 
+	// Queue due reminder emails (cheap; guarded against double-queueing)
+	_, err = s.NewJob(
+		gocron.DurationJob(reminderEmailCheckInterval),
+		gocron.NewTask(scheduleDueReminderEmails),
+	)
+	if err != nil {
+		logger.Error("Error scheduling reminder email check", "error", err.Error())
+	}
+
 	s.Start()
 }
 
