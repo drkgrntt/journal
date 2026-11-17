@@ -29,6 +29,16 @@ templ Base(c *fiber.Ctx, head *Head) {
 	}
 }
 
+// appearanceOf is the palette and font to render: the user's saved choice if
+// their plan is active, the defaults otherwise (and for logged-out pages).
+func appearanceOf(c *fiber.Ctx) (string, string) {
+	user := CurrentUser(c)
+	if user == nil {
+		return "", ""
+	}
+	return user.EffectiveAppearance()
+}
+
 func resolveHead(h *Head) *Head {
 	if h == nil {
 		return DefaultHead()
@@ -38,7 +48,18 @@ func resolveHead(h *Head) *Head {
 
 templ baseWithHead(c *fiber.Ctx, h *Head) {
 	<!DOCTYPE html>
-	<html lang="en">
+	<html
+		lang="en"
+		if palette, _ := appearanceOf(c); palette != "" {
+			data-palette={ palette }
+		}
+		if _, font := appearanceOf(c); font != "" {
+			data-font={ font }
+		}
+		if CurrentUser(c) != nil {
+			data-appearance-sync
+		}
+	>
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>

@@ -52,6 +52,7 @@ func (c *ProfileController) RegisterApiRoutes() {
 
 	c.api.Put("/", c.updateUser)
 	c.api.Put("/password", c.updatePassword)
+	c.api.Put("/appearance", middleware.RequireSubscription, c.updateAppearance)
 	c.api.Post("/billing/checkout/:plan", c.startCheckout)
 	c.api.Post("/billing/portal", c.openPortal)
 	c.api.Get("/export", c.exportJournals)
@@ -334,4 +335,32 @@ func (c *ProfileController) updatePassword(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.SendStatus(http.StatusAccepted)
+}
+
+type UpdateAppearanceBody struct {
+	Theme      string `form:"theme"`
+	FontFamily string `form:"fontFamily"`
+}
+
+// updateAppearance saves the palette and font choice. Both are validated
+// against an allowlist; the route is behind RequireSubscription.
+func (c *ProfileController) updateAppearance(ctx *fiber.Ctx) error {
+	var body UpdateAppearanceBody
+	if err := ctx.BodyParser(&body); err != nil {
+		return ctx.Status(http.StatusBadRequest).SendString("Bad request reading body")
+	}
+	if !models.IsValidTheme(body.Theme) || !models.IsValidFontFamily(body.FontFamily) {
+		return ctx.Status(http.StatusBadRequest).SendString("Unknown appearance option")
+	}
+
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
+	err := c.db.Model(currentUser).Updates(map[string]any{
+		"theme":       body.Theme,
+		"font_family": body.FontFamily,
+	}).Error
+	if err != nil {
+		logger.Warn(err.Error())
+		return ctx.Status(http.StatusInternalServerError).SendString("Error saving appearance")
+	}
+	return ctx.SendStatus(http.StatusOK)
 }

@@ -227,6 +227,64 @@ templ customJournalTypeForm(c *fiber.Ctx) {
 	</div>
 }
 
+templ appearanceSection(c *fiber.Ctx) {
+	{{ user := web.CurrentUser(c) }}
+	<form
+		class="form"
+		hx-put="/api/profile/appearance"
+		hx-swap="none"
+		hx-on::after-request="if (!event.detail.failed) { setAppearance(this.elements.theme.value, this.elements.fontFamily.value); handleHtmxSuccess(event, 'Saved!') }"
+	>
+		<h4>Appearance</h4>
+		if !user.IsSubscribed() {
+			<p>Colors and fonts are part of the plan; your choice is kept for whenever it's back.</p>
+		}
+		<fieldset class="field" disabled?={ !user.IsSubscribed() }>
+			<legend class="label legend">Color</legend>
+			<div class="appearance-swatches">
+				for _, option := range appearanceThemes {
+					<label>
+						<input
+							type="radio"
+							name="theme"
+							value={ option.Value }
+							aria-label={ option.Label }
+							checked?={ user.Theme == option.Value }
+						/>
+						<span class="swatch" data-palette={ option.Value } title={ option.Label }></span>
+					</label>
+				}
+			</div>
+		</fieldset>
+		<fieldset class="field" disabled?={ !user.IsSubscribed() }>
+			<legend class="label legend">Font</legend>
+			<div class="appearance-fonts">
+				<div class="check-field">
+					<input type="radio" id="font-sans" name="fontFamily" value="" checked?={ user.FontFamily == "" }/>
+					<label class="label font-sans" for="font-sans">Sans-serif</label>
+				</div>
+				<div class="check-field">
+					<input type="radio" id="font-serif" name="fontFamily" value="serif" checked?={ user.FontFamily == "serif" }/>
+					<label class="label font-serif" for="font-serif">Serif</label>
+				</div>
+			</div>
+		</fieldset>
+		if user.IsSubscribed() {
+			<div class="field">
+				<button type="submit" class="button">Save</button>
+			</div>
+		}
+	</form>
+}
+
+var appearanceThemes = []web.LabelValue[string]{
+	{Label: "Mint", Value: ""},
+	{Label: "Lavender", Value: "lavender"},
+	{Label: "Sky", Value: "sky"},
+	{Label: "Rose", Value: "rose"},
+	{Label: "Sand", Value: "sand"},
+}
+
 templ ProfilePage(c *fiber.Ctx) {
 	@web.Base(c, nil) {
 		<div id="profile-page">
@@ -237,6 +295,7 @@ templ ProfilePage(c *fiber.Ctx) {
 				@passwordForm(c)
 				@exportSection(c)
 				@planSection(c)
+				@appearanceSection(c)
 				if web.CurrentUser(c).IsSubscribed() || len(web.CurrentUser(c).CustomJournalTypes) > 0 {
 					@customJournalTypeForm(c)
 				}

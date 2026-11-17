@@ -18,6 +18,9 @@ type User struct {
 	LastName         string `gorm:"not null" json:"lastName,omitempty"`
 	Password         string `gorm:"not null" json:"-"`
 	StripeCustomerID string `gorm:"type:text" json:"stripeCustomerId,omitempty"`
+	// Appearance preferences (see appearance.go). Empty = default.
+	Theme      string `gorm:"type:text;not null;default:''" json:"theme,omitempty"`
+	FontFamily string `gorm:"type:text;not null;default:''" json:"fontFamily,omitempty"`
 
 	// Subscription state; see subscription.go for how it's interpreted.
 	SubscriptionStatus   string     `gorm:"type:text;not null;default:''" json:"subscriptionStatus,omitempty"`

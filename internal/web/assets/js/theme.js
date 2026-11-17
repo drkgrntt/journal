@@ -16,6 +16,57 @@
 	}
 })();
 
+// Appearance (palette + font, the paid "Themes" feature; see theme/
+// appearance.css). The server renders data-palette/data-font on <html> for a
+// user with an active plan, and marks logged-in pages with
+// data-appearance-sync. Online, that markup is the truth and is mirrored to
+// localStorage here. Offline, the page may be the service worker's cached
+// /journal/new copy, which can predate the latest choice, so the mirrored
+// value wins. Only the allowlisted tokens are ever stored or applied.
+// Never throws: storage can be blocked, and this runs before first paint.
+var APPEARANCE_KEY = "appearance";
+var PALETTES = ["lavender", "sky", "rose", "sand"];
+var FONTS = ["serif"];
+
+function setAppearance(palette, font) {
+	var root = document.documentElement;
+	if (PALETTES.indexOf(palette) === -1) palette = "";
+	if (FONTS.indexOf(font) === -1) font = "";
+	if (palette) root.setAttribute("data-palette", palette);
+	else root.removeAttribute("data-palette");
+	if (font) root.setAttribute("data-font", font);
+	else root.removeAttribute("data-font");
+	try {
+		localStorage.setItem(APPEARANCE_KEY, JSON.stringify({ palette: palette, font: font }));
+	} catch (e) {}
+	// Charts bake their colors in when built.
+	document.dispatchEvent(new Event("themechange"));
+}
+
+(function () {
+	try {
+		var root = document.documentElement;
+		if (!root.hasAttribute("data-appearance-sync")) return;
+		var palette = root.getAttribute("data-palette") || "";
+		var font = root.getAttribute("data-font") || "";
+		if (navigator.onLine === false) {
+			var saved = JSON.parse(localStorage.getItem(APPEARANCE_KEY) || "null");
+			if (saved) {
+				palette = saved.palette;
+				font = saved.font;
+			}
+			if (PALETTES.indexOf(palette) === -1) palette = "";
+			if (FONTS.indexOf(font) === -1) font = "";
+			if (palette) root.setAttribute("data-palette", palette);
+			else root.removeAttribute("data-palette");
+			if (font) root.setAttribute("data-font", font);
+			else root.removeAttribute("data-font");
+		} else {
+			localStorage.setItem(APPEARANCE_KEY, JSON.stringify({ palette: palette, font: font }));
+		}
+	} catch (e) {}
+})();
+
 function currentEffectiveTheme() {
 	var saved = localStorage.getItem("theme");
 	if (saved === "light" || saved === "dark") {

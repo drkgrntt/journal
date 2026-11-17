@@ -1,0 +1,127 @@
+/* Optional appearance choices (the paid "Themes" feature). The server puts
+   data-palette / data-font on <html> only for a user with an active plan and a
+   non-default choice (base.templ); assets/js/theme.js mirrors them to
+   localStorage so they also apply offline. With neither attribute set, nothing
+   here matches and the original mint look in colors.css/fonts.css is untouched.
+
+   data-palette only moves the primary (mint) family and the accent that is
+   derived from it - neutrals, the peach secondary, and the rating colors stay
+   put - so every palette keeps the same soft, low-contrast feel. The
+   light/dark split mirrors colors.css (the OS preference, or an explicit
+   [data-theme] choice from the header toggle), so the header toggle keeps
+   working with every palette. Keep the palette names in sync with
+   models.ThemePalettes. */
+
+:root[data-palette="lavender"] { --palette-hue: 255deg; }
+:root[data-palette="sky"]      { --palette-hue: 205deg; }
+:root[data-palette="rose"]     { --palette-hue: 345deg; }
+:root[data-palette="sand"]     { --palette-hue: 38deg; }
+
+/* Light */
+:root[data-palette] {
+	--primary-color: hsl(var(--palette-hue) 85% 85%);
+	--primary-color-light: hsl(var(--palette-hue) 85% 89%);
+	--primary-color-lightest: hsl(var(--palette-hue) 85% 95%);
+	--primary-color-dark: hsl(var(--palette-hue) 80% 80%);
+	--primary-color-darkest: hsl(var(--palette-hue) 75% 74%);
+
+	--accent: hsl(var(--palette-hue) 55% 30%);
+	--accent-hover: hsl(var(--palette-hue) 55% 22%);
+}
+
+/* Dark: OS preference unless an explicit light choice was made... */
+@media (prefers-color-scheme: dark) {
+	:root[data-palette]:not([data-theme="light"]) {
+		--primary-color: hsl(var(--palette-hue) 45% 44%);
+		--primary-color-light: hsl(var(--palette-hue) 25% 20%);
+		--primary-color-lightest: hsl(var(--palette-hue) 25% 14%);
+		--primary-color-dark: hsl(var(--palette-hue) 55% 62%);
+		--primary-color-darkest: hsl(var(--palette-hue) 55% 69%);
+
+		--accent: hsl(var(--palette-hue) 55% 68%);
+		--accent-hover: hsl(var(--palette-hue) 55% 76%);
+	}
+}
+
+/* ...or an explicit dark choice. Duplicated from the block above for the
+   same reason colors.css duplicates its own (a media feature and an
+   attribute selector can't be OR'd into one selector). */
+:root[data-theme="dark"][data-palette] {
+	--primary-color: hsl(var(--palette-hue) 45% 44%);
+	--primary-color-light: hsl(var(--palette-hue) 25% 20%);
+	--primary-color-lightest: hsl(var(--palette-hue) 25% 14%);
+	--primary-color-dark: hsl(var(--palette-hue) 55% 62%);
+	--primary-color-darkest: hsl(var(--palette-hue) 55% 69%);
+
+	--accent: hsl(var(--palette-hue) 55% 68%);
+	--accent-hover: hsl(var(--palette-hue) 55% 76%);
+}
+
+/* Fonts. Serif uses a system stack (no web font to fetch, so it works
+   offline). :where() keeps these at the same specificity as the rules in
+   fonts.css (loaded earlier, so these win by order) and below Font Awesome's
+   own class rules, so icons keep their icon font. */
+:where(html[data-font="serif"]) body * {
+	font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+}
+
+:where(html[data-font="serif"]) body :is(h1, h2, h3, h4) {
+	font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+}
+
+/* Swatches on the profile page */
+.appearance-swatches {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-3);
+}
+
+.appearance-swatches label {
+	cursor: pointer;
+}
+
+.appearance-swatches input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.appearance-swatches .swatch {
+	display: block;
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: var(--radius-full);
+	border: 2px solid var(--border-color);
+	box-shadow: var(--shadow-sm);
+}
+
+.appearance-swatches input:checked + .swatch {
+	border-color: var(--accent);
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+.appearance-swatches input:focus-visible + .swatch {
+	outline: 2px solid var(--accent);
+	outline-offset: 4px;
+}
+
+.appearance-swatches input:disabled + .swatch {
+	opacity: 0.6;
+	cursor: default;
+}
+
+/* Fixed light swatch fills so every choice reads the same in dark mode. */
+.swatch[data-palette=""]         { background: linear-gradient(135deg, #B0F8E8 50%, #FFD1B4 50%); }
+.swatch[data-palette="lavender"] { background: linear-gradient(135deg, hsl(255deg 85% 85%) 50%, #FFD1B4 50%); }
+.swatch[data-palette="sky"]      { background: linear-gradient(135deg, hsl(205deg 85% 85%) 50%, #FFD1B4 50%); }
+.swatch[data-palette="rose"]     { background: linear-gradient(135deg, hsl(345deg 85% 85%) 50%, #FFD1B4 50%); }
+.swatch[data-palette="sand"]     { background: linear-gradient(135deg, hsl(38deg 85% 85%) 50%, #FFD1B4 50%); }
+
+.appearance-fonts {
+	display: flex;
+	gap: var(--space-4);
+}
+
+.appearance-fonts .font-sans { font-family: 'Lato', sans-serif; }
+.appearance-fonts .font-serif { font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif; }
