@@ -285,6 +285,16 @@ var appearanceThemes = []web.LabelValue[string]{
 	{Label: "Sand", Value: "sand"},
 }
 
+templ entryTemplatesSection(c *fiber.Ctx) {
+	<div class="form">
+		<h4>Entry Templates</h4>
+		<p>Your own starting text for a new entry, like a gentle structure to fill in.</p>
+		<div class="field">
+			<a class="button" href="/entry-templates">Manage templates</a>
+		</div>
+	</div>
+}
+
 templ ProfilePage(c *fiber.Ctx) {
 	@web.Base(c, nil) {
 		<div id="profile-page">
@@ -296,6 +306,7 @@ templ ProfilePage(c *fiber.Ctx) {
 				@exportSection(c)
 				@planSection(c)
 				@appearanceSection(c)
+				@entryTemplatesSection(c)
 				if web.CurrentUser(c).IsSubscribed() || len(web.CurrentUser(c).CustomJournalTypes) > 0 {
 					@customJournalTypeForm(c)
 				}

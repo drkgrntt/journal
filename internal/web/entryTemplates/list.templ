@@ -1,0 +1,69 @@
+package entryTemplates
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/models"
+	"journal/internal/utils"
+	"journal/internal/web/components"
+)
+
+// ListItem renders one template. Lapsed users see their templates and can
+// delete them, but not edit (canEdit is false for them).
+templ ListItem(c *fiber.Ctx, entryTemplate *models.EntryTemplate, canEdit bool) {
+	<li
+		entry-template
+		id={ fmt.Sprintf("entry-template-%s", entryTemplate.ID.String()) }
+		if c.Method() != "POST" && c.Method() != "GET" {
+			hx-swap-oob={ fmt.Sprintf("outerHTML:#entry-template-%s", entryTemplate.ID.String()) }
+		}
+		class="item"
+	>
+		<div class="info">
+			<div class="text">
+				<p can-blur class="name">{ entryTemplate.Name }</p>
+				<p can-blur class="body">{ entryTemplate.Body }</p>
+			</div>
+			@components.KebabMenu() {
+				<div class="kebab-content">
+					if canEdit {
+						<button
+							class="action-link"
+							aria-label="Edit template"
+							hx-get={ fmt.Sprintf("/entry-templates/%s/form", entryTemplate.ID.String()) }
+							hx-swap="none"
+						>
+							Edit
+						</button>
+					}
+					<button
+						class="action-link danger"
+						aria-label="Delete template"
+						hx-delete={ fmt.Sprintf("/api/entry-templates/%s", entryTemplate.ID.String()) }
+						hx-swap="delete"
+						hx-confirm="Are you sure?"
+						hx-target="closest [entry-template]"
+					>
+						Delete
+					</button>
+				</div>
+			}
+		</div>
+	</li>
+}
+
+templ List(c *fiber.Ctx, all []*models.EntryTemplate, canEdit bool) {
+	<ul id="entry-template-list" entry-template-list>
+		for _, entryTemplate := range all {
+			@ListItem(c, entryTemplate, canEdit)
+		}
+	</ul>
+}
+
+func getEntryTemplates(c *fiber.Ctx) []*models.EntryTemplate {
+	all := utils.GetLocal[[]*models.EntryTemplate](c, utils.LocalEntryTemplates)
+	if all == nil {
+		return []*models.EntryTemplate{}
+	}
+	return *all
+}

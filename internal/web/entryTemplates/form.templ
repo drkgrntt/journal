@@ -1,0 +1,63 @@
+package entryTemplates
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/models"
+)
+
+func templateName(t *models.EntryTemplate) string {
+	if t == nil {
+		return ""
+	}
+	return t.Name
+}
+
+func templateBody(t *models.EntryTemplate) string {
+	if t == nil {
+		return ""
+	}
+	return t.Body
+}
+
+templ Form(c *fiber.Ctx, entryTemplate *models.EntryTemplate) {
+	<form
+		id="entry-template-form"
+		class="form"
+		if entryTemplate != nil {
+			hx-put={ fmt.Sprintf("/api/entry-templates/%s", entryTemplate.ID.String()) }
+		} else {
+			hx-post="/api/entry-templates"
+		}
+		hx-swap="beforeend"
+		hx-target="[entry-template-list]"
+		hx-trigger="submit"
+		hx-swap-oob="outerHTML"
+	>
+		<div class="field">
+			<label class="label" for="entry-template-name">Name</label>
+			<input
+				can-blur
+				class="input"
+				name="name"
+				id="entry-template-name"
+				maxlength="100"
+				placeholder="Gentle check-in"
+				value={ templateName(entryTemplate) }
+			/>
+		</div>
+		<div class="field">
+			<label class="label" for="entry-template-body">Starting text</label>
+			<textarea
+				can-blur
+				placeholder={ "What happened\n\nHow it felt\n\nWhat I need" }
+				class="textarea"
+				name="body"
+				id="entry-template-body"
+				rows="6"
+				maxlength="5000"
+			>{ templateBody(entryTemplate) }</textarea>
+		</div>
+		<button class="button" type="submit">Submit</button>
+	</form>
+}

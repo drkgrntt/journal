@@ -119,6 +119,16 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 				</select>
 			</div>
 		</div>
+		if journal == nil && web.CurrentUser(c).IsSubscribed() {
+			// Filled in at runtime by templatePicker.js (never rendered with
+			// template text, so the cached new-entry page holds none).
+			<div class="field template-picker" id="template-picker" hidden>
+				<label class="label" for="template-select">Start from a template</label>
+				<select id="template-select" class="select">
+					<option value="">None</option>
+				</select>
+			</div>
+		}
 		<div class="field">
 			<span class="label-container">
 				<label class="label" for="entry">Entry</label>
