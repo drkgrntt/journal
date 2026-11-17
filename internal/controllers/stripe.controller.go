@@ -2,19 +2,19 @@ package controllers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"journal/internal/logger"
 	"journal/internal/models"
-	_ "journal/internal/stripe"
+	appstripe "journal/internal/stripe"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/stripe/stripe-go/v84"
-	"github.com/stripe/stripe-go/v84/product"
+	"github.com/stripe/stripe-go/v84/subscription"
 	"github.com/stripe/stripe-go/v84/webhook"
 	"gorm.io/gorm"
 )
@@ -53,77 +53,105 @@ func (c *StripeController) handleWebhook(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).SendString(fmt.Sprintf("Error verifying webhook signature: %v\n", err))
 	}
 
+	// Every handler is idempotent: Stripe can deliver an event more than once
+	// and out of order.
 	switch event.Type {
-	case stripe.EventTypePaymentIntentSucceeded:
-		err = c.handlePaymentIntentSucceeded(&event)
+	case stripe.EventTypeCheckoutSessionCompleted:
+		err = c.handleCheckoutSessionCompleted(&event)
+	case stripe.EventTypeCustomerSubscriptionCreated,
+		stripe.EventTypeCustomerSubscriptionUpdated,
+		stripe.EventTypeCustomerSubscriptionDeleted:
+		err = c.handleSubscriptionChanged(&event)
 	}
 
 	if err != nil {
-		logger.Error("Error handling webhook", "error", err)
+		logger.Error("Error handling webhook", "type", string(event.Type), "error", err)
 		return ctx.SendStatus(http.StatusBadRequest)
 	}
 
 	return ctx.SendStatus(http.StatusOK)
 }
 
-func (c *StripeController) getUser(stripeCustomerId string) (*models.User, error) {
-	var user *models.User
-	err := c.db.Where("stripe_customer_id = ?", stripeCustomerId).First(&user).Error
-	return user, err
+func (c *StripeController) handleSubscriptionChanged(event *stripe.Event) error {
+	var sub stripe.Subscription
+	if err := json.Unmarshal(event.Data.Raw, &sub); err != nil {
+		return fmt.Errorf("parsing subscription: %w", err)
+	}
+
+	status, periodEnd, ok := appstripe.SubscriptionState(&sub)
+	if !ok {
+		return nil
+	}
+	if sub.Customer == nil {
+		return fmt.Errorf("subscription %s has no customer", sub.ID)
+	}
+
+	var user models.User
+	if err := c.db.Where("stripe_customer_id = ?", sub.Customer.ID).First(&user).Error; err != nil {
+		return fmt.Errorf("finding user for customer %s: %w", sub.Customer.ID, err)
+	}
+
+	// Lifetime and comped accounts don't change with subscription events, and
+	// a late event for a subscription that was replaced shouldn't clobber the
+	// current one.
+	if user.SubscriptionStatus == models.SubscriptionLifetime || user.SubscriptionStatus == models.SubscriptionComped {
+		return nil
+	}
+	if user.StripeSubscriptionID != "" && user.StripeSubscriptionID != sub.ID {
+		return nil
+	}
+
+	return c.db.Model(&models.User{}).Where("id = ?", user.ID).Updates(map[string]any{
+		"subscription_status":    status,
+		"current_period_end":     periodEnd,
+		"stripe_subscription_id": sub.ID,
+		"updated_at":             time.Now().UTC(),
+	}).Error
 }
 
-func (c *StripeController) handlePaymentIntentSucceeded(event *stripe.Event) error {
-	var paymentIntent *stripe.PaymentIntent
-	err := json.Unmarshal(event.Data.Raw, &paymentIntent)
-	if err != nil {
-		logger.Error("Error parsing webhook JSON", "error", err)
-		return err
+func (c *StripeController) handleCheckoutSessionCompleted(event *stripe.Event) error {
+	var session stripe.CheckoutSession
+	if err := json.Unmarshal(event.Data.Raw, &session); err != nil {
+		return fmt.Errorf("parsing checkout session: %w", err)
 	}
 
-	productId := paymentIntent.PaymentDetails.OrderReference
-	foundProduct, err := product.Get(productId, &stripe.ProductParams{})
+	userID, err := uuid.Parse(session.ClientReferenceID)
 	if err != nil {
-		logger.Error("Error getting product", "error", err)
-		return err
+		return fmt.Errorf("checkout session %s has no valid client_reference_id", session.ID)
+	}
+	var user models.User
+	if err := c.db.Where("id = ?", userID).First(&user).Error; err != nil {
+		return fmt.Errorf("finding user %s: %w", userID, err)
 	}
 
-	var feature *models.Feature
-	err = c.db.Where("stripe_price_id = ?", foundProduct.DefaultPrice.ID).First(&feature).Error
-	if err != nil {
-		logger.Error("Error getting feature", "error", err)
-		return err
-	}
-
-	user, err := c.getUser(paymentIntent.Customer.ID)
-	if err != nil {
-		logger.Error("Error getting user", "error", err)
-		return err
-	}
-
-	// Webhooks can be delivered more than once, so grant idempotently
-	now := time.Now().UTC()
-	var userFeature models.UserFeature
-	err = c.db.Where("creator_id = ? AND feature_id = ?", user.ID, feature.ID).First(&userFeature).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		err = c.db.Create(&models.UserFeature{
-			FeatureID: feature.ID,
-			EnabledAt: &now,
-			Base: &models.Base{
-				CreatedAt:     now,
-				UpdatedAt:     now,
-				CreatorID:     &user.ID,
-				LastUpdaterID: &user.ID,
-			},
+	switch session.Mode {
+	case stripe.CheckoutSessionModeSubscription:
+		// The subscription events carry the status and period; this just
+		// links the subscription so they can be matched up.
+		if session.Subscription == nil || user.SubscriptionStatus == models.SubscriptionLifetime || user.SubscriptionStatus == models.SubscriptionComped {
+			return nil
+		}
+		return c.db.Model(&models.User{}).Where("id = ?", user.ID).Updates(map[string]any{
+			"stripe_subscription_id": session.Subscription.ID,
+			"updated_at":             time.Now().UTC(),
 		}).Error
-	} else if err == nil && userFeature.EnabledAt == nil {
-		userFeature.EnabledAt = &now
-		userFeature.UpdatedAt = now
-		err = c.db.Save(&userFeature).Error
-	}
-	if err != nil {
-		logger.Error("Error saving user feature", "error", err)
-		return err
-	}
 
+	case stripe.CheckoutSessionModePayment:
+		if session.PaymentStatus != stripe.CheckoutSessionPaymentStatusPaid {
+			return nil
+		}
+		// Someone going lifetime shouldn't keep paying monthly or yearly.
+		if user.StripeSubscriptionID != "" && user.SubscriptionStatus != models.SubscriptionLifetime {
+			if _, err := subscription.Cancel(user.StripeSubscriptionID, nil); err != nil {
+				logger.Error("Error canceling subscription after lifetime purchase", "user", user.ID.String(), "error", err)
+			}
+		}
+		return c.db.Model(&models.User{}).Where("id = ?", user.ID).Updates(map[string]any{
+			"subscription_status":    models.SubscriptionLifetime,
+			"current_period_end":     nil,
+			"stripe_subscription_id": "",
+			"updated_at":             time.Now().UTC(),
+		}).Error
+	}
 	return nil
 }

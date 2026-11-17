@@ -4,7 +4,6 @@ import (
 	"journal/internal/logger"
 	"journal/internal/models"
 	"journal/internal/utils"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -30,17 +29,5 @@ func SetRatings(ctx *fiber.Ctx) error {
 	}
 
 	ctx.Locals(utils.LocalRatings, &ratings)
-	return ctx.Next()
-}
-
-func SetFeatures(ctx *fiber.Ctx) error {
-	var features []*models.Feature
-	err := db.Where("enabled_at < ?", time.Now().UTC()).Find(&features).Error
-	if err != nil {
-		logger.Error("Error getting features: ", "error message", err.Error())
-		return ctx.Next()
-	}
-
-	ctx.Locals(utils.LocalFeatures, &features)
 	return ctx.Next()
 }

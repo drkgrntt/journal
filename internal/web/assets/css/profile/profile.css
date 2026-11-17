@@ -52,4 +52,10 @@
 		height: 100%;
 		object-fit: contain;
 	}
+
+	.plan-options {
+		display: flex;
+		flex-wrap: wrap;
+		gap: .5rem;
+	}
 }

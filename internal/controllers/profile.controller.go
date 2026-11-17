@@ -5,6 +5,7 @@ import (
 	"journal/internal/logger"
 	"journal/internal/middleware"
 	"journal/internal/models"
+	appstripe "journal/internal/stripe"
 	"journal/internal/utils"
 	"journal/internal/web/profile"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/stripe/stripe-go/v84"
+	portal "github.com/stripe/stripe-go/v84/billingportal/session"
 	"github.com/stripe/stripe-go/v84/checkout/session"
 	"github.com/stripe/stripe-go/v84/customer"
 	"gorm.io/gorm"
@@ -41,7 +43,6 @@ func (c *ProfileController) RegisterViewRoutes() {
 	c.views.Get("/",
 		middleware.SetRatings,
 		middleware.SetJournalTypes,
-		middleware.SetFeatures,
 		utils.RenderPage(profile.ProfilePage),
 	)
 }
@@ -51,8 +52,8 @@ func (c *ProfileController) RegisterApiRoutes() {
 
 	c.api.Put("/", c.updateUser)
 	c.api.Put("/password", c.updatePassword)
-	c.api.Put("/features", c.updateFeatures)
-	c.api.Put("/features/:id", c.buyFeature)
+	c.api.Post("/billing/checkout/:plan", c.startCheckout)
+	c.api.Post("/billing/portal", c.openPortal)
 	c.api.Get("/export", c.exportJournals)
 }
 
@@ -176,61 +177,74 @@ func (c *ProfileController) exportJournals(ctx *fiber.Ctx) error {
 	return ctx.SendString(sb.String())
 }
 
-func (c *ProfileController) buyFeature(ctx *fiber.Ctx) error {
-	var feature *models.Feature
-	err := c.db.Where("enabled_at < ?", time.Now().UTC()).Where("id = ?", ctx.Params("id")).First(&feature).Error
+// ensureStripeCustomer returns the user's Stripe customer ID, creating the
+// customer on first use.
+func (c *ProfileController) ensureStripeCustomer(user *models.User) (string, error) {
+	if user.StripeCustomerID != "" {
+		return user.StripeCustomerID, nil
+	}
+	result, err := customer.New(&stripe.CustomerParams{
+		Name:  stripe.String(user.FullName()),
+		Email: stripe.String(user.Email),
+		Metadata: map[string]string{
+			"user_id": user.ID.String(),
+		},
+	})
 	if err != nil {
-		return ctx.Status(http.StatusNotFound).SendString("Feature not found")
+		return "", err
+	}
+	err = c.db.Model(&models.User{}).Where("id = ?", user.ID).Update("stripe_customer_id", result.ID).Error
+	if err != nil {
+		return "", err
+	}
+	user.StripeCustomerID = result.ID
+	return result.ID, nil
+}
+
+// startCheckout sends the user to Stripe Checkout for the plan in :plan.
+func (c *ProfileController) startCheckout(ctx *fiber.Ctx) error {
+	plan, ok := appstripe.ParsePlan(ctx.Params("plan"))
+	if !ok {
+		return ctx.Status(http.StatusNotFound).SendString("Plan not found")
 	}
 
 	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
-
-	if feature.StripePriceID == "" {
-		err := c.db.Save(&models.UserFeature{
-			FeatureID: feature.ID,
-			EnabledAt: utils.Pointer(time.Now().UTC()),
-			Base: &models.Base{
-				CreatedAt:     time.Now().UTC(),
-				UpdatedAt:     time.Now().UTC(),
-				CreatorID:     &currentUser.ID,
-				LastUpdaterID: &currentUser.ID,
-			},
-		}).Error
-		if err != nil {
-			return ctx.Status(http.StatusInternalServerError).SendString("Error adding feature")
-		}
-		return ctx.Status(http.StatusOK).JSON(feature)
+	switch currentUser.SubscriptionStatus {
+	case models.SubscriptionLifetime, models.SubscriptionComped:
+		return ctx.Status(http.StatusBadRequest).SendString("You don't need a plan")
+	case models.SubscriptionActive, models.SubscriptionPastDue:
+		return ctx.Status(http.StatusBadRequest).SendString("You already have a plan; manage it from your profile")
 	}
 
-	// Create the customer in stripe if applicable
-	if currentUser.StripeCustomerID == "" {
-		params := &stripe.CustomerParams{
-			Name:  stripe.String(fmt.Sprintf("%s %s", currentUser.FirstName, currentUser.LastName)),
-			Email: stripe.String(currentUser.Email),
-		}
-		result, err := customer.New(params)
-		if err != nil {
-			logger.Error("Error creating stripe customer", "error", err)
-			return ctx.Status(http.StatusInternalServerError).SendString("Error creating stripe customer")
-		}
-		currentUser.StripeCustomerID = result.ID
-		c.db.Save(&currentUser)
+	price, err := appstripe.GetPlanPrice(plan)
+	if err != nil {
+		logger.Error("Error getting plan price", "plan", string(plan), "error", err)
+		return ctx.Status(http.StatusInternalServerError).SendString("Error finding that plan")
 	}
 
-	// Send the user to stripe checkout
+	customerID, err := c.ensureStripeCustomer(currentUser)
+	if err != nil {
+		logger.Error("Error creating stripe customer", "error", err)
+		return ctx.Status(http.StatusInternalServerError).SendString("Error creating stripe customer")
+	}
+
 	params := &stripe.CheckoutSessionParams{
 		AllowPromotionCodes: stripe.Bool(true),
-		Customer:            stripe.String(currentUser.StripeCustomerID),
-		PaymentMethodTypes:  stripe.StringSlice([]string{string(stripe.PaymentMethodTypeCard)}),
+		Customer:            stripe.String(customerID),
+		ClientReferenceID:   stripe.String(currentUser.ID.String()),
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
-				Price:    stripe.String(feature.StripePriceID),
+				Price:    stripe.String(price.ID),
 				Quantity: stripe.Int64(1),
 			},
 		},
-		Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
-		SuccessURL: stripe.String(fmt.Sprintf("%s/profile", os.Getenv("ROOT_URL"))),
+		SuccessURL: stripe.String(fmt.Sprintf("%s/profile?checkout=success", os.Getenv("ROOT_URL"))),
 		CancelURL:  stripe.String(fmt.Sprintf("%s/profile", os.Getenv("ROOT_URL"))),
+	}
+	if plan.IsRecurring() {
+		params.Mode = stripe.String(string(stripe.CheckoutSessionModeSubscription))
+	} else {
+		params.Mode = stripe.String(string(stripe.CheckoutSessionModePayment))
 	}
 	result, err := session.New(params)
 	if err != nil {
@@ -242,101 +256,24 @@ func (c *ProfileController) buyFeature(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(http.StatusOK)
 }
 
-type UpdateFeaturesBody struct {
-	Features []int `form:"features"`
-}
-
-func (c *ProfileController) updateFeatures(ctx *fiber.Ctx) error {
-	var body UpdateFeaturesBody
-	err := ctx.BodyParser(&body)
-	if err != nil {
-		return ctx.Status(http.StatusBadRequest).SendString("Bad request reading body")
-	}
-
+// openPortal sends the user to the Stripe customer portal to manage or cancel.
+func (c *ProfileController) openPortal(ctx *fiber.Ctx) error {
 	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
-
-	userFeaturesToUpdate := []*models.UserFeature{}
-
-disableFeatureLoop:
-	for _, userFeature := range currentUser.UserFeatures {
-		if !userFeature.IsEnabled() {
-			continue disableFeatureLoop
-		}
-		for _, bodyFeatureId := range body.Features {
-			if bodyFeatureId == userFeature.FeatureID {
-				continue disableFeatureLoop
-			}
-		}
-		userFeature.EnabledAt = nil
-		userFeature.UpdatedAt = time.Now().UTC()
-		userFeaturesToUpdate = append(userFeaturesToUpdate, userFeature)
+	if currentUser.StripeCustomerID == "" {
+		return ctx.Status(http.StatusBadRequest).SendString("There's nothing to manage yet")
 	}
 
-enableFeatureLoop:
-	for _, bodyFeatureId := range body.Features {
-		for _, userFeatureToUpdate := range userFeaturesToUpdate {
-			if bodyFeatureId == userFeatureToUpdate.FeatureID {
-				continue enableFeatureLoop
-			}
-		}
-
-	userFeatureLoop:
-		for _, userFeature := range currentUser.UserFeatures {
-			if userFeature.FeatureID != bodyFeatureId {
-				continue userFeatureLoop
-			}
-			if userFeature.IsEnabled() {
-				continue userFeatureLoop
-			}
-
-			userFeature.EnabledAt = utils.Pointer(time.Now().UTC())
-			userFeature.UpdatedAt = time.Now().UTC()
-			userFeaturesToUpdate = append(userFeaturesToUpdate, userFeature)
-		}
+	result, err := portal.New(&stripe.BillingPortalSessionParams{
+		Customer:  stripe.String(currentUser.StripeCustomerID),
+		ReturnURL: stripe.String(fmt.Sprintf("%s/profile", os.Getenv("ROOT_URL"))),
+	})
+	if err != nil {
+		logger.Error("Error creating stripe portal session", "error", err)
+		return ctx.Status(http.StatusInternalServerError).SendString("Error opening billing")
 	}
 
-	var newFeatureIds []int
-bodyFeatureLoop:
-	for _, bodyFeatureId := range body.Features {
-		for _, userFeature := range currentUser.UserFeatures {
-			if bodyFeatureId == userFeature.FeatureID {
-				continue bodyFeatureLoop
-			}
-		}
-		newFeatureIds = append(newFeatureIds, bodyFeatureId)
-	}
-
-	if len(userFeaturesToUpdate) > 0 {
-		err = c.db.Save(&userFeaturesToUpdate).Error
-		if err != nil {
-			logger.Warn(err.Error())
-			return ctx.Status(http.StatusInternalServerError).SendString("Error updating features")
-		}
-	}
-
-	if len(newFeatureIds) > 0 {
-		userFeatures := []*models.UserFeature{}
-		for _, featureId := range newFeatureIds {
-			uf := &models.UserFeature{
-				FeatureID: featureId,
-				EnabledAt: utils.Pointer(time.Now().UTC()),
-				Base: &models.Base{
-					CreatorID:     &currentUser.ID,
-					LastUpdaterID: &currentUser.ID,
-					CreatedAt:     time.Now().UTC(),
-					UpdatedAt:     time.Now().UTC(),
-				},
-			}
-			userFeatures = append(userFeatures, uf)
-		}
-		err = c.db.Create(&userFeatures).Error
-		if err != nil {
-			logger.Warn(err.Error())
-			return ctx.Status(http.StatusInternalServerError).SendString("Error adding features")
-		}
-	}
-
-	return ctx.Status(http.StatusOK).JSON(currentUser)
+	ctx.Set("HX-Redirect", result.URL)
+	return ctx.SendStatus(http.StatusOK)
 }
 
 type UpdateUserBody struct {

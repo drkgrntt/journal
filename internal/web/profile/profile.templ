@@ -2,10 +2,10 @@ package profile
 
 import (
 	"fmt"
+	"time"
 	"github.com/gofiber/fiber/v2"
 	"journal/internal/models"
 	"journal/internal/stripe"
-	"journal/internal/utils"
 	"journal/internal/web"
 	"journal/internal/web/customJournalTypes"
 )
@@ -102,44 +102,94 @@ templ passwordForm(c *fiber.Ctx) {
 	</form>
 }
 
-func getFeatures(c *fiber.Ctx) []*models.Feature {
-	features := utils.GetLocal[[]*models.Feature](c, utils.LocalFeatures)
-	return *features
+func formatDate(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.Format("January 2, 2006")
 }
 
-templ featureForm(c *fiber.Ctx) {
-	<form
-		class="form"
-		hx-put="/api/profile/features"
-		hx-swap="none"
-		hx-on::after-request="handleHtmxSuccess(event, 'Saved!');window.location.reload()"
-	>
-		<fieldset class="field">
-			<legend class="label legend">Features</legend>
-			for _, userFeature := range web.CurrentUser(c).UserFeatures {
-				<div class="check-field">
-					<input
-						id={ fmt.Sprint(userFeature.FeatureID) }
-						type="checkbox"
-						name="features[]"
-						value={ fmt.Sprint(userFeature.FeatureID) }
-						if web.CurrentUser(c).HasFeature(userFeature.Feature.Code) {
-							checked
-						}
-					/>
-					<label class="label" for={ fmt.Sprint(userFeature.FeatureID) }>{ userFeature.Feature.Name }</label>
-				</div>
-			}
-		</fieldset>
-		<div class="field">
-			<button
-				type="submit"
-				class="button"
-			>
-				Save
-			</button>
-		</div>
-	</form>
+// planStatus is the plain-language line about where the user's plan stands.
+func planStatus(user *models.User) string {
+	end := formatDate(user.AccessEndsAt())
+	switch user.SubscriptionStatus {
+	case models.SubscriptionComped:
+		return "Everything is on for this account."
+	case models.SubscriptionLifetime:
+		return "You have a lifetime plan. Thank you."
+	case models.SubscriptionPastDue:
+		return "There was a problem with your last payment. You can update it from Manage plan, and everything stays on in the meantime."
+	}
+	if user.IsSubscribed() && !user.InGracePeriod() {
+		if user.SubscriptionStatus == models.SubscriptionTrialing {
+			return fmt.Sprintf("Everything is on while you try it, through %s.", end)
+		}
+		if end != "" {
+			return fmt.Sprintf("Your plan is active through %s.", end)
+		}
+		return "Your plan is active."
+	}
+	if user.InGracePeriod() {
+		return fmt.Sprintf("Your plan ended on %s. Everything stays on for a couple more weeks, then the extras rest. What you've written is never touched.", end)
+	}
+	return "The extras are resting. What you've written is untouched, and they'll pick up where they left off whenever you want them back."
+}
+
+func hasPlanToManage(user *models.User) bool {
+	switch user.SubscriptionStatus {
+	case models.SubscriptionActive, models.SubscriptionPastDue:
+		return true
+	}
+	return false
+}
+
+func canChoosePlan(user *models.User) bool {
+	switch user.SubscriptionStatus {
+	case models.SubscriptionActive, models.SubscriptionPastDue, models.SubscriptionLifetime, models.SubscriptionComped:
+		return false
+	}
+	return true
+}
+
+templ planSection(c *fiber.Ctx) {
+	<div class="form plan">
+		<h4>Plan</h4>
+		if c.Query("checkout") == "success" {
+			<p>Thank you. It can take a moment for your plan to show up here.</p>
+		}
+		<p>{ planStatus(web.CurrentUser(c)) }</p>
+		<p>The plan includes Routines and Custom Topics.</p>
+		if hasPlanToManage(web.CurrentUser(c)) {
+			<div class="field">
+				<button class="button" hx-post="/api/profile/billing/portal" hx-swap="none">Manage plan</button>
+			</div>
+		}
+		if canChoosePlan(web.CurrentUser(c)) {
+			<div class="field plan-options">
+				for _, plan := range stripe.Plans {
+					if label := stripe.PlanLabel(plan); label != "" {
+						<button
+							class="button"
+							hx-post={ fmt.Sprintf("/api/profile/billing/checkout/%s", plan) }
+							hx-swap="none"
+						>
+							{ planName(plan) } &middot; { label }
+						</button>
+					}
+				}
+			</div>
+		}
+	</div>
+}
+
+func planName(plan stripe.Plan) string {
+	switch plan {
+	case stripe.PlanMonthly:
+		return "Monthly"
+	case stripe.PlanAnnual:
+		return "Annual"
+	}
+	return "Lifetime"
 }
 
 templ blurTextToggle(c *fiber.Ctx) {
@@ -175,48 +225,6 @@ templ customJournalTypeForm(c *fiber.Ctx) {
 	</div>
 }
 
-templ featureList(c *fiber.Ctx) {
-	<div class="features">
-		for _, feature := range getFeatures(c) {
-			if !web.CurrentUser(c).HasFeature(feature.Code) {
-				<div class="feature">
-					<h4 class="feature-name">{ feature.Name }</h4>
-					<p class="feature-description">{ feature.Description }</p>
-					<div class="feature-images">
-						switch feature.Code {
-							case "custom-topics":
-								<div>
-									<img src="/assets/images/custom-topic-form.png" class="feature-image" alt="Custom Topics settings panel listing user-created topics with edit and delete controls"/>
-								</div>
-								<div>
-									<img src="/assets/images/custom-topic-journal.png" class="feature-image" alt="Journal entry form with a Topic dropdown set to a custom topic"/>
-								</div>
-							case "routines":
-								<div>
-									<img src="/assets/images/routine-form.png" class="feature-image" alt="Routines panel for creating a recurring action item with a frequency and starting date"/>
-								</div>
-								<div>
-									<img src="/assets/images/routine-in-list.png" class="feature-image" alt="A recurring action item shown as a completed item in a journal entry's action list"/>
-								</div>
-						}
-					</div>
-					<button
-						class="button"
-						hx-put={ fmt.Sprintf("/api/profile/features/%d", feature.ID) }
-						hx-swap="none"
-						hx-on::after-request="handleHtmxSuccess(event, 'Saved!');window.location.reload()"
-					>
-						Get this feature
-						if feature.StripePriceID != "" {
-							{ fmt.Sprintf("($%.2f)", stripe.GetPrice(feature.StripePriceID).UnitAmountDecimal / float64(100)) }
-						}
-					</button>
-				</div>
-			}
-		}
-	</div>
-}
-
 templ ProfilePage(c *fiber.Ctx) {
 	@web.Base(c, nil) {
 		<div id="profile-page">
@@ -226,17 +234,11 @@ templ ProfilePage(c *fiber.Ctx) {
 				@infoForm(c)
 				@passwordForm(c)
 				@exportSection(c)
-				if len(web.CurrentUser(c).UserFeatures) > 0 {
-					@featureForm(c)
-				}
+				@planSection(c)
 				if web.CurrentUser(c).HasFeature("custom-topics") {
 					@customJournalTypeForm(c)
 				}
 			</div>
-			if len(web.CurrentUser(c).UserFeatures) < len(getFeatures(c)) {
-				<h2 class="heading">Features</h2>
-				@featureList(c)
-			}
 		</div>
 	}
 }
