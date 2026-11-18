@@ -39,6 +39,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = seeders.SeedRoutines()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func deleteItems() {

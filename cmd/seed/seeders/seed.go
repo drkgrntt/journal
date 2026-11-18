@@ -35,6 +35,11 @@ func Seed() {
 		log.Fatal(err)
 	}
 
+	err = SeedCustomJournalTypes()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	err = SeedJournals()
 	if err != nil {
 		log.Fatal(err)
@@ -50,7 +55,17 @@ func Seed() {
 		log.Fatal(err)
 	}
 
-	err = SeedFeatures()
+	err = SeedRoutines()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = SeedReminders()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = SeedEntryTemplates()
 	if err != nil {
 		log.Fatal(err)
 	}
