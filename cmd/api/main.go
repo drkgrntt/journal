@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	_ "journal/internal/jobs"
+	"journal/internal/jobs"
 	"journal/internal/logger"
 	"journal/internal/server"
 	"os"
@@ -40,6 +40,8 @@ func gracefulShutdown(fiberServer *server.FiberServer, done chan bool) {
 }
 
 func main() {
+
+	jobs.Start()
 
 	server := server.New()
 

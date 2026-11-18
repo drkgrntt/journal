@@ -19,7 +19,7 @@ func SetDailyReminder(ctx *fiber.Ctx) error {
 	}
 
 	var reminders []*models.Reminder
-	err := db.
+	err := DB().
 		Where("creator_id = ?", currentUser.ID).
 		Order("created_at, id").
 		Find(&reminders).Error

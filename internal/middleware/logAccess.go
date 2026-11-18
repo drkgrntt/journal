@@ -39,7 +39,7 @@ func LogAccess(ctx *fiber.Ctx) error {
 		Domain:    ctx.Hostname(),
 	}
 
-	db.Create(&analytic)
+	DB().Create(&analytic)
 
 	return ctx.Next()
 }

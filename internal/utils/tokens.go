@@ -13,14 +13,14 @@ import (
 	"github.com/google/uuid"
 )
 
-var (
-	accessTokenPrivateKey = os.Getenv("ACCESS_TOKEN_PRIVATE_KEY")
-	accessTokenPublicKey  = os.Getenv("ACCESS_TOKEN_PUBLIC_KEY")
-	accessTokenExpiresIn  = os.Getenv("ACCESS_TOKEN_EXPIRES_IN")
-)
+// The token settings are read per call, not at package load, so tests can set
+// them with t.Setenv.
+func accessTokenPrivateKey() string { return os.Getenv("ACCESS_TOKEN_PRIVATE_KEY") }
+func accessTokenPublicKey() string  { return os.Getenv("ACCESS_TOKEN_PUBLIC_KEY") }
+func accessTokenExpiresIn() string  { return os.Getenv("ACCESS_TOKEN_EXPIRES_IN") }
 
 func CreateToken(expiresIn time.Duration, additionalClaims map[string]any) (string, error) {
-	decodedPrivateKey, err := base64.StdEncoding.DecodeString(accessTokenPrivateKey)
+	decodedPrivateKey, err := base64.StdEncoding.DecodeString(accessTokenPrivateKey())
 
 	if err != nil {
 		return "", fmt.Errorf("could not decode key: %w", err)
@@ -51,7 +51,7 @@ func CreateToken(expiresIn time.Duration, additionalClaims map[string]any) (stri
 }
 
 func CreateAccessToken(userId uuid.UUID) (string, error) {
-	expiresIn, err := time.ParseDuration(accessTokenExpiresIn)
+	expiresIn, err := time.ParseDuration(accessTokenExpiresIn())
 	if err != nil {
 		return "", fmt.Errorf("invalid expiry duration: %w", err)
 	}
@@ -73,7 +73,7 @@ type TokenData struct {
 }
 
 func ValidateToken(token string) (*TokenData, error) {
-	decodedPublicKey, err := base64.StdEncoding.DecodeString(accessTokenPublicKey)
+	decodedPublicKey, err := base64.StdEncoding.DecodeString(accessTokenPublicKey())
 	if err != nil {
 		return nil, fmt.Errorf("could not decode: %w", err)
 	}
@@ -132,7 +132,7 @@ func CreateEmailConfirmToken(userId uuid.UUID, email string) (string, error) {
 // ValidateEmailConfirmToken returns the user ID and (lowercased) address a
 // confirmation token was issued for.
 func ValidateEmailConfirmToken(token string) (uuid.UUID, string, error) {
-	decodedPublicKey, err := base64.StdEncoding.DecodeString(accessTokenPublicKey)
+	decodedPublicKey, err := base64.StdEncoding.DecodeString(accessTokenPublicKey())
 	if err != nil {
 		return uuid.Nil, "", fmt.Errorf("could not decode: %w", err)
 	}

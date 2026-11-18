@@ -22,7 +22,7 @@ func scheduleDueReminderEmails() {
 	}()
 
 	var users []*models.User
-	err := db.
+	err := DB().
 		Where("reminder_email_enabled = ?", true).
 		Where("email_confirmed_at IS NOT NULL").
 		Find(&users).Error
@@ -48,7 +48,7 @@ func scheduleDueReminderEmails() {
 // a retry/restart) race, exactly one sees RowsAffected == 1 and the other does
 // nothing. If job creation fails the claim rolls back with it.
 func queueReminderEmail(user *models.User, today string) error {
-	return db.Transaction(func(tx *gorm.DB) error {
+	return DB().Transaction(func(tx *gorm.DB) error {
 		res := tx.Model(&models.User{}).
 			Where("id = ?", user.ID).
 			Where("reminder_email_enabled = ?", true).
@@ -83,7 +83,7 @@ func prepareReminderEmail(job *models.Job, data *EmailData, config *emails.Email
 		return false, errors.New("reminder email job has no user")
 	}
 	var user models.User
-	err = db.First(&user, "id = ?", *job.CreatorID).Error
+	err = DB().First(&user, "id = ?", *job.CreatorID).Error
 	if err != nil {
 		return false, err
 	}

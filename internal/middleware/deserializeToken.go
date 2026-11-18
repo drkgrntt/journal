@@ -22,7 +22,7 @@ func DeserializeToken(ctx *fiber.Ctx) error {
 	}
 
 	var user models.User
-	err = db.Where("id = ?", data.UserID).
+	err = DB().Where("id = ?", data.UserID).
 		Preload("CustomJournalTypes").
 		First(&user).Error
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"journal/internal/logger"
 	"journal/internal/models"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -15,14 +16,29 @@ import (
 
 var (
 	db               *gorm.DB
+	dbOnce           sync.Once
 	scheduleDuration = time.Second * time.Duration(10)
 )
 
-func init() {
-	if db == nil {
-		db = database.New().DB
-	}
+// DB returns the database the jobs use, connecting on first use rather than at
+// import. Tests call SetDB to point it at a test database.
+func DB() *gorm.DB {
+	dbOnce.Do(func() {
+		if db == nil {
+			db = database.New().DB
+		}
+	})
+	return db
+}
 
+// SetDB overrides the database. Call it before anything else uses the package.
+func SetDB(d *gorm.DB) {
+	db = d
+}
+
+// Start begins the background schedulers. cmd/api/main.go calls it explicitly;
+// importing the package no longer starts anything, so tests can import it.
+func Start() {
 	s, err := gocron.NewScheduler()
 	if err != nil {
 		logger.Error("Error starting scheduler", "error", err.Error())
@@ -67,7 +83,7 @@ func runJobs() {
 	// job: SKIP LOCKED lets a concurrent runner skip rows another runner is
 	// already claiming, and marking AttemptedAt before committing keeps it
 	// from matching the "due" query again once the lock is released.
-	err := db.Transaction(func(tx *gorm.DB) error {
+	err := DB().Transaction(func(tx *gorm.DB) error {
 		err := tx.
 			Session(&gorm.Session{Logger: gormlogger.Default.LogMode(gormlogger.Error)}).
 			Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
@@ -108,7 +124,7 @@ func runJobs() {
 		if r := recover(); r != nil {
 			logger.Error("Recovered from panic while running jobs", "panic", r)
 			if len(jobs) > 0 {
-				db.Save(&jobs)
+				DB().Save(&jobs)
 			}
 		}
 	}()
@@ -134,7 +150,7 @@ func runJobs() {
 	}
 
 	if len(jobs) > 0 {
-		err = db.Save(&jobs).Error
+		err = DB().Save(&jobs).Error
 		if err != nil {
 			logger.Error("Error saving processed jobs", "error", err.Error())
 		}
