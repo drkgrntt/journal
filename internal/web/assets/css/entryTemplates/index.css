@@ -51,6 +51,12 @@
 .template-picker {
 	font-size: .9rem;
 
+	/* .field sets display:flex, which would beat the hidden attribute and show
+	   the picker even when there are no templates to pick from. */
+	&[hidden] {
+		display: none;
+	}
+
 	.select {
 		max-width: 16rem;
 	}

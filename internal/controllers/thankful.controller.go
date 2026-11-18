@@ -151,6 +151,7 @@ func (c *ThankfulController) createThankful(ctx *fiber.Ctx) error {
 	err = c.db.Create(&thankful).Error
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating thankful"})
 	}
 
@@ -180,6 +181,7 @@ func (c *ThankfulController) updateThankful(ctx *fiber.Ctx) error {
 	err = c.db.Save(thankful).Error
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error updating journal"})
 	}
 
@@ -200,6 +202,7 @@ func (c *ThankfulController) deleteThankful(ctx *fiber.Ctx) error {
 
 	err := c.db.Delete(thankful).Error
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting thankful"})
 	}
 

@@ -221,7 +221,7 @@ templ blurTextToggle(c *fiber.Ctx) {
 templ exportSection(c *fiber.Ctx) {
 	<div class="form">
 		<h4>Export Your Journal</h4>
-		<p>Download everything you've written — for backup, or to use elsewhere.</p>
+		<p>Download everything you've written, for backup or to use elsewhere.</p>
 		<div class="field">
 			<a class="button" href="/api/profile/export?format=markdown" download>Export as Markdown</a>
 			<a class="button" href="/api/profile/export?format=json" download>Export as JSON</a>
@@ -251,7 +251,7 @@ templ appearanceSection(c *fiber.Ctx) {
 	>
 		<h4>Appearance</h4>
 		if !user.IsSubscribed() {
-			<p>Colors and fonts are part of the plan; your choice is kept for whenever it's back.</p>
+			<p>Colors and fonts are part of the plan; your saved choice comes back with it.</p>
 		}
 		<fieldset class="field" disabled?={ !user.IsSubscribed() }>
 			<legend class="label legend">Color</legend>
@@ -304,7 +304,7 @@ templ routinesSection(c *fiber.Ctx) {
 		<h4>Routines</h4>
 		<p>Action items that appear on a schedule, like a weekly check-in.</p>
 		if !web.CurrentUser(c).IsSubscribed() {
-			<p>Creating routines is part of the plan; the ones you have wait quietly until it's back.</p>
+			<p>Creating routines is part of the plan; the ones you have wait until it's back.</p>
 		}
 		<div class="field">
 			<a class="button" href="/action-items">Manage routines</a>
@@ -315,7 +315,7 @@ templ routinesSection(c *fiber.Ctx) {
 templ entryTemplatesSection(c *fiber.Ctx) {
 	<div class="form">
 		<h4>Entry Templates</h4>
-		<p>Your own starting text for a new entry, like a gentle structure to fill in.</p>
+		<p>Your own starting text for a new entry, like a simple outline to fill in.</p>
 		if !web.CurrentUser(c).IsSubscribed() {
 			<p>Using and creating templates is part of the plan; the ones you've saved are kept.</p>
 		}
@@ -329,7 +329,7 @@ templ reminderEmailSection(c *fiber.Ctx) {
 	if web.CurrentUser(c).IsSubscribed() && !web.CurrentUser(c).EmailConfirmed() {
 		<div class="form">
 			<h4>Reminder Email</h4>
-			<p>A quiet daily email inviting you to write. To turn it on, confirm your email first, so it only goes to an address you've confirmed.</p>
+			<p>A short daily email with a link to write. To turn it on, confirm your email first, so it only goes to an address you've confirmed.</p>
 			<div class="field">
 				<button
 					class="button"
@@ -348,7 +348,7 @@ templ reminderEmailSection(c *fiber.Ctx) {
 			hx-on::after-request="handleHtmxSuccess(event, 'Saved!')"
 		>
 			<h4>Reminder Email</h4>
-			<p>A quiet daily email inviting you to write. Your reminders and entries are never included. Off unless you turn it on.</p>
+			<p>A short daily email with a link to write. Your reminders and entries are never included. Off unless you turn it on.</p>
 			<div class="checkField">
 				<input
 					type="checkbox"
@@ -401,7 +401,7 @@ templ reminderEmailSection(c *fiber.Ctx) {
 		</form>	} else {
 		<div class="form">
 			<h4>Reminder Email</h4>
-			<p>A quiet daily email inviting you to write. It's part of the plan, which isn't active right now.</p>
+			<p>A short daily email with a link to write. It's part of the plan, which isn't active right now.</p>
 		</div>
 	}
 }

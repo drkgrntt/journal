@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"journal/internal/logger"
 	"journal/internal/models"
@@ -88,6 +89,13 @@ func (c *StripeController) handleSubscriptionChanged(event *stripe.Event) error 
 
 	var user models.User
 	if err := c.db.Where("stripe_customer_id = ?", sub.Customer.ID).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// The customer ID is saved before checkout starts, so this account
+			// no longer exists (deleted since). A retry can't change that, so
+			// acknowledge the event instead of making Stripe redeliver it for days.
+			logger.Warn("Subscription event for an unknown customer, ignoring", "subscription", sub.ID, "type", string(event.Type))
+			return nil
+		}
 		return fmt.Errorf("finding user for customer %s: %w", sub.Customer.ID, err)
 	}
 

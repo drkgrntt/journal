@@ -6,6 +6,12 @@ package utils
 const (
 	LocalCurrentUser = "currentUser"
 
+	// LocalRequestID is the *string random reference for this request (set by
+	// middleware.RequestID); LocalRequestError is the *string safe description of
+	// why a request failed (see SetRequestError).
+	LocalRequestID    = "requestID"
+	LocalRequestError = "requestError"
+
 	// LocalEmailConfirmed is the *bool result of following a confirmation link.
 	LocalEmailConfirmed = "emailConfirmed"
 

@@ -27,7 +27,7 @@ func ScheduleEmailJob(
 	data *EmailData,
 	scheduledAt time.Time,
 ) (*models.Job, error) {
-	return scheduleEmailJobTx(db, userId, data, scheduledAt)
+	return scheduleEmailJobTx(DB(), userId, data, scheduledAt)
 }
 
 // scheduleEmailJobTx is ScheduleEmailJob against a specific handle, so callers
@@ -109,7 +109,7 @@ func sendEmail(job *models.Job) error {
 		return err
 	}
 	// Update here because .Save doesn't seem to catch that the metadata changes
-	db.Model(job).Update("metadata", job.Metadata)
+	DB().Model(job).Update("metadata", job.Metadata)
 
 	return nil
 }

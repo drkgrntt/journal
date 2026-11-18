@@ -73,6 +73,7 @@ func (c *EntryTemplateController) pickerList(ctx *fiber.Ctx) error {
 	all, err := c.loadTemplates(ctx)
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error loading templates"})
 	}
 
@@ -144,6 +145,7 @@ func (c *EntryTemplateController) createEntryTemplate(ctx *fiber.Ctx) error {
 
 	if err := c.db.Create(&entryTemplate).Error; err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating template"})
 	}
 
@@ -166,6 +168,7 @@ func (c *EntryTemplateController) updateEntryTemplate(ctx *fiber.Ctx) error {
 
 	if err := c.db.Save(entryTemplate).Error; err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error updating template"})
 	}
 
@@ -181,6 +184,7 @@ func (c *EntryTemplateController) deleteEntryTemplate(ctx *fiber.Ctx) error {
 	entryTemplate := utils.GetLocal[models.EntryTemplate](ctx, utils.LocalEntryTemplate)
 
 	if err := c.db.Delete(entryTemplate).Error; err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting template"})
 	}
 

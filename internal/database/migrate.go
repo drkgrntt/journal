@@ -33,21 +33,30 @@ func RunMigrations() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	if _, err := sqlDB.Exec(createMigrationsTableSQL); err != nil {
+	if err := ApplyMigrations(sqlDB); err != nil {
 		log.Fatal(err)
+	}
+}
+
+// ApplyMigrations is RunMigrations against an explicit connection, returning
+// the error instead of exiting. Test helpers use it to build a schema in a
+// throwaway database.
+func ApplyMigrations(sqlDB *sql.DB) error {
+	if _, err := sqlDB.Exec(createMigrationsTableSQL); err != nil {
+		return err
 	}
 
 	versions, err := pendingMigrationVersions(sqlDB)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	for _, version := range versions {
 		if err := applyMigration(sqlDB, version); err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
+	return nil
 }
 
 // pendingMigrationVersions returns the sorted list of migration versions

@@ -10,7 +10,7 @@ import (
 
 func SetJournalTypes(ctx *fiber.Ctx) error {
 	var types []*models.JournalType
-	err := db.Where("code != ?", "custom").Order("name ASC").Find(&types).Error
+	err := DB().Where("code != ?", "custom").Order("name ASC").Find(&types).Error
 	if err != nil {
 		logger.Error("Error getting journal types: ", "error message", err.Error())
 		return ctx.Next()
@@ -22,7 +22,7 @@ func SetJournalTypes(ctx *fiber.Ctx) error {
 
 func SetRatings(ctx *fiber.Ctx) error {
 	var ratings []*models.Rating
-	err := db.Order("value DESC").Find(&ratings).Error
+	err := DB().Order("value DESC").Find(&ratings).Error
 	if err != nil {
 		logger.Error("Error getting ratings: ", "error message", err.Error())
 		return ctx.Next()

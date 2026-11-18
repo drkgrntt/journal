@@ -11,10 +11,12 @@ import (
 	"os"
 )
 
-var key = []byte(os.Getenv("CRYPTO_KEY"))
+// cryptoKey is read per call, not at package load, so tests can set
+// CRYPTO_KEY with t.Setenv.
+func cryptoKey() []byte { return []byte(os.Getenv("CRYPTO_KEY")) }
 
 func Encrypt(plaintext string) (string, error) {
-	block, err := aes.NewCipher(key)
+	block, err := aes.NewCipher(cryptoKey())
 	if err != nil {
 		return "", err
 	}
@@ -39,7 +41,7 @@ func Decrypt(ciphertext string) (string, error) {
 		return "", err
 	}
 
-	block, err := aes.NewCipher(key)
+	block, err := aes.NewCipher(cryptoKey())
 	if err != nil {
 		return "", err
 	}

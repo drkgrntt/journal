@@ -168,12 +168,14 @@ func (c *DashboardController) setPatternHidden(ctx *fiber.Ctx, hidden bool) erro
 	metadata, err := models.EncodeMetadata(dashboardPreferences{HiddenPatterns: updated})
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error saving preference"})
 	}
 	currentUser.Metadata = metadata
 
 	if err := c.db.Save(currentUser).Error; err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error saving preference"})
 	}
 
