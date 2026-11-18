@@ -40,7 +40,14 @@ func (c *RecurringActionItemController) Init(db *gorm.DB, app *fiber.App) {
 	c.registerCrons()
 }
 
+// cronsEnabled lets tests turn the background scheduler off, so building a
+// controller for a test doesn't leave a once-a-minute job running.
+var cronsEnabled = true
+
 func (c *RecurringActionItemController) registerCrons() {
+	if !cronsEnabled {
+		return
+	}
 	s, err := gocron.NewScheduler()
 	if err != nil {
 		logger.Error("Error starting scheduler", "error", err.Error())
@@ -60,7 +67,12 @@ func (c *RecurringActionItemController) registerCrons() {
 }
 
 func (c *RecurringActionItemController) createActionItems() {
-	now := time.Now()
+	c.createActionItemsAt(time.Now())
+}
+
+// createActionItemsAt is createActionItems with the clock passed in, so tests
+// can pin the time.
+func (c *RecurringActionItemController) createActionItemsAt(now time.Time) {
 	var recurringActionItems []*models.RecurringActionItem
 	c.db.
 		Session(&gorm.Session{
@@ -88,45 +100,11 @@ func (c *RecurringActionItemController) createActionItems() {
 			continue
 		}
 
-		// Exit if it hasn't started yet
-		if recurringActionItem.StartsAt.After(now) {
-			// logger.Info("Recurring action item has not started yet", "id", recurringActionItem.ID)
-			continue
-		}
-
-		if len(recurringActionItem.ActionItems) > 0 {
-			recentActionItem := recurringActionItem.ActionItems[0]
-
-			// Exit if it has not been completed yet
-			if recentActionItem.CompletedAt == nil {
-				// logger.Info("Recurring action item has not been completed yet", "id", recurringActionItem.ID)
-				continue
-			}
-
-			startsAtUnix := recurringActionItem.StartsAt.Unix()
-			nowUnix := now.Unix()
-			frequency := int64(recurringActionItem.Frequency.Seconds())
-			if frequency <= 0 {
+		if !recurringActionItem.DueAt(now) {
+			if recurringActionItem.Frequency <= 0 && len(recurringActionItem.ActionItems) > 0 {
 				logger.Warn("Recurring action item has a non-positive frequency, skipping", "id", recurringActionItem.ID)
-				continue
 			}
-			periodsSinceStart := (nowUnix - startsAtUnix) / frequency
-
-			previousScheduled := recurringActionItem.StartsAt.Add(time.Duration(periodsSinceStart) * recurringActionItem.Frequency)
-
-			// logger.Info("period info", "started", recurringActionItem.StartsAt, "periods", periodsSinceStart, "previous scheduled", previousScheduled, "created", recentActionItem.CreatedAt, "completed", recentActionItem.CompletedAt)
-
-			// Exit if it has been created in this period
-			if recentActionItem.CreatedAt.After(previousScheduled) {
-				// logger.Info("Recurring action item has been created in this period", "id", recurringActionItem.ID)
-				continue
-			}
-
-			// Exit if it has been completed in this period
-			if recentActionItem.CompletedAt.After(previousScheduled) {
-				// logger.Info("Recurring action item has been completed in this period", "id", recurringActionItem.ID)
-				continue
-			}
+			continue
 		}
 
 		actionItem := models.ActionItem{
