@@ -15,6 +15,12 @@ import (
 var reminderEmailCheckInterval = time.Minute * time.Duration(3)
 
 func scheduleDueReminderEmails() {
+	scheduleDueReminderEmailsAt(time.Now())
+}
+
+// scheduleDueReminderEmailsAt is scheduleDueReminderEmails with the clock
+// passed in, so tests can pin the time instead of depending on the wall clock.
+func scheduleDueReminderEmailsAt(now time.Time) {
 	defer func() {
 		if r := recover(); r != nil {
 			logger.Error("Recovered from panic while scheduling reminder emails", "panic", r)
@@ -31,7 +37,6 @@ func scheduleDueReminderEmails() {
 		return
 	}
 
-	now := time.Now()
 	for _, user := range users {
 		due, today := models.ReminderEmailDue(user.ReminderEmailSettings(), now)
 		if !due {

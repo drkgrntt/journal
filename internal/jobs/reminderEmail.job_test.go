@@ -109,43 +109,39 @@ func TestScheduleDueReminderEmails_Queues(t *testing.T) {
 	})
 }
 
-func TestScheduleDueReminderEmails_NotQueued(t *testing.T) {
-	// Local minute-of-day now, to build a "not yet due" time. Skip the one
-	// minute a day where no later time exists.
-	loc, _ := time.LoadLocation(aheadTZ)
-	nowLocal := time.Now().In(loc)
-	later := "23:59"
-	notYetOK := !(nowLocal.Hour() == 23 && nowLocal.Minute() == 59)
+// A fixed clock: 12:00 UTC is 02:00 the next day in Kiritimati (UTC+14), so
+// the local date is 2025-06-11 and a 00:00 reminder is due but a 23:59 one
+// isn't. Nothing here depends on when the test runs.
+var fixedNow = time.Date(2025, 6, 10, 12, 0, 0, 0, time.UTC)
 
-	longAgo := time.Now().Add(-100 * 24 * time.Hour)
+const fixedLocalDay = "2025-06-11"
+
+func TestScheduleDueReminderEmails_NotQueued(t *testing.T) {
+	longAgo := fixedNow.Add(-100 * 24 * time.Hour)
 	tests := []struct {
 		name   string
 		mutate func(*models.User)
-		skip   bool
 	}{
-		{"disabled", func(u *models.User) { u.ReminderEmailEnabled = false }, false},
+		{"disabled", func(u *models.User) { u.ReminderEmailEnabled = false }},
 		{"lapsed", func(u *models.User) {
 			u.SubscriptionStatus = models.SubscriptionCanceled
 			u.CurrentPeriodEnd = &longAgo
-		}, false},
-		{"unconfirmed", func(u *models.User) { u.EmailConfirmedAt = nil }, false},
-		{"not yet due locally", func(u *models.User) { u.ReminderEmailTime = later }, !notYetOK},
+		}},
+		{"unconfirmed", func(u *models.User) { u.EmailConfirmedAt = nil }},
+		{"not yet due locally", func(u *models.User) { u.ReminderEmailTime = "23:59" }},
 		{"already sent today", func(u *models.User) {
-			d, _ := time.Parse("2006-01-02", localToday(aheadTZ))
+			d, _ := time.Parse("2006-01-02", fixedLocalDay)
 			u.ReminderEmailLastSentOn = &d
-		}, false},
+		}},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.skip {
-				t.Skip("wall clock makes this case impossible right now")
-			}
 			testutil.Tx(t, func(tx *gorm.DB) {
 				useDB(t, tx)
 				u := dueUser(t, tx, tc.mutate)
 				before := lastSentOn(t, tx, u.ID)
 
-				scheduleDueReminderEmails()
+				scheduleDueReminderEmailsAt(fixedNow)
 
 				if n := len(reminderJobs(t, tx, u.ID)); n != 0 {
 					t.Errorf("jobs = %d, want 0", n)
@@ -157,6 +153,38 @@ func TestScheduleDueReminderEmails_NotQueued(t *testing.T) {
 			})
 		})
 	}
+}
+
+// The same user becomes due as the clock passes their local reminder time,
+// and the claim records the user's local date, not the UTC one.
+func TestScheduleDueReminderEmails_DueOnceTheClockPassesTheTime(t *testing.T) {
+	testutil.Tx(t, func(tx *gorm.DB) {
+		useDB(t, tx)
+		u := dueUser(t, tx, func(u *models.User) { u.ReminderEmailTime = "08:00" })
+
+		scheduleDueReminderEmailsAt(fixedNow) // 02:00 local: not yet
+		if n := len(reminderJobs(t, tx, u.ID)); n != 0 {
+			t.Fatalf("queued before the reminder time: %d jobs", n)
+		}
+
+		scheduleDueReminderEmailsAt(fixedNow.Add(6 * time.Hour)) // 08:00 local
+		if n := len(reminderJobs(t, tx, u.ID)); n != 1 {
+			t.Fatalf("jobs = %d at the reminder time, want 1", n)
+		}
+		if got := lastSentOn(t, tx, u.ID); got == nil || *got != fixedLocalDay {
+			t.Errorf("last_sent_on = %v, want local date %s", got, fixedLocalDay)
+		}
+
+		scheduleDueReminderEmailsAt(fixedNow.Add(8 * time.Hour)) // later the same local day
+		if n := len(reminderJobs(t, tx, u.ID)); n != 1 {
+			t.Errorf("jobs = %d later the same day, want still 1", n)
+		}
+
+		scheduleDueReminderEmailsAt(fixedNow.Add(30 * time.Hour)) // next local day, 08:00
+		if n := len(reminderJobs(t, tx, u.ID)); n != 2 {
+			t.Errorf("jobs = %d the next day, want 2", n)
+		}
+	})
 }
 
 // Two runners racing for the same user must queue exactly one email. A Tx is
