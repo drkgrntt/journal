@@ -23,9 +23,9 @@ type patternDef struct {
 // PatternKeys is the canonical list of valid pattern keys, used by the
 // dashboard controller to validate the :key route param on hide/show.
 var PatternKeys = []string{
-	"calendar", "moodByDay", "moodChart", "moodVsThankfulness",
-	"moodVsActionCompletion", "moodByTopic", "frequencyChart", "moodByTod",
-	"thankfulFrequency", "distByTopic", "routineCompletion",
+	"calendar", "yearInPixels", "moodChart", "ratingDistribution",
+	"moodVsThankfulness", "moodVsActionCompletion", "moodByTopic",
+	"weekByTime", "distByTopic", "routineCompletion",
 }
 
 func IsValidPatternKey(key string) bool {
@@ -43,15 +43,16 @@ func allPatternDefs(c *fiber.Ctx) []patternDef {
 			Key:   "calendar",
 			Title: "The Calendar",
 			Description: "A quick look at how your days have felt over time without having to read back through anything. " +
-				"Patterns tend to emerge that you might not notice day to day; a rough stretch, a good week, how things have shifted over months.",
+				"Patterns tend to emerge that you might not notice day to day; a rough stretch, a good week, how things have shifted over months. " +
+				"You can also switch it to show which days you wrote, noted something you were thankful for, or got something done. Days without any are simply blank.",
 			Chart: RatingCalendar(c),
 		},
 		{
-			Key:   "moodByDay",
-			Title: "Average Rating by Day",
-			Description: "Some days of the week just tend to feel different than others. This might show you that your Mondays are rougher than you thought, " +
-				"or that your weekends aren't as good as you'd expect. The 7, 30, and 90 day ranges let you see whether those patterns are consistent over time or just a recent thing.",
-			Chart: MoodByDay(c),
+			Key:   "yearInPixels",
+			Title: "The Year",
+			Description: "Every day of a year as one small dot, colored by how it felt. Seasons, rough stretches and good stretches show up in a single glance. " +
+				"There's nothing to fill in or keep up; empty days are just empty.",
+			Chart: YearInPixels(c),
 		},
 		{
 			Key:   "moodChart",
@@ -61,18 +62,26 @@ func allPatternDefs(c *fiber.Ctx) []patternDef {
 			Chart: MoodChart(c),
 		},
 		{
+			Key:   "ratingDistribution",
+			Title: "How You Tend to Feel",
+			Description: "This shows which ratings you reach for, and how often. There's no right shape here. " +
+				"If most of your entries land in the middle, that can mean the small shifts matter more than they look.",
+			Chart: RatingDistribution(c),
+		},
+		{
 			Key:   "moodVsThankfulness",
 			Title: "Rating vs Thankfulness",
 			Description: "On days where you took a moment to note something worth being grateful for, did it actually make a difference? This tries to show that, " +
-				"comparing the average mood of entries with at least one thankful against those without, grouped by rating. It won't always show a clear pattern, " +
+				"comparing the two kinds of days: of the days with at least one thankful, and of the days without, what share felt each way. Each set of bars adds up to the same " +
+				"whole, so it's the shape that matters rather than how many days fell on each side. It won't always show a clear pattern, " +
 				"and that's okay. Sometimes it just reflects that you're good at finding gratitude even on hard days.",
 			Chart: MoodVsThankfulness(c),
 		},
 		{
 			Key:   "moodVsActionCompletion",
 			Title: "Rating vs Action Completion",
-			Description: "On days where you checked something off, did things feel any different? This compares the average mood of entries on days with at least one " +
-				"completed action against those without. The pattern won't always be dramatic. Sometimes it just means you're getting things done regardless of how you feel, " +
+			Description: "On days where you checked something off, did things feel any different? Of the days with at least one completed action, and of the days without, " +
+				"this shows what share felt each way. Each set of bars adds up to the same whole, so it's the shape that matters rather than how many days fell on each side. The pattern won't always be dramatic. Sometimes it just means you're getting things done regardless of how you feel, " +
 				"which is its own kind of useful to see.",
 			Chart: MoodVsActionCompletion(c),
 		},
@@ -84,25 +93,12 @@ func allPatternDefs(c *fiber.Ctx) []patternDef {
 			Chart: MoodByTopic(c),
 		},
 		{
-			Key:   "frequencyChart",
-			Title: "Entries per Day",
-			Description: "A look at how often you've been writing. Less about consistency as a goal and more about noticing your own patterns: when you tend to write more, " +
-				"whether busy or difficult stretches show up as gaps, and how that's shifted over time.",
-			Chart: FrequencyChart(c),
-		},
-		{
-			Key:   "moodByTod",
-			Title: "Rating by Time of Day",
-			Description: "Whether the time you write has any relationship to how you're feeling. Morning entries might rate differently than late night ones, or there might " +
-				"be no pattern at all, but if there is one, it's the kind of thing you'd probably never notice just from writing.",
-			Chart: MoodByTod(c),
-		},
-		{
-			Key:   "thankfulFrequency",
-			Title: "Thankfuls per Day",
-			Description: "Tracks how often you're jotting down things worth being grateful for. Less about hitting a number and more about noticing whether the habit is " +
-				"forming, fading, or just inconsistent in ways that might be interesting.",
-			Chart: ThankfulFrequencyChart(c),
+			Key:   "weekByTime",
+			Title: "Week by Time of Day",
+			Description: "The days of the week and the times you write, laid out together. Each square is tinted by how those entries tended to feel, and squares built from only a " +
+				"few entries are drawn fainter, since a couple of entries don't say much. Entries are often written about earlier moments, so this is more about when you write " +
+				"than necessarily when it happened. There may be nothing here at all, and that's fine.",
+			Chart: WeekByTime(c),
 		},
 		{
 			Key:   "distByTopic",
@@ -115,9 +111,9 @@ func allPatternDefs(c *fiber.Ctx) []patternDef {
 	if web.CurrentUser(c).IsSubscribed() {
 		defs = append(defs, patternDef{
 			Key:   "routineCompletion",
-			Title: "Routine Completion",
-			Description: "A non-judgmental look at how consistently you've been following through on your recurring actions. The rolling window is intentional. A rough " +
-				"week doesn't define the whole month, and a good stretch can show up even if things fell apart for a while. Less about holding yourself accountable and more about just knowing where things actually stand.",
+			Title: "Routines You've Done",
+			Description: "How many times you've done each of your routines in the window you pick. It's a count, not a target, and a quiet stretch is just a quiet " +
+				"stretch. Routines wait for you either way, so this is only here for noticing what's been part of your days lately.",
 			Chart: RoutineCompletionRate(c),
 		})
 	}

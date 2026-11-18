@@ -1,18 +1,8 @@
-#mood-by-day {
+#rating-distribution {
 	padding: .5rem;
 	border-radius: var(--radius-lg);
 	background-color: var(--primary-color-lightest);
 	box-shadow: var(--shadow-sm);
-
-	.options {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-
-		legend {
-			display: none;
-		}
-	}
 
 	canvas {
 		min-height: 15rem;

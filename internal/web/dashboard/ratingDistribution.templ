@@ -1,0 +1,26 @@
+package dashboard
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/utils"
+	"journal/internal/web/components"
+)
+
+templ RatingDistributionContent(c *fiber.Ctx) {
+	@components.TimespanFieldset("/dashboard/rating-distribution", "", "rd-days", "#rating-distribution", c.QueryInt("days", 90))
+	<div class="rating-distribution">
+		@templ.JSONScript("rating-distribution-data", c.Locals(utils.LocalRatingDistributionData))
+		@templ.JSONScript("rating-distribution-ratings-data", c.Locals(utils.LocalRatings))
+		<script src="/assets/js/components/ratingDistribution.js" type="module" onload="document.dispatchEvent(new Event('load-rating-distribution'))"></script>
+	</div>
+}
+
+templ RatingDistribution(c *fiber.Ctx) {
+	<div
+		id="rating-distribution"
+		hx-get="/dashboard/rating-distribution"
+		hx-trigger="load"
+		hx-target="#rating-distribution"
+		hx-swap="innerHTML"
+	></div>
+}

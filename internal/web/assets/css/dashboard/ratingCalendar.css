@@ -4,6 +4,21 @@
 	background-color: var(--secondary-color-lightest);
 	box-shadow: var(--shadow-sm);
 
+	.lens-control {
+		display: flex;
+		align-items: center;
+		gap: .5rem;
+		margin-bottom: .5rem;
+	}
+
+	/* Non-rating lenses: the palette-aware accent, softer for fewer. */
+	.lens-dot {
+		color: var(--accent);
+		&.lens-step-1 { opacity: .4; }
+		&.lens-step-2 { opacity: .65; }
+		&.lens-step-3 { opacity: .9; }
+	}
+
 	.legend {
 		display: flex;
 		justify-content: space-between;

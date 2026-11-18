@@ -2,6 +2,11 @@ function initRoutineCompletionRate() {
   const data = JSON.parse(document.getElementById("routine-completion-rate-data").textContent);
   const element = document.querySelector(".routine-completion-rate");
 
+  if (!data || data.length === 0) {
+    renderChartEmptyState(element);
+    return;
+  }
+
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   if (!ctx) {
@@ -14,13 +19,8 @@ function initRoutineCompletionRate() {
       labels: data.map(item => item.routine),
       datasets: [
         {
-          label: "Completion Rate",
-          // A routine completed more than once per period can legitimately
-          // push the raw percent past 100 - clamp for charting since a
-          // "Completion Rate" axis shouldn't read >100%. Kept as a number
-          // (not the old .toFixed(2) string) so Chart.js treats it as data
-          // like every other chart here, not a category label.
-          data: data.map(item => Math.min(item.percent, 100)),
+          label: "Times completed",
+          data: data.map(item => item.completed),
           ...themedColors("--secondary-color-dark", "--secondary-color-light"),
           borderWidth: 2,
         },
@@ -32,6 +32,14 @@ function initRoutineCompletionRate() {
       plugins: {
         legend: {
           display: false,
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const n = context.parsed.y;
+              return `Completed ${n} ${n === 1 ? "time" : "times"}`;
+            },
+          },
         },
       },
       scales: {
@@ -46,8 +54,12 @@ function initRoutineCompletionRate() {
           }
         },
         y: {
+          beginAtZero: true,
           grid: {
             display: false,
+          },
+          ticks: {
+            precision: 0,
           },
         }
       },

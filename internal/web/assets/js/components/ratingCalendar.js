@@ -1,80 +1,68 @@
+import { makeRatingColorizer } from '/assets/js/utils/ratingColors.js'
+
+// Reads the tz cookie so dates are bucketed the same way the server did.
+function calendarDayFormatter() {
+  const tzMatch = document.cookie.match(/(?:^|; )tz=([^;]+)/)
+  const tz = tzMatch ? decodeURIComponent(tzMatch[1]) : undefined
+  return new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' })
+}
+
+const LENS_LABELS = {
+  wrote: ['entry', 'entries'],
+  thankful: ['thankful', 'thankfuls'],
+  did: ['thing done', 'things done'],
+}
+
+// Non-rating lenses: per-day counts are bucketed server-side (in the tz
+// cookie's zone), so the keys match each cell's data-calendar-date directly.
+function initCountLens(calendar, lens) {
+  const counts = JSON.parse(document.getElementById("calendar-counts").textContent) || {}
+  const [singular, plural] = LENS_LABELS[lens] || ['item', 'items']
+  const linksToJournal = lens === 'wrote'
+
+  calendar.querySelectorAll("[data-calendar-date]").forEach(function(td) {
+    const dateKey = td.dataset.calendarDate
+    const [year, month, day] = dateKey.split('-').map(Number)
+    const dateString = new Date(year, month - 1, day).toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    })
+    const count = counts[dateKey] || 0
+
+    if (count === 0) {
+      td.innerHTML = `<span title='${dateString}'>●</span>`;
+      return;
+    }
+
+    const step = Math.min(count, 3)
+    const dot = document.createElement(linksToJournal ? 'a' : 'span')
+    if (linksToJournal) {
+      dot.href = `/journal?date=${dateKey}`
+      dot.style.textDecoration = 'none'
+    }
+    dot.className = `lens-dot lens-step-${step}`
+    dot.title = `${dateString}\n${count} ${count === 1 ? singular : plural}`
+    dot.textContent = '●'
+
+    td.innerHTML = ''
+    td.appendChild(dot)
+  })
+}
+
 function initRatingCalendar() {
-  // Ratings don't carry a color of their own, so the low->high color ramp
-  // stays hardcoded here - but which Rating.value each color applies to,
-  // and the low/high bounds used for clamping/interpolation below, are
-  // read from the actual Rating table instead of assuming it's always
-  // exactly the 5 rows 1-5 (see moodByDay.js and friends for the same
-  // Rating-table-as-source-of-truth fix on the chart tick labels).
-  const RATING_COLOR_VARS = ['--awful-color', '--bad-color', '--fine-color', '--good-color', '--great-color'];
-  const ratings = JSON.parse(document.getElementById("calendar-ratings").textContent) || [];
-  const sortedRatings = [...ratings].sort((a, b) => a.value - b.value);
-  const ratingColorsByValue = {};
-  sortedRatings.forEach(function(rating, index) {
-    ratingColorsByValue[rating.value] = getCssValue(RATING_COLOR_VARS[Math.min(index, RATING_COLOR_VARS.length - 1)]);
-  });
-  const minRatingValue = sortedRatings.length ? sortedRatings[0].value : 1;
-  const maxRatingValue = sortedRatings.length ? sortedRatings[sortedRatings.length - 1].value : 5;
-
-  function hexToHsl(hex) {
-    hex = hex.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16) / 255;
-    const g = parseInt(hex.substring(2, 4), 16) / 255;
-    const b = parseInt(hex.substring(4, 6), 16) / 255;
-
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    let h, s;
-    const l = (max + min) / 2;
-
-    if (max === min) {
-      h = s = 0;
-    } else {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-
-      switch (max) {
-        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-        case g: h = (b - r) / d + 2; break;
-        case b: h = (r - g) / d + 4; break;
-      }
-
-      h *= 60;
-    }
-
-    return { h, s: s * 100, l: l * 100 };
-  }
-  function hslToCss({ h, s, l }) {
-    return `hsl(${h}, ${s}%, ${l}%)`;
-  }
-  function lerp(a, b, t) {
-    return a + (b - a) * t;
-  }
-  function interpolateHsl(c1, c2, t) {
-    return {
-      h: lerp(c1.h, c2.h, t),
-      s: lerp(c1.s, c2.s, t),
-      l: lerp(c1.l, c2.l, t),
-    };
-  }
-  function colorForRating(value) {
-    const clamped = Math.max(minRatingValue, Math.min(maxRatingValue, value));
-
-    const lower = Math.floor(clamped);
-    const upper = Math.ceil(clamped);
-
-    if (lower === upper) {
-      return ratingColorsByValue[lower];
-    }
-
-    const t = clamped - lower;
-
-    const c1 = hexToHsl(ratingColorsByValue[lower]);
-    const c2 = hexToHsl(ratingColorsByValue[upper]);
-
-    return hslToCss(interpolateHsl(c1, c2, t));
-  }
-
   const calendar = document.querySelector(".rating-calendar");
+  const lens = calendar.dataset.lens || "rating";
+  if (lens !== "rating") {
+    initCountLens(calendar, lens);
+    return;
+  }
+
+  // The low->high ramp (colors mapped onto the Rating table's sorted values)
+  // lives in utils/ratingColors.js, shared with the other pattern components.
+  const ratings = JSON.parse(document.getElementById("calendar-ratings").textContent) || [];
+  const colorForRating = makeRatingColorizer(ratings);
+
   const journals = JSON.parse(document.getElementById("calendar-journals").textContent);
   const calendarDates = calendar.querySelectorAll("[data-calendar-date]");
 
@@ -87,9 +75,7 @@ function initRatingCalendar() {
   // Re-reading the cookie here (rather than trusting it always equals the
   // browser's current zone) keeps this in sync with whatever tz the server
   // actually used.
-  const tzMatch = document.cookie.match(/(?:^|; )tz=([^;]+)/)
-  const tz = tzMatch ? decodeURIComponent(tzMatch[1]) : undefined
-  const dayFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' })
+  const dayFormatter = calendarDayFormatter()
   function localCalendarDate(dateString) {
     return dayFormatter.format(new Date(dateString))
   }

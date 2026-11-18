@@ -1,0 +1,44 @@
+package dashboard
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/utils"
+	"journal/internal/web/components"
+)
+
+templ WeekByTimeContent(c *fiber.Ctx) {
+	<div class="week-by-time-controls">
+		@components.TimespanFieldset("/dashboard/week-by-time", fmt.Sprintf("&granularity=%s", c.Query("granularity", "period")), "wbt-days", "#week-by-time", c.QueryInt("days", 90))
+		<div class="granularity-control">
+			<label for="wbt-granularity">Granularity</label>
+			<select
+				id="wbt-granularity"
+				name="granularity"
+				class="select"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/week-by-time?days=%d", c.QueryInt("days", 90))) }
+				hx-trigger="change"
+				hx-target="#week-by-time"
+				hx-swap="innerHTML"
+			>
+				<option value="period" if c.Query("granularity", "period") == "period" { selected }>Time of day</option>
+				<option value="3hour" if c.Query("granularity", "period") == "3hour" { selected }>3-hour blocks</option>
+			</select>
+		</div>
+	</div>
+	<div class="week-by-time">
+		@templ.JSONScript("week-by-time-data", c.Locals(utils.LocalWeekByTimeData))
+		@templ.JSONScript("week-by-time-ratings-data", c.Locals(utils.LocalRatings))
+		<script src="/assets/js/components/weekByTime.js" type="module" onload="document.dispatchEvent(new Event('load-week-by-time'))"></script>
+	</div>
+}
+
+templ WeekByTime(c *fiber.Ctx) {
+	<div
+		id="week-by-time"
+		hx-get="/dashboard/week-by-time"
+		hx-trigger="load"
+		hx-target="#week-by-time"
+		hx-swap="innerHTML"
+	></div>
+}
