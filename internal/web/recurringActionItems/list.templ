@@ -31,6 +31,9 @@ templ ListItem(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) {
 					every { recurringActionItem.Frequency.Hours() / 24 } days	
 				}
 			</span>
+			if recurringActionItem.EmailMe {
+				<i class="fa fa-envelope" aria-label="Emails you when it comes up" title="Emails you when it comes up"></i>
+			}
 		</div>
 		<div class="info">
 			<p can-blur class="text">
