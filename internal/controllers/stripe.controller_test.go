@@ -250,12 +250,29 @@ func TestWebhookSubscriptionIgnoredForLifetimeAndComped(t *testing.T) {
 	}
 }
 
-// An unknown customer currently yields 400 (Stripe will retry), not a 500.
+// A customer we have no account for (deleted since) is acknowledged with 200:
+// retrying can never succeed, so Stripe shouldn't keep redelivering it.
 func TestWebhookSubscriptionUnknownCustomer(t *testing.T) {
 	testutil.Tx(t, func(tx *gorm.DB) {
+		bystander := testutil.User(t, tx, "bystander@example.com")
 		got := postWebhook(t, tx, subscriptionEvent("customer.subscription.updated", "sub_1", "cus_nobody", "active", 1), true)
+		if got != http.StatusOK {
+			t.Fatalf("status = %d, want 200", got)
+		}
+		if g := reload(t, tx, bystander); g.StripeSubscriptionID != "" || g.SubscriptionStatus != bystander.SubscriptionStatus {
+			t.Fatalf("an unrelated user was changed: %+v", g)
+		}
+	})
+}
+
+// Only "no such customer" is acknowledged. Any other database failure must still
+// error so Stripe retries it.
+func TestWebhookSubscriptionDatabaseErrorStillRetries(t *testing.T) {
+	testutil.Tx(t, func(tx *gorm.DB) {
+		tx.Exec("DROP TABLE users CASCADE") // rolled back with the test transaction
+		got := postWebhook(t, tx, subscriptionEvent("customer.subscription.updated", "sub_1", "cus_any", "active", 1), true)
 		if got != http.StatusBadRequest {
-			t.Fatalf("status = %d, want 400", got)
+			t.Fatalf("status = %d, want 400 so Stripe retries", got)
 		}
 	})
 }
