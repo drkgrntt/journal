@@ -4,6 +4,7 @@ import (
 	"journal/internal/controllers"
 	"journal/internal/logger"
 	"journal/internal/middleware"
+	"journal/internal/utils"
 	"journal/internal/web"
 	"net/http"
 	"runtime/debug"
@@ -25,10 +26,16 @@ func (s *FiberServer) RegisterFiberRoutes() {
 		MaxAge:     60 * 60 * 24 * 365,
 	}))
 
+	s.App.Use(middleware.RequestID)
+
 	s.App.Use(func(c *fiber.Ctx) error {
 		defer func() {
 			if r := recover(); r != nil {
-				logger.Error("Recovered panic:", "error", r)
+				requestID := ""
+				if id := utils.GetLocal[string](c, utils.LocalRequestID); id != nil {
+					requestID = *id
+				}
+				logger.Error("Recovered panic:", "request_id", requestID, "path", c.Path(), "error", r)
 				debug.PrintStack()
 				c.Status(http.StatusInternalServerError).SendString("Internal Server Error")
 			}

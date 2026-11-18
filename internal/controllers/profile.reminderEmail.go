@@ -37,6 +37,7 @@ func (c *ProfileController) updateReminderEmail(ctx *fiber.Ctx) error {
 			Update("reminder_email_enabled", false).Error
 		if err != nil {
 			logger.Warn(err.Error())
+			utils.SetRequestError(ctx, err)
 			return ctx.Status(http.StatusInternalServerError).SendString("Error updating reminder email")
 		}
 		return ctx.SendStatus(http.StatusOK)
@@ -57,6 +58,7 @@ func (c *ProfileController) updateReminderEmail(ctx *fiber.Ctx) error {
 	}
 	if err := currentUser.SetReminderEmailMessage(message); err != nil {
 		logger.Warn(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error updating reminder email")
 	}
 
@@ -71,6 +73,7 @@ func (c *ProfileController) updateReminderEmail(ctx *fiber.Ctx) error {
 	}).Error
 	if err != nil {
 		logger.Warn(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error updating reminder email")
 	}
 	return ctx.SendStatus(http.StatusOK)

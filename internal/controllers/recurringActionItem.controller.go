@@ -326,6 +326,7 @@ func (c *RecurringActionItemController) createRecurringActionItem(ctx *fiber.Ctx
 	err = c.db.Create(&recurringActionItem).Error
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action item"})
 	}
 
@@ -351,6 +352,7 @@ func (c *RecurringActionItemController) updateRecurringActionItem(ctx *fiber.Ctx
 	err = c.db.Save(recurringActionItem).Error
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error updating recurring action item"})
 	}
 
@@ -367,6 +369,7 @@ func (c *RecurringActionItemController) deleteRecurringActionItem(ctx *fiber.Ctx
 
 	err := c.db.Delete(recurringActionItem).Error
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting recurring action item"})
 	}
 

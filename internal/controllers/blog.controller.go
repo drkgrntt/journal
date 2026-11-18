@@ -97,6 +97,7 @@ func (c *BlogController) getBlog(ctx *fiber.Ctx) error {
 	var blog models.Blog
 	rest, err := frontmatter.Parse(bytes.NewReader(content), &blog)
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.SendStatus(http.StatusInternalServerError) // err
 	}
 
@@ -108,6 +109,7 @@ func (c *BlogController) getBlog(ctx *fiber.Ctx) error {
 
 	var buf bytes.Buffer
 	if err := goldmark.Convert([]byte(rest), &buf); err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.SendStatus(http.StatusInternalServerError)
 	}
 	blog.Content = buf.String()

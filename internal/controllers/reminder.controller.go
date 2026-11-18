@@ -132,6 +132,7 @@ func (c *ReminderController) createReminder(ctx *fiber.Ctx) error {
 	err = c.db.Create(&reminder).Error
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating reminder"})
 	}
 
@@ -157,6 +158,7 @@ func (c *ReminderController) updateReminder(ctx *fiber.Ctx) error {
 	err = c.db.Save(reminder).Error
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error updating reminder"})
 	}
 
@@ -173,6 +175,7 @@ func (c *ReminderController) deleteReminder(ctx *fiber.Ctx) error {
 
 	err := c.db.Delete(reminder).Error
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting reminder"})
 	}
 

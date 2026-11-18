@@ -200,6 +200,7 @@ func (c *ActionItemController) createActionItem(ctx *fiber.Ctx) error {
 	err = c.db.Create(&actionItem).Error
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action item"})
 	}
 
@@ -229,6 +230,7 @@ func (c *ActionItemController) updateActionItem(ctx *fiber.Ctx) error {
 	err = c.db.Save(actionItem).Error
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error updating journal"})
 	}
 
@@ -249,6 +251,7 @@ func (c *ActionItemController) deleteActionItem(ctx *fiber.Ctx) error {
 
 	err := c.db.Delete(actionItem).Error
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting action item"})
 	}
 

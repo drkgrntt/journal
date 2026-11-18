@@ -115,6 +115,7 @@ func (c *CustomJournalTypeController) createCustomJournalType(ctx *fiber.Ctx) er
 	err = c.db.Create(&customJournalType).Error
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating custom journal type"})
 	}
 
@@ -140,6 +141,7 @@ func (c *CustomJournalTypeController) updateCustomJournalType(ctx *fiber.Ctx) er
 	err = c.db.Save(customJournalType).Error
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error updating journal"})
 	}
 
@@ -156,6 +158,7 @@ func (c *CustomJournalTypeController) deleteCustomJournalType(ctx *fiber.Ctx) er
 
 	err := c.db.Delete(customJournalType).Error
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting custom journal type"})
 	}
 

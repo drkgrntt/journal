@@ -90,6 +90,7 @@ func (c *ProfileController) exportJournals(ctx *fiber.Ctx) error {
 		Find(&journals).Error
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error exporting journals")
 	}
 
@@ -227,12 +228,14 @@ func (c *ProfileController) startCheckout(ctx *fiber.Ctx) error {
 	price, err := appstripe.GetPlanPrice(plan)
 	if err != nil {
 		logger.Error("Error getting plan price", "plan", string(plan), "error", err)
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error finding that plan")
 	}
 
 	customerID, err := c.ensureStripeCustomer(currentUser)
 	if err != nil {
 		logger.Error("Error creating stripe customer", "error", err)
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error creating stripe customer")
 	}
 
@@ -257,6 +260,7 @@ func (c *ProfileController) startCheckout(ctx *fiber.Ctx) error {
 	result, err := session.New(params)
 	if err != nil {
 		logger.Error("Error creating stripe checkout session", "error", err)
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error creating stripe checkout session")
 	}
 
@@ -277,6 +281,7 @@ func (c *ProfileController) openPortal(ctx *fiber.Ctx) error {
 	})
 	if err != nil {
 		logger.Error("Error creating stripe portal session", "error", err)
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error opening billing")
 	}
 
@@ -304,6 +309,7 @@ func (c *ProfileController) updateUser(ctx *fiber.Ctx) error {
 	err = c.db.Save(currentUser).Error
 	if err != nil {
 		logger.Warn(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error updating user")
 	}
 
@@ -338,6 +344,7 @@ func (c *ProfileController) updatePassword(ctx *fiber.Ctx) error {
 		Updates(&models.User{Password: body.NewPassword}).Error
 	if err != nil {
 		logger.Warn(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error updating user")
 	}
 
@@ -367,6 +374,7 @@ func (c *ProfileController) updateAppearance(ctx *fiber.Ctx) error {
 	}).Error
 	if err != nil {
 		logger.Warn(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error saving appearance")
 	}
 	return ctx.SendStatus(http.StatusOK)

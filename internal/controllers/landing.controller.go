@@ -69,6 +69,7 @@ func (c *LandingController) sendFeedback(ctx *fiber.Ctx) error {
 	}
 	_, err = jobs.ScheduleEmailJob(uuid.Nil, data, time.Now())
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error sending feedback")
 	}
 

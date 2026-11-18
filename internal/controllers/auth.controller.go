@@ -70,6 +70,7 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 
 	tx := c.db.Begin()
 	if tx.Error != nil {
+		utils.SetRequestError(ctx, tx.Error)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error starting a transaction")
 	}
 
@@ -85,10 +86,12 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 
 	if err != nil {
 		tx.Rollback()
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error creating user")
 	}
 
 	if err := tx.Commit().Error; err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error committing the transaction")
 	}
 
@@ -99,6 +102,7 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 
 	token, err := utils.CreateAccessToken(user.ID)
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error creating token" + err.Error())
 	}
 
@@ -137,6 +141,7 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 
 	token, err := utils.CreateAccessToken(user.ID)
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error creating token" + err.Error())
 	}
 
@@ -185,6 +190,7 @@ func (c *AuthController) forgot(ctx *fiber.Ctx) error {
 	}
 	resetToken, err := utils.CreateToken(time.Minute*5, claims)
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error creating reset token")
 	}
 
@@ -203,6 +209,7 @@ func (c *AuthController) forgot(ctx *fiber.Ctx) error {
 	}
 	_, err = jobs.ScheduleEmailJob(user.ID, data, time.Now())
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error sending reset email")
 	}
 
@@ -233,6 +240,7 @@ func (c *AuthController) resetPassword(ctx *fiber.Ctx) error {
 
 	err = c.db.Model(&models.User{}).Where("id = ?", tokenData.UserID).Updates(&models.User{Password: body.Password}).Error
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error updating password"})
 	}
 

@@ -57,6 +57,7 @@ func (c *ProfileController) resendEmailConfirmation(ctx *fiber.Ctx) error {
 	}
 	if err := sendEmailConfirmation(c.db, currentUser); err != nil {
 		logger.Error("Error sending email confirmation", "error", err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error sending the confirmation email")
 	}
 	return ctx.Status(http.StatusOK).SendString("Check your email for a confirmation link.")

@@ -24,8 +24,26 @@ export function handleHtmxError(event) {
 	// Status 0 means the request never reached the server (offline) - there's
 	// no response to show, and the journal form reports it in its own status.
 	if (event.detail.failed && event.detail.xhr.status !== 0) {
-		window.alertDialog(event.detail.xhr.response)
+		window.alertDialog(errorMessage(event.detail.xhr))
 	}
+}
+
+// The text to show for a failed request: the response's message (JSON bodies
+// carry it under "message"), plus, for a server error, the random reference
+// the server sent so it can be quoted when reporting the problem. Plain-text
+// server errors already end with the reference, so it's only added when missing.
+function errorMessage(xhr) {
+	let message = xhr.response
+	try {
+		const parsed = JSON.parse(message)
+		if (parsed && typeof parsed.message === "string") message = parsed.message
+	} catch {}
+
+	const reference = xhr.getResponseHeader("X-Request-ID")
+	if (xhr.status >= 500 && reference && !String(message).includes(reference)) {
+		message = `${message} (reference: ${reference})`
+	}
+	return message
 }
 setToWindow("handleHtmxError", handleHtmxError)
 

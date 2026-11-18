@@ -63,6 +63,15 @@ func Start() {
 		logger.Error("Error scheduling reminder email check", "error", err.Error())
 	}
 
+	// Delete old request log rows
+	_, err = s.NewJob(
+		gocron.DurationJob(requestLogPruneInterval),
+		gocron.NewTask(pruneRequestLog),
+	)
+	if err != nil {
+		logger.Error("Error scheduling request log pruning", "error", err.Error())
+	}
+
 	s.Start()
 }
 

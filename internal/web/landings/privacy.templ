@@ -10,19 +10,33 @@ templ PrivacyPage(c *fiber.Ctx) {
 		<section class="landing" id="privacy-page">
 			<h2>Privacy Policy</h2>
 			<p>
-				Your privacy matters. This journal is designed to be a personal tool, not a data
-				collection platform. This policy explains what data is collected, how it’s used,
-				and what control you have over it.
+				This journal is a personal tool, not a data collection platform. This policy
+				explains what data is collected, how it’s used, who else handles it, and what
+				control you have over it. Last updated November 18, 2026.
 			</p>
 			<h3>What information is collected</h3>
 			<p>
-				To use the journal, you provide basic account information such as your name,
-				email address, and a password.
+				<strong>Your account.</strong> Your name, email address, and a password. The
+				password is stored as a hash, so it can’t be read back.
 			</p>
 			<p>
-				When you write journal entries, actions, or thankfuls, that content is stored
-				so it can be shown back to you later. Each of those are encrypted before being
-				saved.
+				<strong>Your writing.</strong> Journal entries, actions, thankfuls, reminders,
+				routines, entry templates, and the custom message for the reminder email are
+				encrypted before they’re saved. Other details are stored as they are, so the
+				journal can chart and filter them: ratings, topics, dates, bookmarks, and your
+				account settings (like theme and reminder time).
+			</p>
+			<p>
+				<strong>Billing.</strong> If you choose a paid plan, payment is handled by
+				Stripe. The journal stores only your Stripe customer and subscription IDs and
+				the status of your plan. It never sees or stores your card details.
+			</p>
+			<p>
+				<strong>Request logs.</strong> The site keeps a short, anonymous log of requests: the time, the page requested, and whether it worked. It does not record your IP address, browser, account, or anything you write, so it can’t be tied to a person. Entries are deleted after 14 days. It’s there to spot errors and outages. Each request also gets a random reference code that isn’t tied to you or to any other request. If something goes wrong on the server, you’ll see the code, and if you send it to me I can find what happened.
+			</p>
+			<p>
+				<strong>Feedback.</strong> If you send feedback, your message and the optional
+				email address you give are sent to me by email.
 			</p>
 			<h3>How your information is used</h3>
 			<p>
@@ -30,57 +44,76 @@ templ PrivacyPage(c *fiber.Ctx) {
 			</p>
 			<ul>
 				<li>To authenticate you and keep your account secure</li>
-				<li>To store and display your journal entries</li>
+				<li>To store and display your writing</li>
 				<li>To generate summaries, charts, or views you explicitly use</li>
+				<li>To send email you’ve asked for or need: password resets, address confirmation, and, only if you turn them on, a daily reminder or a note when a routine comes up</li>
+				<li>To keep the site reliable, using the anonymous request log above</li>
 			</ul>
 			<p>
-				Your data is not sold, rented, or shared with third parties for advertising or
-				marketing purposes.
+				Emails never include your entries or your saved reminders. Your data is not
+				sold, rented, or shared with third parties for advertising or marketing purposes.
+			</p>
+			<h3>Who else handles your data</h3>
+			<p>
+				A few services are involved in running the journal:
+			</p>
+			<ul>
+				<li><strong>Stripe</strong> processes payments for paid plans.</li>
+				<li><strong>Mailgun</strong> delivers email, so it sees your email address, your name, and the content of the emails sent to you.</li>
+				<li><strong>Cloudflare R2</strong> stores daily backups of the database. Backups contain the database as it’s stored, so your writing is still encrypted in them. They’re kept on a rolling schedule and thinned out over time, so data you delete can remain in older backups for a while.</li>
+			</ul>
+			<p>
+				The journal itself runs on a server I manage.
 			</p>
 			<h3>Encryption and security</h3>
 			<p>
-				Journal entries, actions, and thankfuls are encrypted at rest. This is intended to protect your writing
-				from casual access and reduce risk if data were ever exposed.
+				The writing listed above is encrypted at rest. This is intended to protect it
+				from casual access and reduce risk if the database were ever exposed. It isn’t
+				end-to-end encryption: the server holds the key so it can show your writing
+				back to you.
 			</p>
 			<p>
 				No system is perfect, but reasonable steps are taken to protect your information
 				and limit access to it.
 			</p>
-			<h3>Cookies and authentication</h3>
+			<h3>Cookies and your device</h3>
 			<p>
-				This app uses cookies strictly for authentication and session management.
-				These cookies are not used for tracking or analytics.
+				The journal sets two cookies: one keeps you logged in, and one remembers your
+				time zone so dates and times show correctly. Neither is used for tracking or
+				analytics.
+			</p>
+			<p>
+				Your browser also stores your appearance settings. While you write a new entry,
+				a draft is saved on your device in plain text so it isn’t lost if you go offline.
+				It’s removed as soon as it has been saved to your account, and wiped when you
+				log out. The offline cache holds only the site’s static files and the new-entry
+				page, not your entries.
 			</p>
 			<h3>Analytics and tracking</h3>
 			<p>
 				This app does not use third-party tracking cookies, advertising pixels, or
-				behavioral analytics.
-			</p>
-			<p>
-				Any usage metrics that exist are minimal and focused on keeping the app reliable,
-				not on profiling users.
+				third-party analytics. The only usage data is the anonymous request log described above, which stays in the journal’s own database and is used to keep the app running.
 			</p>
 			<h3>Your control</h3>
 			<p>
-				You can update your account information at any time.
+				You can update your account information at any time, and export everything
+				you’ve written from your profile.
 			</p>
 			<p>
 				You can delete journal entries you no longer want to keep. If you choose to stop
-				using the app, you may request that your account and associated data be deleted.
+				using the app, you can ask for your account and associated data to be deleted
+				through the <a href="/feedback">feedback form</a>.
 			</p>
 			<h3>Changes to this policy</h3>
 			<p>
-				This privacy policy may be updated over time as the app evolves. Any changes will
-				be made with the same guiding principle: respect for your privacy.
-			</p>
-			<p>
-				Continued use of the app after changes are made means you accept the updated
-				policy.
+				This policy may be updated as the app changes. When it is, this page will show
+				the new version and date. Continued use of the app after changes are made means
+				you accept the updated policy.
 			</p>
 			<h3>Contact</h3>
 			<p>
-				If you have questions or concerns about privacy, you can reach out through the
-				contact information provided in the app.
+				If you have questions or concerns about privacy, use the
+				<a href="/feedback">feedback form</a>.
 			</p>
 		</section>
 	}

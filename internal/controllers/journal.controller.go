@@ -498,6 +498,7 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 		journal.Metadata, err = models.EncodeMetadata(models.JournalMetadata{DraftID: draftID})
 		if err != nil {
 			logger.Error(err.Error())
+			utils.SetRequestError(ctx, err)
 			return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating journal"})
 		}
 	}
@@ -507,6 +508,7 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 
 	if tx.Error != nil {
 		logger.Error(tx.Error.Error())
+		utils.SetRequestError(ctx, tx.Error)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating journal"})
 	}
 
@@ -518,6 +520,7 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 	err = tx.Create(&journal).Error
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating journal"})
 	}
 
@@ -531,6 +534,7 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 	if len(actionItems) > 0 {
 		err = tx.Save(&actionItems).Error
 		if err != nil {
+			utils.SetRequestError(ctx, err)
 			return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action items"})
 		}
 	}
@@ -545,12 +549,14 @@ func (c *JournalController) createJournal(ctx *fiber.Ctx) error {
 	if len(thankfuls) > 0 {
 		err = tx.Save(&thankfuls).Error
 		if err != nil {
+			utils.SetRequestError(ctx, err)
 			return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating thankfuls"})
 		}
 	}
 
 	err = tx.Commit().Error
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action items"})
 	}
 
@@ -580,6 +586,7 @@ func (c *JournalController) updateJournal(ctx *fiber.Ctx) error {
 
 	err = c.db.Save(journal).Error
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error updating journal"})
 	}
 
@@ -600,6 +607,7 @@ func (c *JournalController) deleteJournal(ctx *fiber.Ctx) error {
 	journal := utils.GetLocal[models.Journal](ctx, utils.LocalJournal)
 	err := c.db.Delete(journal).Error
 	if err != nil {
+		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting journal"})
 	}
 

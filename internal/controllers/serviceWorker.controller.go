@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"journal/internal/logger"
+	"journal/internal/utils"
 	"journal/internal/web"
 	"net/http"
 
@@ -35,6 +36,7 @@ func serveServiceWorker(ctx *fiber.Ctx) error {
 	src, err := web.ServiceWorkerSource()
 	if err != nil {
 		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
 		return ctx.SendStatus(http.StatusInternalServerError)
 	}
 	ctx.Set(fiber.HeaderContentType, "application/javascript; charset=utf-8")
