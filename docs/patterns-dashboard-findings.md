@@ -114,3 +114,38 @@ from normal user input (a zero-frequency routine), and #1 hit any account with a
 window (new users, or anyone on the 7-day filter). #3/#4 were quieter but meant the comparison
 charts had been silently undercounting since they shipped. All items are now fixed; kept here
 for context on how the work was sequenced.
+
+
+---
+
+# Patterns revisit (2026-11-18)
+
+A second pass on the Patterns tab, this time about *design* rather than bugs: which patterns belong, what to enhance, what to add, and which visual forms fit the app's spirit (optional, non-directive, nothing to optimize). Everything below is built.
+
+## What changed
+
+- **Calendar lens switch.** The month calendar got a "Show" control: Rating (default), Wrote, Thankful, Did something. The three count lenses tint a day softly by how many (1, 2, 3+), with no totals, no scale, and no special styling for empty days, so it stays a record rather than a contribution graph. The Entries per Day and Thankfuls per Day line charts it replaces have been retired (see below).
+- **The Year (new).** One dot per day for a whole year, colored by the day's average rating, laid out as 12 month rows by 31 days (the first version, 31 rows tall, was too tall). Dots link to the day's entries. Navigation stops at the current year.
+- **Week by Time of Day (new).** A weekday by time-block heatmap of average rating (Night/Morning/Afternoon/Evening, or 3-hour blocks). Cells with fewer than 3 entries are drawn fainter instead of carrying a warning. It replaces Average Rating by Day and Rating by Time of Day, which have been retired.
+- **Rating Distribution (new).** How often each rating gets picked, per entry. It makes the "I gravitate towards fine" shape visible without judging it.
+- **Comparison charts fixed.** *Rating vs Thankfulness* and *Rating vs Action Completion* described average mood but plotted the number of days at each rating, so unequal group sizes dominated. They now plot each group's share of days per rating (each set sums to 100%), with the day count in the tooltip, and the copy was rewritten to match.
+- **Routine Completion** is now "Routines You've Done": a count of completions in the window, not a percent, so a quiet stretch doesn't read as a failing grade.
+- **Entries per Day tooltip** no longer prints "Average rating: undefined" for days with no rated entries.
+- **Rating-color logic de-duplicated** into `assets/js/utils/ratingColors.js` (three copies existed). Whitespace in CSS values is now trimmed, which fixes a latent miscoloring of interpolated calendar days.
+- **Seeder** updated to match the current data model; see CLAUDE.md.
+
+## Retired
+
+Entries per Day, Thankfuls per Day, Average Rating by Day, and Rating by Time of Day, along with their routes (`/dashboard/entry-time-frequency`, `/thankful-frequency`, `/mood-by-day`, `/time-of-day-patterns`), handlers, templ/JS/CSS files, and local keys. Their ground is covered by the calendar lenses and the week-by-time heatmap. A user who had hidden one of them keeps a stale key in their hidden-patterns metadata; it is harmless because hidden lists are computed against the current registry. The heatmap loses the old time-of-day chart's per-hour granularity and the 7/30/90-day windows on the by-day view; if either is missed, add it to the heatmap rather than reviving the old charts.
+
+## Principles that fell out of this
+
+- A calendar-shaped view is right for anything that happens on a given day; prefer a lens on the existing calendar to another chart.
+- Show how much data is behind a view (fainter, tooltip counts) instead of warning about it.
+- Nothing resurfaces or interprets entry text, and no new pattern reads more columns than it needs.
+- Avoid: goal lines, streak-like "wrote" grids with missed-day styling, "best day" callouts, anything computed from entry text, and generated sentences about what the data means.
+
+## Not done / open
+
+- Ideas considered and parked: topics over time as a soft stacked ribbon (the topic distribution chart's code comment says "over time" but it is a snapshot), a month-of-year view (only meaningful after about a year of data), a within-day dot strip, and "what follows a hard day" (the most analytical of the set; skip unless it feels right).
+- The new patterns and fixes have only been exercised through pure-function tests; none of the UI or the controller queries has automated coverage.

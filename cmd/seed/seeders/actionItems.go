@@ -20,8 +20,13 @@ var mockActionItems = []string{
 }
 
 func maybeCompleted(createdAt time.Time) *time.Time {
-	// ~99% chance completed
-	if rand.Float64() < 0.99 {
+	// Older items are almost always done; the last few days keep some
+	// outstanding so the Today tab has something to show.
+	chance := 0.995
+	if time.Since(createdAt) < 3*24*time.Hour {
+		chance = 0.5
+	}
+	if rand.Float64() < chance {
 		completed := createdAt.Add(time.Duration(rand.Intn(12)+1) * time.Hour)
 		return &completed
 	}

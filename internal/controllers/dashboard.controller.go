@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"fmt"
 	"journal/internal/logger"
 	"journal/internal/middleware"
 	"journal/internal/models"
+	"journal/internal/patterns"
 	"journal/internal/utils"
 	"journal/internal/web/dashboard"
 	"math"
@@ -203,15 +203,14 @@ func (c *DashboardController) RegisterViewRoutes() {
 		utils.RenderPage(dashboard.DashboardPage),
 	)
 	c.views.Get("/calendar", middleware.SetRatings, c.getCalendar)
+	c.views.Get("/year", middleware.SetRatings, c.getYearInPixels)
 	c.views.Get("/mood-chart", middleware.SetRatings, c.getMoodChart)
-	c.views.Get("/mood-by-day", middleware.SetRatings, c.getMoodByDay)
 	c.views.Get("/mood-vs-action-completion", c.getMoodVsActionCompletion)
 	c.views.Get("/mood-vs-thankfulness", c.getMoodVsThankfulness)
 
 	c.views.Get("/mood-by-topic", middleware.SetRatings, c.getMoodByTopic)
-	c.views.Get("/time-of-day-patterns", middleware.SetRatings, c.getTimeOfDayPatterns)
-	c.views.Get("/entry-time-frequency", c.getEntryTimeFrequency)
-	c.views.Get("/thankful-frequency", c.getThankfulFrequency)
+	c.views.Get("/week-by-time", middleware.SetRatings, c.getWeekByTime)
+	c.views.Get("/rating-distribution", middleware.SetRatings, c.getRatingDistribution)
 	c.views.Get("/routine-completion-rate", c.getRoutineCompletionRate)
 	c.views.Get("/topic-distribution", c.getTopicDistribution)
 }
@@ -243,17 +242,51 @@ func (c *DashboardController) getCalendar(ctx *fiber.Ctx) error {
 		loc,
 	)
 	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
-	var journals []*models.Journal
+	lens := patterns.NormalizeLens(ctx.Query("lens"))
+	windowStart := date.AddDate(0, 0, -1).UTC()
+	windowEnd := date.AddDate(0, 1, 1).UTC()
 
-	c.db.
+	if lens == patterns.LensRating {
+		var journals []*models.Journal
+
+		c.db.
+			Where("creator_id = ?", currentUser.ID).
+			Where("date BETWEEN ? AND ?", windowStart, windowEnd).
+			Preload("Rating").
+			Preload("JournalType").
+			Order("created_at DESC").
+			Find(&journals)
+
+		ctx.Locals(utils.LocalJournals, &journals)
+		return utils.RenderComponent(dashboard.RatingCalendar(ctx), ctx)
+	}
+
+	// The other lenses only need when something happened, so pluck just the
+	// timestamp column; no entry, thankful, or action item text is loaded.
+	var times []time.Time
+	var tx *gorm.DB
+	var column string
+	switch lens {
+	case patterns.LensWrote:
+		column = "date"
+		tx = c.db.Model(&models.Journal{})
+	case patterns.LensThankful:
+		column = "created_at"
+		tx = c.db.Model(&models.Thankful{})
+	default: // patterns.LensDid
+		column = "completed_at"
+		tx = c.db.Model(&models.ActionItem{}).Where("completed_at IS NOT NULL")
+	}
+	if err := tx.
 		Where("creator_id = ?", currentUser.ID).
-		Where("date BETWEEN ? AND ?", date.AddDate(0, 0, -1).UTC(), date.AddDate(0, 1, 1).UTC()).
-		Preload("Rating").
-		Preload("JournalType").
-		Order("created_at DESC").
-		Find(&journals)
+		Where(column+" BETWEEN ? AND ?", windowStart, windowEnd).
+		Pluck(column, &times).Error; err != nil {
+		utils.SetRequestError(ctx, err)
+		return ctx.SendStatus(fiber.StatusInternalServerError)
+	}
 
-	ctx.Locals(utils.LocalJournals, &journals)
+	counts := patterns.CountByLocalDay(times, loc)
+	ctx.Locals(utils.LocalCalendarCounts, &counts)
 
 	return utils.RenderComponent(dashboard.RatingCalendar(ctx), ctx)
 }
@@ -350,67 +383,6 @@ func (c *DashboardController) getMoodChart(ctx *fiber.Ctx) error {
 	return utils.RenderComponent(dashboard.MoodChartContent(ctx), ctx)
 }
 
-func (c *DashboardController) getMoodByDay(ctx *fiber.Ctx) error {
-	tz := ctx.Cookies("tz", "UTC")
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		loc = time.UTC
-	}
-	days := ctx.QueryInt("days", 30)
-	t := time.Now()
-	date := time.Date(
-		t.Year(),
-		t.Month(),
-		t.Day(),
-		0, 0, 0, 0,
-		loc,
-	).AddDate(0, 0, -days)
-
-	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
-	var journals []*models.Journal
-
-	c.db.Where("creator_id = ?", currentUser.ID).
-		Where("date >= ?", date.UTC()).
-		Preload("Rating").
-		Find(&journals)
-
-	moodByDayTmp := map[time.Weekday][]int{}
-	for _, journal := range journals {
-		if journal.Rating == nil {
-			continue
-		}
-		localizedDate := journal.Date.In(loc).Weekday()
-		if _, ok := moodByDayTmp[localizedDate]; !ok {
-			moodByDayTmp[localizedDate] = []int{}
-		}
-		moodByDayTmp[localizedDate] = append(moodByDayTmp[localizedDate], journal.Rating.Value)
-	}
-
-	type MoodByDayData struct {
-		Value   float64      `json:"value"`
-		Day     string       `json:"day"`
-		Weekday time.Weekday `json:"-"`
-	}
-	moodByDayData := []MoodByDayData{}
-	for day, values := range moodByDayTmp {
-		total := 0
-		for _, value := range values {
-			total += value
-		}
-		moodByDayData = append(moodByDayData, MoodByDayData{
-			Value:   float64(total) / float64(len(values)),
-			Day:     day.String(),
-			Weekday: day,
-		})
-	}
-	sort.Slice(moodByDayData, func(i, j int) bool {
-		return moodByDayData[i].Weekday < moodByDayData[j].Weekday
-	})
-	ctx.Locals(utils.LocalMoodByDayData, &moodByDayData)
-
-	return utils.RenderComponent(dashboard.MoodByDayContent(ctx), ctx)
-}
-
 func (c *DashboardController) getMoodVsActionCompletion(ctx *fiber.Ctx) error {
 	tz := ctx.Cookies("tz", "UTC")
 	loc, err := time.LoadLocation(tz)
@@ -482,8 +454,21 @@ func (c *DashboardController) getMoodVsActionCompletion(ctx *fiber.Ctx) error {
 		Rating             string `json:"rating"`
 		WithCompletions    int    `json:"withCompletions"`
 		WithoutCompletions int    `json:"withoutCompletions"`
+		// Percent (0-100) of each group's days that landed at this rating, so
+		// groups of different sizes can be compared.
+		WithShare    float64 `json:"withShare"`
+		WithoutShare float64 `json:"withoutShare"`
 	}
 	moodVsActionCompletionData := []MoodVsActionCompletionData{}
+
+	ratingValues := []int{}
+	for _, rating := range ratings {
+		if rating.Value != 0 {
+			ratingValues = append(ratingValues, rating.Value)
+		}
+	}
+	withShares := patterns.ShareByBucket(withCompletionsByRating, ratingValues)
+	withoutShares := patterns.ShareByBucket(withoutCompletionsByRating, ratingValues)
 
 	for _, rating := range ratings {
 		if rating.Value == 0 {
@@ -495,6 +480,8 @@ func (c *DashboardController) getMoodVsActionCompletion(ctx *fiber.Ctx) error {
 			Rating:             rating.Name,
 			WithCompletions:    withCompletionsByRating[rating.Value],
 			WithoutCompletions: withoutCompletionsByRating[rating.Value],
+			WithShare:          withShares[rating.Value],
+			WithoutShare:       withoutShares[rating.Value],
 		})
 	}
 	ctx.Locals(utils.LocalMoodVsActionCompletionData, &moodVsActionCompletionData)
@@ -575,8 +562,21 @@ func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
 		Rating           string `json:"rating"`
 		WithThankfuls    int    `json:"withThankfuls"`
 		WithoutThankfuls int    `json:"withoutThankfuls"`
+		// Percent (0-100) of each group's days that landed at this rating, so
+		// groups of different sizes can be compared.
+		WithShare    float64 `json:"withShare"`
+		WithoutShare float64 `json:"withoutShare"`
 	}
 	moodVsThankfulData := []MoodVsThankfulData{}
+
+	ratingValues := []int{}
+	for _, rating := range ratings {
+		if rating.Value != 0 {
+			ratingValues = append(ratingValues, rating.Value)
+		}
+	}
+	withShares := patterns.ShareByBucket(withThankfulsByRating, ratingValues)
+	withoutShares := patterns.ShareByBucket(withoutThankfulsByRating, ratingValues)
 
 	for _, rating := range ratings {
 		if rating.Value == 0 {
@@ -588,6 +588,8 @@ func (c *DashboardController) getMoodVsThankfulness(ctx *fiber.Ctx) error {
 			Rating:           rating.Name,
 			WithThankfuls:    withThankfulsByRating[rating.Value],
 			WithoutThankfuls: withoutThankfulsByRating[rating.Value],
+			WithShare:        withShares[rating.Value],
+			WithoutShare:     withoutShares[rating.Value],
 		})
 	}
 
@@ -661,282 +663,6 @@ func (c *DashboardController) getMoodByTopic(ctx *fiber.Ctx) error {
 	return utils.RenderComponent(dashboard.MoodByTopicContent(ctx), ctx)
 }
 
-// timeOfDayBucket returns the display label for a local time under the given
-// granularity ("hour", "3hour", or "period"), plus a sortKey that orders
-// buckets chronologically (needed because e.g. "Night" < "Morning" alphabetically
-// but should sort first).
-func timeOfDayBucket(t time.Time, granularity string) (label string, sortKey int) {
-	hour := t.Hour()
-	switch granularity {
-	case "3hour":
-		start := (hour / 3) * 3
-		return fmt.Sprintf("%02d:00", start), start
-	case "period":
-		switch {
-		case hour < 5:
-			return "Night", 0
-		case hour < 12:
-			return "Morning", 1
-		case hour < 17:
-			return "Afternoon", 2
-		default:
-			return "Evening", 3
-		}
-	default:
-		return t.Format("15:00"), hour
-	}
-}
-
-// Time of day patterns -- do morning entries rate differently than evening ones
-func (c *DashboardController) getTimeOfDayPatterns(ctx *fiber.Ctx) error {
-	tz := ctx.Cookies("tz", "UTC")
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		loc = time.UTC
-	}
-	days := ctx.QueryInt("days", 30)
-	granularity := ctx.Query("granularity", "hour")
-	t := time.Now()
-	date := time.Date(
-		t.Year(),
-		t.Month(),
-		t.Day(),
-		0, 0, 0, 0,
-		loc,
-	).AddDate(0, 0, -days)
-
-	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
-	var journals []*models.Journal
-
-	c.db.Where("creator_id = ?", currentUser.ID).
-		Where("date >= ?", date.UTC()).
-		Preload("Rating").
-		Find(&journals)
-
-	moodByTodTmp := map[string][]int{}
-	todSortKeys := map[string]int{}
-	for _, journal := range journals {
-		if journal.Rating == nil {
-			continue
-		}
-		tod, sortKey := timeOfDayBucket(journal.Date.In(loc), granularity)
-		if _, ok := moodByTodTmp[tod]; !ok {
-			moodByTodTmp[tod] = []int{}
-		}
-		moodByTodTmp[tod] = append(moodByTodTmp[tod], journal.Rating.Value)
-		todSortKeys[tod] = sortKey
-	}
-
-	type MoodByTodData struct {
-		Value float64 `json:"value"`
-		Tod   string  `json:"tod"`
-	}
-	moodByTodData := []MoodByTodData{}
-	for tod, values := range moodByTodTmp {
-		total := 0
-		for _, value := range values {
-			total += value
-		}
-		moodByTodData = append(moodByTodData, MoodByTodData{
-			Value: float64(total) / float64(len(values)),
-			Tod:   tod,
-		})
-	}
-	sort.Slice(moodByTodData, func(i, j int) bool {
-		return todSortKeys[moodByTodData[i].Tod] < todSortKeys[moodByTodData[j].Tod]
-	})
-	ctx.Locals(utils.LocalMoodByTodData, &moodByTodData)
-
-	return utils.RenderComponent(dashboard.MoodByTodContent(ctx), ctx)
-}
-
-// Entry frequency heatmap -- GitHub-style contribution graph showing journaling
-func (c *DashboardController) getEntryTimeFrequency(ctx *fiber.Ctx) error {
-	month := ctx.QueryInt("month")
-	year := ctx.QueryInt("year")
-	tz := ctx.Cookies("tz", "UTC")
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		loc = time.UTC
-	}
-
-	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
-	var journals []*models.Journal
-
-	tx := c.db.
-		Where("creator_id = ?", currentUser.ID).
-		Preload("Rating").
-		Preload("JournalType").
-		Preload("CustomJournalType").
-		Order("created_at DESC")
-
-	t := time.Now()
-	end := time.Date(
-		t.Year(),
-		t.Month(),
-		t.Day(),
-		0, 0, 0, 0,
-		loc,
-	)
-	start := end.AddDate(0, -1, -1)
-	if month != 0 && year != 0 {
-		date := time.Date(
-			year,
-			time.Month(month),
-			1, 0, 0, 0, 0,
-			loc,
-		)
-		start = date.AddDate(0, 0, -1)
-		end = date.AddDate(0, 1, 1)
-	}
-	tx = tx.Where("date BETWEEN ? AND ?", start.UTC(), end.UTC()).
-		Find(&journals)
-
-	frequencyChartTmp := map[string][]int{}
-	for _, journal := range journals {
-		if journal.Rating == nil {
-			journal.Rating = &models.Rating{Value: 0}
-		}
-		localizedDate := journal.Date.In(loc).Format("01-02-2006")
-
-		if _, ok := frequencyChartTmp[localizedDate]; !ok {
-			frequencyChartTmp[localizedDate] = []int{}
-		}
-		frequencyChartTmp[localizedDate] = append(frequencyChartTmp[localizedDate], journal.Rating.Value)
-	}
-
-	type FrequencyChartData struct {
-		Quantity *float64  `json:"quantity"`
-		Rating   *float64  `json:"rating"`
-		Date     string    `json:"date"`
-		DateTime time.Time `json:"-"`
-	}
-	frequencyChartData := []FrequencyChartData{}
-	for date, values := range frequencyChartTmp {
-		total := 0
-		qtyWithRatings := 0
-		for _, rating := range values {
-			total += rating
-			if rating > 0 {
-				qtyWithRatings++
-			}
-		}
-		dateTime, _ := time.Parse("01-02-2006", date)
-		var ratingPtr *float64
-		if qtyWithRatings > 0 {
-			rating := float64(total) / float64(qtyWithRatings)
-			ratingPtr = &rating
-		}
-		frequencyChartData = append(frequencyChartData, FrequencyChartData{
-			Quantity: utils.Pointer(float64(len(values))),
-			Rating:   ratingPtr,
-			Date:     date,
-			DateTime: dateTime,
-		})
-	}
-
-	for i := start; i.Before(end); i = i.AddDate(0, 0, 1) {
-		localizedDate := i.In(loc).Format("01-02-2006")
-		if _, ok := frequencyChartTmp[localizedDate]; !ok {
-			frequencyChartData = append(frequencyChartData, FrequencyChartData{
-				Rating:   nil,
-				Quantity: utils.Pointer(float64(0)),
-				Date:     localizedDate,
-				DateTime: i,
-			})
-		}
-	}
-
-	sort.Slice(frequencyChartData, func(i, j int) bool {
-		return frequencyChartData[i].DateTime.Before(frequencyChartData[j].DateTime)
-	})
-	ctx.Locals(utils.LocalFrequencyChartData, &frequencyChartData)
-
-	return utils.RenderComponent(dashboard.FrequencyChartContent(ctx), ctx)
-}
-
-// Thankful frequency over time -- simple count of how often you include thankfuls, since the behavior itself is the signal
-func (c *DashboardController) getThankfulFrequency(ctx *fiber.Ctx) error {
-	month := ctx.QueryInt("month")
-	year := ctx.QueryInt("year")
-	tz := ctx.Cookies("tz", "UTC")
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		loc = time.UTC
-	}
-
-	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
-	var thankfuls []*models.Thankful
-
-	tx := c.db.
-		Where("creator_id = ?", currentUser.ID).
-		Order("created_at DESC")
-
-	t := time.Now()
-	end := time.Date(
-		t.Year(),
-		t.Month(),
-		t.Day(),
-		0, 0, 0, 0,
-		loc,
-	)
-	start := end.AddDate(0, -1, -1)
-	if month != 0 && year != 0 {
-		date := time.Date(
-			year,
-			time.Month(month),
-			1, 0, 0, 0, 0,
-			loc,
-		)
-		start = date.AddDate(0, 0, -1)
-		end = date.AddDate(0, 1, 1)
-	}
-	tx = tx.Where("created_at BETWEEN ? AND ?", start.UTC(), end.UTC()).
-		Find(&thankfuls)
-
-	thankfulFrequencyChartTmp := map[string]int{}
-	for _, thankful := range thankfuls {
-		localizedDate := thankful.CreatedAt.In(loc).Format("01-02-2006")
-		if _, ok := thankfulFrequencyChartTmp[localizedDate]; !ok {
-			thankfulFrequencyChartTmp[localizedDate] = 0
-		}
-		thankfulFrequencyChartTmp[localizedDate] = thankfulFrequencyChartTmp[localizedDate] + 1
-	}
-
-	type ThankfulFrequencyChartData struct {
-		Quantity *int      `json:"quantity"`
-		Date     string    `json:"date"`
-		DateTime time.Time `json:"-"`
-	}
-	thankfulFrequencyChartData := []ThankfulFrequencyChartData{}
-	for date, quantity := range thankfulFrequencyChartTmp {
-		dateTime, _ := time.Parse("01-02-2006", date)
-		thankfulFrequencyChartData = append(thankfulFrequencyChartData, ThankfulFrequencyChartData{
-			Quantity: utils.Pointer(quantity),
-			Date:     date,
-			DateTime: dateTime,
-		})
-	}
-
-	for i := start; i.Before(end); i = i.AddDate(0, 0, 1) {
-		localizedDate := i.In(loc).Format("01-02-2006")
-		if _, ok := thankfulFrequencyChartTmp[localizedDate]; !ok {
-			thankfulFrequencyChartData = append(thankfulFrequencyChartData, ThankfulFrequencyChartData{
-				Quantity: utils.Pointer(0),
-				Date:     localizedDate,
-				DateTime: i,
-			})
-		}
-	}
-
-	sort.Slice(thankfulFrequencyChartData, func(i, j int) bool {
-		return thankfulFrequencyChartData[i].DateTime.Before(thankfulFrequencyChartData[j].DateTime)
-	})
-	ctx.Locals(utils.LocalThankfulFrequencyChartData, &thankfulFrequencyChartData)
-
-	return utils.RenderComponent(dashboard.ThankfulFrequencyChartContent(ctx), ctx)
-}
-
 // Routine completion rate -- which routines are getting done and which aren't, presented neutrally
 func (c *DashboardController) getRoutineCompletionRate(ctx *fiber.Ctx) error {
 	tz := ctx.Cookies("tz", "UTC")
@@ -964,27 +690,15 @@ func (c *DashboardController) getRoutineCompletionRate(ctx *fiber.Ctx) error {
 		}).
 		Find(&routines)
 
-	type RoutineCompletionRate struct {
-		Percent float64 `json:"percent"`
-		Routine string  `json:"routine"`
+	type RoutineCompletionCount struct {
+		Routine   string `json:"routine"`
+		Completed int    `json:"completed"`
 	}
-	routineCompletionRates := []RoutineCompletionRate{}
+	routineCompletionRates := []RoutineCompletionCount{}
 	for _, routine := range routines {
-		frequency := int64(routine.Frequency.Seconds())
-		if frequency <= 0 {
-			// Bad/legacy data (zero or negative frequency) -- skip rather than divide by zero.
-			continue
-		}
-
-		startsAtUnix := math.Max(float64(routine.StartsAt.Unix()), float64(date.Unix()))
-
-		nowUnix := time.Now().Unix()
-		periodsSinceStart := ((nowUnix - int64(startsAtUnix)) / frequency) + 1
-		percent := float64(len(routine.ActionItems)) / float64(periodsSinceStart) * 100
-
-		routineCompletionRates = append(routineCompletionRates, RoutineCompletionRate{
-			Percent: percent,
-			Routine: routine.Text,
+		routineCompletionRates = append(routineCompletionRates, RoutineCompletionCount{
+			Routine:   routine.Text,
+			Completed: len(routine.ActionItems),
 		})
 	}
 	sort.Slice(routineCompletionRates, func(i, j int) bool {

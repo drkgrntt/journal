@@ -1,0 +1,76 @@
+.year-in-pixels {
+	padding: .5rem;
+	border-radius: var(--radius-lg);
+	background-color: var(--secondary-color-lightest);
+	box-shadow: var(--shadow-sm);
+
+	.legend {
+		display: flex;
+		justify-content: space-between;
+		margin-bottom: .5rem;
+		flex-wrap: wrap;
+		gap: .5rem;
+	}
+
+	.dot {
+		font-size: 1.5rem;
+		&.awful { color: var(--awful-color); }
+		&.bad { color: var(--bad-color); }
+		&.fine { color: var(--fine-color); }
+		&.good { color: var(--good-color); }
+		&.great { color: var(--great-color); }
+	}
+
+	.year-nav {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.2rem;
+		font-weight: 600;
+		padding: .5rem 0;
+
+		.button {
+			margin: 0 .5rem;
+			min-height: 2rem;
+			padding: .3rem .6rem;
+
+			&.placeholder {
+				visibility: hidden;
+			}
+		}
+	}
+
+	/* One row per month, days running across: 12 rows tall instead of 31. */
+	.year-grid {
+		display: flex;
+		flex-direction: column;
+		gap: clamp(1px, .5vw, 4px);
+	}
+
+	.year-month {
+		display: grid;
+		grid-template-columns: 1.1rem repeat(31, minmax(0, 1fr));
+		align-items: center;
+		min-width: 0;
+	}
+
+	.year-month-label {
+		font-size: .75rem;
+		color: var(--text-secondary-color);
+	}
+
+	/* Dots shrink with the viewport so all 31 columns always fit. */
+	.pixel {
+		display: block;
+		text-align: center;
+		font-size: clamp(.5rem, 2.2vw, 1rem);
+		line-height: 1.2;
+		color: var(--text-secondary-color);
+		opacity: .2;
+		text-decoration: none;
+
+		&.rated {
+			opacity: 1;
+		}
+	}
+}

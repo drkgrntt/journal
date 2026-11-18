@@ -1,0 +1,101 @@
+package dashboard
+
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+	"journal/internal/models"
+	"journal/internal/patterns"
+	"journal/internal/utils"
+	"time"
+)
+
+// YearInPixelsData is what the handler hands the page: the year shown, the
+// current year (so "next" can stop there), and one entry per rated day.
+type YearInPixelsData struct {
+	Year        int
+	CurrentYear int
+	Days        []patterns.DayRating
+}
+
+func daysInMonth(year int, month time.Month) int {
+	return time.Date(year, month+1, 0, 0, 0, 0, 0, time.UTC).Day()
+}
+
+func yearDateKey(year int, month time.Month, day int) string {
+	return time.Date(year, month, day, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+}
+
+func yearDays(n int) []int {
+	days := make([]int, n)
+	for i := range days {
+		days[i] = i + 1
+	}
+	return days
+}
+
+var yearMonthLetters = []string{"J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"}
+
+templ YearInPixelsContent(c *fiber.Ctx) {
+	{{ data := utils.GetLocal[YearInPixelsData](c, utils.LocalYearInPixels) }}
+	<div class="year-in-pixels">
+		<div class="legend">
+			<span><span class="dot awful">●</span> Awful</span>
+			<span><span class="dot bad">●</span> Bad</span>
+			<span><span class="dot fine">●</span> Fine</span>
+			<span><span class="dot good">●</span> Good</span>
+			<span><span class="dot great">●</span> Great</span>
+		</div>
+		<div class="year-nav">
+			<a
+				href="#"
+				class="button"
+				aria-label="Previous year"
+				hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/year?year=%d", data.Year-1)) }
+				hx-target=".year-in-pixels"
+				hx-swap="outerHTML"
+			>
+				<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+			</a>
+			<span class="year-label">{ fmt.Sprint(data.Year) }</span>
+			if data.Year < data.CurrentYear {
+				<a
+					href="#"
+					class="button"
+					aria-label="Next year"
+					hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/year?year=%d", data.Year+1)) }
+					hx-target=".year-in-pixels"
+					hx-swap="outerHTML"
+				>
+					<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+				</a>
+			} else {
+				<span class="button placeholder" aria-hidden="true">
+					<i class="fa-solid fa-chevron-right"></i>
+				</span>
+			}
+		</div>
+		<div class="year-grid">
+			for m := 1; m <= 12; m++ {
+				<div class="year-month">
+					<span class="year-month-label" aria-hidden="true">{ yearMonthLetters[m-1] }</span>
+					for _, d := range yearDays(daysInMonth(data.Year, time.Month(m))) {
+						<span class="pixel" data-year-date={ yearDateKey(data.Year, time.Month(m), d) }>●</span>
+					}
+				</div>
+			}
+		</div>
+		@templ.JSONScript("year-in-pixels-days", data.Days)
+		@templ.JSONScript("year-in-pixels-ratings", utils.GetLocal[[]*models.Rating](c, utils.LocalRatings))
+		<script src="/assets/js/components/yearInPixels.js" type="module" onload="document.dispatchEvent(new Event('load-year-in-pixels'))"></script>
+	</div>
+}
+
+templ YearInPixels(c *fiber.Ctx) {
+	<div
+		id="year-in-pixels"
+		hx-get="/dashboard/year"
+		hx-trigger="load"
+		hx-target="#year-in-pixels"
+		hx-swap="innerHTML"
+	></div>
+}

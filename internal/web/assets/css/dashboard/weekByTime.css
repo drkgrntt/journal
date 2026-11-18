@@ -1,0 +1,83 @@
+#week-by-time {
+	padding: .5rem;
+	border-radius: var(--radius-lg);
+	background-color: var(--primary-color-lightest);
+	box-shadow: var(--shadow-sm);
+
+	.week-by-time-controls {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: center;
+		gap: .5rem 1rem;
+	}
+
+	.options {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+
+		legend {
+			display: none;
+		}
+	}
+
+	.granularity-control {
+		display: flex;
+		align-items: center;
+		gap: .5rem;
+		flex-shrink: 0;
+
+		label {
+			font-size: .875rem;
+			color: var(--text-secondary-color);
+			white-space: nowrap;
+		}
+
+		.select {
+			width: auto;
+			padding: .4rem 2rem .4rem .7rem;
+		}
+	}
+
+	.week-by-time-table {
+		width: 100%;
+		table-layout: fixed;
+		border-collapse: separate;
+		border-spacing: 3px;
+		margin-top: .5rem;
+
+		th {
+			font-size: .75rem;
+			font-weight: 500;
+			color: var(--text-secondary-color);
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		thead th {
+			padding-bottom: .25rem;
+		}
+
+		tbody th {
+			width: 2.5rem;
+			text-align: left;
+		}
+
+		tbody td {
+			height: 2.25rem;
+			border-radius: var(--radius-sm);
+			border: 1px solid transparent;
+
+			&.empty {
+				border-color: var(--border-color);
+				opacity: .5;
+			}
+
+			&.faint {
+				opacity: .4;
+			}
+		}
+	}
+}

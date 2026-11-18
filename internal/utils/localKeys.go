@@ -49,14 +49,17 @@ const (
 
 	LocalHiddenPatterns = "hiddenPatterns"
 
+	// LocalCalendarCounts is the *map[string]int of per-day counts ("2006-01-02")
+	// for the calendar's non-rating lenses.
+	LocalCalendarCounts = "calendarCounts"
+
 	LocalMoodChartData              = "moodChartData"
-	LocalMoodByDayData              = "moodByDayData"
+	LocalYearInPixels               = "yearInPixels"
 	LocalMoodVsActionCompletionData = "moodVsActionCompletionData"
 	LocalMoodVsThankfulData         = "moodVsThankfulData"
 	LocalMoodByTopicData            = "moodByTopicData"
-	LocalMoodByTodData              = "moodByTodData"
-	LocalFrequencyChartData         = "frequencyChartData"
-	LocalThankfulFrequencyChartData = "thankfulFrequencyChartData"
+	LocalWeekByTimeData             = "weekByTimeData"
+	LocalRatingDistributionData     = "ratingDistributionData"
 	LocalRoutineCompletionRateData  = "routineCompletionRateData"
 	LocalDistByTopicData            = "distByTopicData"
 )

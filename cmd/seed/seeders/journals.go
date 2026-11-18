@@ -74,10 +74,51 @@ func normalizeMood(mood int) int {
 	return mood
 }
 
+// hourWeights is how likely an entry is to be written in each local hour of
+// the day (index = hour). Mostly mornings and evenings, a few at night, so the
+// time-of-day patterns have some shape to show.
+var hourWeights = [24]int{
+	1, 1, 0, 0, 0, 1, 3, 6, 8, 6, 4, 3,
+	4, 3, 3, 3, 4, 5, 7, 9, 10, 9, 5, 2,
+}
+
+func randomHour() int {
+	total := 0
+	for _, w := range hourWeights {
+		total += w
+	}
+	roll := rand.Intn(total)
+	for hour, w := range hourWeights {
+		if roll < w {
+			return hour
+		}
+		roll -= w
+	}
+	return 12
+}
+
+// SeedTimezone is the zone the seeded entries' hours are chosen in, and the
+// test user's timezone, so the time-of-day patterns read the way they were
+// generated when the browser's tz cookie matches.
+const SeedTimezone = "America/Chicago"
+
+// entryTime returns a random moment (in UTC) on the local day daysAgo days
+// before now, at an hour drawn from hourWeights.
+func entryTime(now time.Time, daysAgo int) time.Time {
+	loc, err := time.LoadLocation(SeedTimezone)
+	if err != nil {
+		loc = time.UTC
+	}
+	day := now.In(loc).AddDate(0, 0, -daysAgo)
+	local := time.Date(day.Year(), day.Month(), day.Day(), randomHour(), rand.Intn(60), rand.Intn(60), 0, loc)
+	return local.UTC()
+}
+
 func SeedJournals() error {
 	var user *models.User
 	var journalTypes []*models.JournalType
 	var ratings []*models.Rating
+	var customTypes []*models.CustomJournalType
 
 	if err := db.First(&user, "email = ?", "test@example.com").Error; err != nil {
 		return err
@@ -87,6 +128,17 @@ func SeedJournals() error {
 	}
 	if err := db.Find(&ratings).Error; err != nil {
 		return err
+	}
+
+	if err := db.Find(&customTypes, "creator_id = ?", user.ID).Error; err != nil {
+		return err
+	}
+
+	var customJournalType *models.JournalType
+	for _, jt := range journalTypes {
+		if jt.Code == "custom" {
+			customJournalType = jt
+		}
 	}
 
 	// Map rating value -> Rating model
@@ -99,6 +151,8 @@ func SeedJournals() error {
 
 	currentMood := 3 // start “Fine”
 
+	now := time.Now().UTC()
+
 	for i := 0; i < 400; i++ {
 		entriesOnDay := rand.Intn(4) + 1 // always at least 1
 
@@ -109,7 +163,10 @@ func SeedJournals() error {
 		rating := ratingByValue[currentMood]
 
 		for j := 0; j < entriesOnDay; j++ {
-			date := time.Now().AddDate(0, 0, -i)
+			date := entryTime(now, i)
+			if date.After(now) {
+				continue // don't seed entries from later today
+			}
 
 			base := &models.Base{
 				CreatorID:     &user.ID,
@@ -118,15 +175,33 @@ func SeedJournals() error {
 				UpdatedAt:     date,
 			}
 
-			journalType := journalTypes[rand.Intn(len(journalTypes))]
+			journal := &models.Journal{
+				Base:   base,
+				Date:   &date,
+				Entry:  getMockJournalEntry(),
+				Rating: rating,
+			}
 
-			journals = append(journals, &models.Journal{
-				Base:        base,
-				Date:        &date,
-				Entry:       getMockJournalEntry(),
-				JournalType: journalType,
-				Rating:      rating,
-			})
+			// About one entry in eight is filed under one of the custom topics.
+			if customJournalType != nil && len(customTypes) > 0 && rand.Float64() < 0.125 {
+				journal.JournalType = customJournalType
+				journal.CustomJournalType = customTypes[rand.Intn(len(customTypes))]
+			} else {
+				for {
+					journal.JournalType = journalTypes[rand.Intn(len(journalTypes))]
+					if journal.JournalType.Code != "custom" {
+						break
+					}
+				}
+			}
+
+			// A few are bookmarked.
+			if rand.Float64() < 0.03 {
+				bookmarkedAt := date.Add(time.Hour)
+				journal.BookmarkedAt = &bookmarkedAt
+			}
+
+			journals = append(journals, journal)
 		}
 	}
 

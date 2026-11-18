@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"journal/internal/models"
+	"journal/internal/patterns"
 	"journal/internal/utils"
 	"time"
 )
@@ -76,8 +77,35 @@ func monthYearLabel(ctx *fiber.Ctx) string {
 	return fmt.Sprintf("%s %s", month(ctx), year(ctx))
 }
 
+func calendarLens(c *fiber.Ctx) string {
+	return patterns.NormalizeLens(c.Query("lens"))
+}
+
+// calendarURL builds a calendar URL for the given month, keeping the current lens.
+func calendarURL(c *fiber.Ctx, t time.Time) templ.SafeURL {
+	return templ.SafeURL(fmt.Sprintf("/dashboard/calendar?month=%d&year=%d&lens=%s", int(t.Month()), t.Year(), calendarLens(c)))
+}
+
 templ RatingCalendar(c *fiber.Ctx) {
-	<div class="rating-calendar">
+	<div class="rating-calendar" data-lens={ calendarLens(c) }>
+		<div class="lens-control">
+			<label for="calendar-lens">Show</label>
+			<select
+				id="calendar-lens"
+				name="lens"
+				class="select"
+				hx-get={ fmt.Sprintf("/dashboard/calendar?month=%d&year=%d", int(current(c).Month()), current(c).Year()) }
+				hx-trigger="change"
+				hx-target=".rating-calendar"
+				hx-swap="outerHTML"
+			>
+				<option value="rating" if calendarLens(c) == "rating" { selected }>Rating</option>
+				<option value="wrote" if calendarLens(c) == "wrote" { selected }>Wrote</option>
+				<option value="thankful" if calendarLens(c) == "thankful" { selected }>Thankful</option>
+				<option value="did" if calendarLens(c) == "did" { selected }>Did something</option>
+			</select>
+		</div>
+		if calendarLens(c) == "rating" {
 		<div class="legend">
 			<span><span class="dot awful">●</span> Awful</span>
 			<span><span class="dot bad">●</span> Bad</span>
@@ -86,13 +114,14 @@ templ RatingCalendar(c *fiber.Ctx) {
 			<span><span class="dot great">●</span> Great</span>
 			<span><span class="dot no-journals">●</span> No Journals</span>
 		</div>
+		}
 		<table>
 			<caption>
 				<a
 					href="#"
 					class="button"
 					aria-label="Previous month"
-					hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/calendar?month=%d&year=%d", int(current(c).AddDate(0, -1, 0).Month()), current(c).AddDate(0, -1, 0).Year())) }
+					hx-get={ string(calendarURL(c, current(c).AddDate(0, -1, 0))) }
 					hx-target=".rating-calendar"
 					hx-swap="outerHTML"
 				>
@@ -103,7 +132,7 @@ templ RatingCalendar(c *fiber.Ctx) {
 					href="#"
 					class="button"
 					aria-label="Next month"
-					hx-get={ templ.SafeURL(fmt.Sprintf("/dashboard/calendar?month=%d&year=%d", int(current(c).AddDate(0, 1, 0).Month()), current(c).AddDate(0, 1, 0).Year())) }
+					hx-get={ string(calendarURL(c, current(c).AddDate(0, 1, 0))) }
 					hx-target=".rating-calendar"
 					hx-swap="outerHTML"
 				>
@@ -139,8 +168,12 @@ templ RatingCalendar(c *fiber.Ctx) {
 				}
 			</tbody>
 		</table>
-		@templ.JSONScript("calendar-journals", utils.GetLocal[[]*models.Journal](c, utils.LocalJournals))
-		@templ.JSONScript("calendar-ratings", utils.GetLocal[[]*models.Rating](c, utils.LocalRatings))
+		if calendarLens(c) == "rating" {
+			@templ.JSONScript("calendar-journals", utils.GetLocal[[]*models.Journal](c, utils.LocalJournals))
+			@templ.JSONScript("calendar-ratings", utils.GetLocal[[]*models.Rating](c, utils.LocalRatings))
+		} else {
+			@templ.JSONScript("calendar-counts", utils.GetLocal[map[string]int](c, utils.LocalCalendarCounts))
+		}
 		<script src="/assets/js/components/ratingCalendar.js" type="module" onload="document.dispatchEvent(new Event('load-rating-calendar'))"></script>
 	</div>
 }

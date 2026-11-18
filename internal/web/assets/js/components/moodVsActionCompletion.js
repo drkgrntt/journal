@@ -15,13 +15,13 @@
       datasets: [
         {
           label: "Completed Action",
-          data: data.map(item => item.withCompletions),
+          data: data.map(item => item.withShare),
           ...themedColors("--primary-color-dark", "--primary-color-light"),
           borderWidth: 2,
         },
         {
           label: "No Completed Action",
-          data: data.map(item => item.withoutCompletions),
+          data: data.map(item => item.withoutShare),
           ...themedColors("--secondary-color-dark", "--secondary-color-light"),
           borderWidth: 2,
         },
@@ -32,6 +32,17 @@
       maintainAspectRatio: false,
       minBarLength: 2,
       plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const item = data[context.dataIndex];
+              const isWith = context.datasetIndex === 0;
+              const count = isWith ? item.withCompletions : item.withoutCompletions;
+              const share = Math.round(context.parsed.y);
+              return `${share}% of days ${isWith ? "with a completed action" : "without a completed action"} (${count} ${count === 1 ? "day" : "days"})`;
+            },
+          },
+        },
       },
       scales: {
         x: {
@@ -40,8 +51,13 @@
           },
         },
         y: {
+          min: 0,
+          max: 100,
           grid: {
             display: false,
+          },
+          ticks: {
+            callback: value => `${value}%`,
           },
         },
       },

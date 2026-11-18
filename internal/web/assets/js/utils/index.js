@@ -187,7 +187,7 @@ export function shouldBlurText() {
 }
 setToWindow("shouldBlurText", shouldBlurText)
 
-// Shared by the dashboard's rating charts (mood-by-day/tod/topic, the
+// Shared by the dashboard's rating charts (mood-by-topic and the
 // month-view mood chart): Math.min(...[]) / Math.max(...[]) evaluate to
 // +/-Infinity for an empty values array, which produces an inverted/broken
 // y-axis instead of degrading gracefully. Returns null when there's nothing
@@ -231,13 +231,13 @@ export function ratingLabelsByValue(ratings) {
 }
 setToWindow("ratingLabelsByValue", ratingLabelsByValue)
 
-// Shared by the dashboard's rating charts (mood-by-day/tod/topic, the
+// Shared by the dashboard's rating charts (mood-by-topic and the
 // month-view mood chart): these all build a single-dataset bar/line Chart.js
 // chart out of a `range` (from ratingAxisRange) and `ratingLabels` (from
 // ratingLabelsByValue), styled/gridded/legend-less the same way, and mount
 // it into a container element the same way (clear it, append a fresh
 // canvas). This factors that construction out; callers still own their own
-// chart-data mapping (e.g. converting a time-of-day string, filtering
+// chart-data mapping (e.g. filtering
 // zero/empty values before computing `range`), which Chart.js `type` they
 // need, dataset label/colors, and any extra top-level or per-dataset options
 // specific to that chart (e.g. `tension`, `spanGaps`).
