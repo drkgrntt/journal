@@ -2,13 +2,17 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	gormlogger "gorm.io/gorm/logger"
+	"journal/internal/emails"
+	"journal/internal/jobs"
 	"journal/internal/logger"
 	"journal/internal/middleware"
 	"journal/internal/models"
 	"journal/internal/utils"
 	"journal/internal/web/recurringActionItems"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/a-h/templ"
@@ -76,6 +80,7 @@ func (c *RecurringActionItemController) createActionItems() {
 	subscribed := c.subscribedCreators(recurringActionItems)
 
 	var actionItems []*models.ActionItem
+	var emailCreators []uuid.UUID
 	for _, recurringActionItem := range recurringActionItems {
 		// A routine whose owner's plan has lapsed just waits; it picks up
 		// again whenever the plan does.
@@ -135,6 +140,9 @@ func (c *RecurringActionItemController) createActionItems() {
 			},
 		}
 		actionItems = append(actionItems, &actionItem)
+		if recurringActionItem.EmailMe {
+			emailCreators = append(emailCreators, *recurringActionItem.CreatorID)
+		}
 	}
 
 	if len(actionItems) == 0 {
@@ -151,6 +159,43 @@ func (c *RecurringActionItemController) createActionItems() {
 		Create(actionItems).Error
 	if err != nil {
 		logger.Error(err.Error())
+		return
+	}
+
+	c.emailRoutineOwners(emailCreators)
+}
+
+// emailRoutineOwners sends one short email to each owner (once, even if several
+// of their routines came up together) who asked to be emailed. Like the daily
+// reminder email it only goes to a confirmed address, and it never contains
+// the routine's text: jobs are stored unencrypted, and the text is private.
+func (c *RecurringActionItemController) emailRoutineOwners(ids []uuid.UUID) {
+	if len(ids) == 0 {
+		return
+	}
+	var users []*models.User
+	err := c.db.
+		Session(&gorm.Session{Logger: gormlogger.Default.LogMode(gormlogger.Error), SkipHooks: true}).
+		Select("id", "email", "first_name", "last_name", "email_confirmed_at").
+		Where("id IN ?", ids).
+		Where("email_confirmed_at IS NOT NULL").
+		Find(&users).Error
+	if err != nil {
+		logger.Error("Error loading routine email recipients", "error", err.Error())
+		return
+	}
+	for _, user := range users {
+		data := &jobs.EmailData{
+			Name: emails.GENERAL,
+			Variables: &emails.GeneralVariables{
+				Subject: "A routine is ready",
+				Message: fmt.Sprintf("A routine of yours just came up. Whenever you're ready: %s/dashboard", os.Getenv("ROOT_URL")),
+			},
+			Recipients: []*emails.EmailRecipient{{Name: user.FullName(), Email: user.Email}},
+		}
+		if _, err := jobs.ScheduleEmailJob(user.ID, data, time.Now()); err != nil {
+			logger.Error("Error queueing routine email", "error", err.Error())
+		}
 	}
 }
 
@@ -224,6 +269,7 @@ type RecurringActionItemBody struct {
 	StartsAt        int    `form:"startsAt"`
 	Frequency       int    `form:"frequency"`
 	HourlyFrequency int    `form:"hourlyFrequency"`
+	EmailMe         string `form:"emailMe"`
 }
 
 func (c *RecurringActionItemController) parseRecurringActionItemFromBody(ctx *fiber.Ctx, recurringActionItem *models.RecurringActionItem) error {
@@ -237,6 +283,7 @@ func (c *RecurringActionItemController) parseRecurringActionItemFromBody(ctx *fi
 		return errors.New("text is required")
 	}
 	recurringActionItem.Text = body.Text
+	recurringActionItem.EmailMe = body.EmailMe == "true" || body.EmailMe == "on"
 
 	if body.StartsAt != 0 {
 		date := time.UnixMilli(int64(body.StartsAt))

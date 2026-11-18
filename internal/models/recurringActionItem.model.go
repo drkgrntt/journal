@@ -18,6 +18,8 @@ type RecurringActionItem struct {
 	IsEncrypted bool          `gorm:"type:bool;not null" json:"isEncrypted"`
 	Frequency   time.Duration `gorm:"type:bigint" json:"frequency,omitempty"`
 	StartsAt    *time.Time    `gorm:"type:timestamptz" json:"startsAt,omitempty"`
+	// EmailMe sends the owner a short email each time the routine comes up.
+	EmailMe     bool          `gorm:"not null;default:false" json:"emailMe"`
 	ActionItems []*ActionItem `gorm:"foreignKey:RecurringActionItemID" json:"actionItems,omitempty"`
 }
 

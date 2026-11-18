@@ -126,6 +126,16 @@ templ Form(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) {
 				@components.DateTimeInput("startsAt", recurringActionItemDefaultStartsAt(c, recurringActionItem))
 			</div>
 		</div>
+		<div class="checkField">
+			<input
+				type="checkbox"
+				name="emailMe"
+				id="emailMe"
+				value="true"
+				checked?={ recurringActionItem != nil && recurringActionItem.EmailMe }
+			/>
+			<label class="label" for="emailMe">Email me when this comes up</label>
+		</div>
 		<button class="button" type="submit">Submit</button>
 	</form>
 }
