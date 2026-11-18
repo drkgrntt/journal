@@ -329,7 +329,7 @@ templ reminderEmailSection(c *fiber.Ctx) {
 	if web.CurrentUser(c).IsSubscribed() && !web.CurrentUser(c).EmailConfirmed() {
 		<div class="form">
 			<h4>Reminder Email</h4>
-			<p>A quiet daily email that says your reminder is waiting. To turn it on, confirm your email first, so it only goes to an address you've confirmed.</p>
+			<p>A quiet daily email inviting you to write. To turn it on, confirm your email first, so it only goes to an address you've confirmed.</p>
 			<div class="field">
 				<button
 					class="button"
@@ -348,7 +348,7 @@ templ reminderEmailSection(c *fiber.Ctx) {
 			hx-on::after-request="handleHtmxSuccess(event, 'Saved!')"
 		>
 			<h4>Reminder Email</h4>
-			<p>A quiet daily email that says your reminder is waiting. Your reminder itself is never included. Off unless you turn it on.</p>
+			<p>A quiet daily email inviting you to write. Your reminders and entries are never included. Off unless you turn it on.</p>
 			<div class="checkField">
 				<input
 					type="checkbox"
@@ -371,16 +371,16 @@ templ reminderEmailSection(c *fiber.Ctx) {
 				/>
 			</div>
 			<div class="field">
-				<label for="reminderEmailMessage" class="label">Your own message (optional)</label>
+				<label for="reminderEmailMessage" class="label">Your own message (replaces the default)</label>
 				<textarea
 					class="input"
 					name="message"
 					id="reminderEmailMessage"
 					maxlength="280"
 					rows="2"
-					placeholder="Your reminder is waiting."
+					placeholder="Whenever you're ready, the journal is here."
 				>{ web.CurrentUser(c).ReminderEmailMessageText() }</textarea>
-				<small>This message is sent by email in plain text, up to 280 characters.</small>
+				<small>Sent by email in plain text, up to 280 characters. Its first line is the subject.</small>
 			</div>
 			<div class="field">
 				<button type="submit" class="button">Save</button>
@@ -401,7 +401,7 @@ templ reminderEmailSection(c *fiber.Ctx) {
 		</form>	} else {
 		<div class="form">
 			<h4>Reminder Email</h4>
-			<p>A quiet daily email that says your reminder is waiting. It's part of the plan, which isn't active right now.</p>
+			<p>A quiet daily email inviting you to write. It's part of the plan, which isn't active right now.</p>
 		</div>
 	}
 }

@@ -91,10 +91,11 @@ func prepareReminderEmail(job *models.Job, data *EmailData, config *emails.Email
 		return true, nil
 	}
 
-	config.Content = emails.ReminderEmail(&emails.ReminderEmailVariables{
+	vars := &emails.ReminderEmailVariables{
 		RootUrl: os.Getenv("ROOT_URL"),
 		Message: user.ReminderEmailMessageText(),
-	})
-	config.Subject = "Your reminder is waiting"
+	}
+	config.Content = emails.ReminderEmail(vars)
+	config.Subject = vars.Subject()
 	return false, nil
 }

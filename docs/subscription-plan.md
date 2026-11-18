@@ -33,8 +33,8 @@ Open: S/M/L text size. Recommendation is to keep it **free** (partly accessibili
 
 ### Reminder email
 
-- Default content is a short calm line ("Your reminder is waiting") plus a link. The reminder's text is never put in the email.
-- The user may replace the line with their own message (stored encrypted at rest; it passes through Mailgun in plaintext, and the setting says so in one line).
+- Default content is a short calm line ("Whenever you're ready, the journal is here.") plus a link. The reminder's text is never put in the email.
+- The user may replace the line with their own message (its first line also becomes the subject) (stored encrypted at rest; it passes through Mailgun in plaintext, and the setting says so in one line).
 - No missed-day logic, no follow-ups. One email at the chosen time, if enabled.
 - Needs the user's timezone stored on `User` (the job runs server-side, no `tz` cookie). Sent through the existing `jobs` queue (`ScheduleEmailJob`).
 

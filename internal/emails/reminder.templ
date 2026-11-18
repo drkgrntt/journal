@@ -1,10 +1,16 @@
 package emails
 
+import "strings"
+
 const (
 	REMINDER_EMAIL = "reminder-email"
 )
 
-const DefaultReminderEmailLine = "Your reminder is waiting."
+const (
+	DefaultReminderEmailLine    = "Whenever you're ready, the journal is here."
+	DefaultReminderEmailSubject = "A moment for yourself"
+	reminderSubjectMaxRunes     = 60
+)
 
 type ReminderEmailVariables struct {
 	RootUrl string
@@ -17,6 +23,24 @@ func (v *ReminderEmailVariables) Line() string {
 		return DefaultReminderEmailLine
 	}
 	return v.Message
+}
+
+// Subject is the default subject, or the first line of the user's own message
+// (shortened) so a custom message replaces the default everywhere instead of
+// sitting beside it.
+func (v *ReminderEmailVariables) Subject() string {
+	if v.Message == "" {
+		return DefaultReminderEmailSubject
+	}
+	line := strings.TrimSpace(strings.SplitN(strings.TrimSpace(v.Message), "\n", 2)[0])
+	if line == "" {
+		return DefaultReminderEmailSubject
+	}
+	runes := []rune(line)
+	if len(runes) > reminderSubjectMaxRunes {
+		return strings.TrimSpace(string(runes[:reminderSubjectMaxRunes-1])) + "…"
+	}
+	return line
 }
 
 templ ReminderEmail(vars *ReminderEmailVariables) {
