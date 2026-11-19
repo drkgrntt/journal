@@ -113,13 +113,62 @@ func (c *JournalController) getSurroundingJournals(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
+// journalFilters applies the list filters shared by every query behind the
+// journal list (the page itself, the By Date day picker, and the prev/next
+// day lookups), so they can't drift apart. A topic is either a built-in
+// type's code or a custom type's SubID; a custom type is matched only among
+// the current user's own custom types.
+func journalFilters(db *gorm.DB, tx *gorm.DB, userID uuid.UUID, topic string, bookmarkedOnly bool) *gorm.DB {
+	tx = tx.Where("creator_id = ?", userID)
+	if topic != "" {
+		tx = tx.Where(db.Where(
+			"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
+			topic,
+		).Or(
+			"custom_journal_type_id IN (SELECT id FROM custom_journal_types WHERE creator_id = ? AND right(id::text, length(?)) = ?)",
+			userID, topic, topic,
+		))
+	}
+	if bookmarkedOnly {
+		tx = tx.Where("bookmarked_at IS NOT NULL")
+	}
+	return tx
+}
+
 func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 	page := ctx.QueryInt("page")
 	pageSize := 10
 
 	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
+	topic := ctx.Query("topic")
+	date := ctx.Query("date")
+	isSortByBookmark := ctx.Query("sort") == "bookmark"
+	isSortByDate := ctx.Query("sort") == "date"
+
+	// tz is interpolated into SQL below, so it must be a name LoadLocation
+	// accepts; anything else falls back to UTC.
+	tz := ctx.Cookies("tz", "UTC")
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		tz = "UTC"
+		loc = time.UTC
+	}
+
+	var parsedDate time.Time
+	if date != "" {
+		parsedDate, err = time.Parse("2006-01-02", date)
+		if err != nil {
+			return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Invalid date"})
+		}
+	}
+
+	// A specific day shows that whole day; By Date without one pages through
+	// the days that have entries.
+	pagesByDay := isSortByDate && date == ""
+	dayExpr := fmt.Sprintf("date_trunc('day', date AT TIME ZONE '%s')", tz)
+
 	journals := []*models.Journal{}
-	tx := c.db.Where("creator_id = ?", currentUser.ID).
+	tx := journalFilters(c.db, c.db, currentUser.ID, topic, isSortByBookmark).
 		Preload("JournalType").
 		Preload("CustomJournalType").
 		Preload("Rating").
@@ -128,217 +177,92 @@ func (c *JournalController) getJournals(ctx *fiber.Ctx) error {
 		Order("date desc").
 		Order("created_at desc")
 
-	topic := ctx.Query("topic")
-	if topic != "" {
-		tx = tx.Where(c.db.Where(
-			"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
-			topic,
-		).Or(
-			"custom_journal_type_id::text LIKE ?",
-			fmt.Sprintf("%%%s", topic),
-		))
-	}
-
-	tz := ctx.Cookies("tz", "UTC")
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		tz = "UTC"
-		loc = time.UTC
-	}
-	err = nil
-
-	date := ctx.Query("date")
 	if date != "" {
-		parsed, err := time.Parse("2006-01-02", date)
-		if err != nil {
-			return err
-		}
-
-		start := time.Date(
-			parsed.Year(),
-			parsed.Month(),
-			parsed.Day(),
-			0, 0, 0, 0,
-			loc,
-		)
-
-		end := start.AddDate(0, 0, 1)
-		tx = tx.Where("date >= ? AND date < ?", start.UTC(), end.UTC())
-	}
-
-	isSortByBookmark := ctx.Query("sort") == "bookmark"
-	if isSortByBookmark {
-		tx = tx.Where("bookmarked_at IS NOT NULL")
-	}
-
-	isSortByDate := ctx.Query("sort") == "date"
-	if isSortByDate {
-		dayExpr := fmt.Sprintf("date_trunc('day', date AT TIME ZONE '%s')", tz)
-
-		daySubquery := c.db.
-			Table("journals").
+		start := time.Date(parsedDate.Year(), parsedDate.Month(), parsedDate.Day(), 0, 0, 0, 0, loc)
+		tx = tx.Where("date >= ? AND date < ?", start.UTC(), start.AddDate(0, 0, 1).UTC())
+	} else if pagesByDay {
+		// dayExpr is a zone-less local timestamp, so compare it against the
+		// same expression on each row rather than against the raw column.
+		daySubquery := journalFilters(c.db, c.db.Table("journals"), currentUser.ID, topic, isSortByBookmark).
 			Select(dayExpr).
-			Where("creator_id = ?", currentUser.ID)
-
-		if topic != "" {
-			daySubquery = daySubquery.Where(c.db.Where(
-				"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
-				topic,
-			).Or(
-				"custom_journal_type_id::text LIKE ?",
-				fmt.Sprintf("%%%s", topic),
-			))
-		}
-
-		daySubquery = daySubquery.
 			Group(dayExpr).
 			Order(dayExpr + " DESC").
 			Offset(page).
 			Limit(1)
-
-		tx = tx.Where(
-			"date >= (?) AND date < ((?) + INTERVAL '1 day')",
-			daySubquery,
-			daySubquery,
-		)
-	} else if date == "" {
-		tx.Limit(pageSize + 1).
-			Offset(page * pageSize)
+		tx = tx.Where(dayExpr+" = (?)", daySubquery)
+	} else {
+		tx = tx.Limit(pageSize + 1).Offset(page * pageSize)
 	}
 
-	err = tx.Find(&journals).Error
-
-	if err != nil {
+	if err := tx.Find(&journals).Error; err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "No journals found"})
 	}
 
-	if date != "" || isSortByDate {
-
+	if date != "" || pagesByDay {
 		var pageDate time.Time
-		if len(journals) > 0 {
-			pageDate = *journals[0].Date
-		} else {
-			pageDate, err = time.ParseInLocation("2006-01-02", date, loc)
+		if date != "" {
+			pageDate = parsedDate
+		} else if len(journals) > 0 {
+			pageDate = journals[0].Date.In(loc)
+		}
+
+		if !pageDate.IsZero() {
+			startLocal := time.Date(pageDate.Year(), pageDate.Month(), pageDate.Day(), 0, 0, 0, 0, loc)
+			endLocal := startLocal.AddDate(0, 0, 1)
+
+			var prev time.Time
+			err = journalFilters(c.db, c.db.Model(&models.Journal{}), currentUser.ID, topic, isSortByBookmark).
+				Select("date(date AT TIME ZONE ?)", tz).
+				Where("date < ?", startLocal.UTC()).
+				Order("date DESC").
+				Limit(1).
+				Scan(&prev).Error
 			if err != nil {
 				return err
 			}
-		}
+			if !prev.IsZero() {
+				prevDate := prev.Format("2006-01-02")
+				ctx.Locals(utils.LocalPrevDate, &prevDate)
+			}
 
-		startLocal := time.Date(
-			pageDate.Year(),
-			pageDate.Month(),
-			pageDate.Day(),
-			0, 0, 0, 0,
-			loc,
-		)
-		endLocal := startLocal.AddDate(0, 0, 1)
-
-		var prev time.Time
-		prevTx := c.db.
-			Model(&models.Journal{}).
-			Select("date(date) AT TIME ZONE ?", tz).
-			Where("creator_id = ?", currentUser.ID).
-			Where("date < ?", startLocal.UTC())
-		if topic != "" {
-			prevTx = prevTx.
-				Where(c.db.Where(
-					"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
-					topic,
-				).Or(
-					"custom_journal_type_id::text LIKE ?",
-					fmt.Sprintf("%%%s", topic),
-				))
-		}
-		err = prevTx.
-			Order("date DESC").
-			Limit(1).
-			Scan(&prev).Error
-
-		if !prev.IsZero() {
-			t := time.Date(
-				prev.Year(),
-				prev.Month(),
-				prev.Day(),
-				0, 0, 0, 0,
-				loc,
-			)
-			prevDate := t.Format("2006-01-02")
-			ctx.Locals(utils.LocalPrevDate, &prevDate)
-		}
-
-		var next time.Time
-		nextTx := c.db.
-			Model(&models.Journal{}).
-			Select("date(date AT TIME ZONE ?)", tz).
-			Where("creator_id = ?", currentUser.ID).
-			Where("date >= ?", endLocal.UTC())
-		if topic != "" {
-			nextTx = nextTx.
-				Where(c.db.Where(
-					"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
-					topic,
-				).Or(
-					"custom_journal_type_id::text LIKE ?",
-					fmt.Sprintf("%%%s", topic),
-				))
-		}
-		err = nextTx.
-			Order("date ASC").
-			Limit(1).
-			Scan(&next).Error
-
-		if !next.IsZero() {
-			t := time.Date(
-				next.Year(),
-				next.Month(),
-				next.Day(),
-				0, 0, 0, 0,
-				loc,
-			)
-			nextDate := t.Format("2006-01-02")
-			ctx.Locals(utils.LocalNextDate, &nextDate)
+			var next time.Time
+			err = journalFilters(c.db, c.db.Model(&models.Journal{}), currentUser.ID, topic, isSortByBookmark).
+				Select("date(date AT TIME ZONE ?)", tz).
+				Where("date >= ?", endLocal.UTC()).
+				Order("date ASC").
+				Limit(1).
+				Scan(&next).Error
+			if err != nil {
+				return err
+			}
+			if !next.IsZero() {
+				nextDate := next.Format("2006-01-02")
+				ctx.Locals(utils.LocalNextDate, &nextDate)
+			}
 		}
 	}
 
-	if isSortByDate {
+	if pagesByDay {
 		nextPage := page + 1
 
-		nextDaySubquery := c.db.
-			Table("journals").
+		nextDaySubquery := journalFilters(c.db, c.db.Table("journals"), currentUser.ID, topic, isSortByBookmark).
 			Select("1").
-			Where("creator_id = ?", currentUser.ID)
-
-		if topic != "" {
-			nextDaySubquery = nextDaySubquery.Where(
-				"journal_type_id IN (SELECT id FROM journal_types WHERE code = ?)",
-				topic,
-			)
-		}
-
-		dayExpr := fmt.Sprintf("date_trunc('day', date AT TIME ZONE '%s')", tz)
-
-		nextDaySubquery = nextDaySubquery.
 			Group(dayExpr).
 			Order(dayExpr + " DESC").
 			Offset(nextPage).
 			Limit(1)
 
 		var hasMore bool
-		c.db.Raw(
-			"SELECT EXISTS (?)",
-			nextDaySubquery,
-		).Scan(&hasMore)
+		c.db.Raw("SELECT EXISTS (?)", nextDaySubquery).Scan(&hasMore)
 
 		ctx.Locals(utils.LocalHasMore, &hasMore)
 		ctx.Locals(utils.LocalNextPage, &nextPage)
-	} else {
-		if len(journals) > pageSize {
-			journals = journals[:pageSize]
-			hasMore := true
-			nextPage := page + 1
-			ctx.Locals(utils.LocalHasMore, &hasMore)
-			ctx.Locals(utils.LocalNextPage, &nextPage)
-		}
+	} else if date == "" && len(journals) > pageSize {
+		journals = journals[:pageSize]
+		hasMore := true
+		nextPage := page + 1
+		ctx.Locals(utils.LocalHasMore, &hasMore)
+		ctx.Locals(utils.LocalNextPage, &nextPage)
 	}
 
 	ctx.Locals(utils.LocalJournals, &journals)

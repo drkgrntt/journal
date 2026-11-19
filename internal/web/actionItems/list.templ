@@ -2,6 +2,7 @@ package actionItems
 
 import (
 	"fmt"
+	"net/url"
 	"github.com/gofiber/fiber/v2"
 	"journal/internal/models"
 	"journal/internal/utils"
@@ -114,7 +115,7 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 templ loadMore(c *fiber.Ctx) {
 	<button
 		class="button"
-		hx-get={ fmt.Sprintf("/action-items/list?page=%d", web.NextPage(c)) }
+		hx-get={ fmt.Sprintf("/action-items/list?page=%d&completed=%s&journalType=%s", web.NextPage(c), url.QueryEscape(c.Query("completed")), url.QueryEscape(c.Query("journalType"))) }
 		hx-target="[action-item-list]"
 		hx-swap="beforeend"
 		hx-swap-oob="true"
@@ -214,6 +215,14 @@ templ listPageFilters(c *fiber.Ctx) {
 					class={ "filter", templ.KV("active", c.Query("journalType") == journalType.Code) }
 				>
 					{ journalType.Name }
+				</a>
+			}
+			for _, customJournalType := range web.CurrentUser(c).CustomJournalTypes {
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("/action-items?journalType=%s&completed=%s", customJournalType.SubID(), c.Query("completed"))) }
+					class={ "filter", templ.KV("active", c.Query("journalType") == customJournalType.SubID()) }
+				>
+					{ customJournalType.Name }
 				</a>
 			}
 		</div>
