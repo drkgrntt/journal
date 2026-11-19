@@ -85,6 +85,21 @@ function applyThemeColorMeta(theme) {
 	var meta = document.getElementById("theme-color-meta");
 	if (!meta) return;
 	meta.setAttribute("content", theme === "dark" ? "#212526" : "#ffffff");
+	applyNativeStatusBar(theme);
+}
+
+// In the native shell (mobile/), the status bar icons follow the system theme
+// unless told otherwise, so they can disappear against the page. Match them to
+// the page's theme. A no-op in a browser.
+function applyNativeStatusBar(theme) {
+	try {
+		var cap = window.Capacitor;
+		if (!cap || !cap.isNativePlatform || !cap.isNativePlatform()) return;
+		// A page loaded from a server URL has no bundled plugin imports, so the
+		// native plugin has to be registered by name first.
+		var bar = (cap.Plugins && cap.Plugins.StatusBar) || cap.registerPlugin("StatusBar");
+		bar.setStyle({ style: theme === "dark" ? "DARK" : "LIGHT" });
+	} catch (e) {}
 }
 
 // The header's theme toggle (see header.templ) is a simple two-state

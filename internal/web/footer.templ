@@ -6,10 +6,12 @@ templ Footer(c *fiber.Ctx) {
 	<footer id="footer">
 		<nav>
 			<ul class="links">
-				<li><a href="/about">About</a></li>
-				<li>●</li>
-				<li><a href="/blog">Blog</a></li>
-				<li>●</li>
+				if !IsNativeApp(c) {
+					<li><a href="/about">About</a></li>
+					<li>●</li>
+					<li><a href="/blog">Blog</a></li>
+					<li>●</li>
+				}
 				<li><a href="/privacy">Privacy</a></li>
 				<li>●</li>
 				<li><a href="/feedback">Feedback</a></li>

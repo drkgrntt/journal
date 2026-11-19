@@ -159,12 +159,12 @@ templ planSection(c *fiber.Ctx) {
 		}
 		<p>{ planStatus(web.CurrentUser(c)) }</p>
 		<p>The plan includes Routines, Custom Topics, Themes, Entry Templates, and a daily reminder email.</p>
-		if hasPlanToManage(web.CurrentUser(c)) {
+		if !web.IsNativeApp(c) && hasPlanToManage(web.CurrentUser(c)) {
 			<div class="field">
 				<button class="button" hx-post="/api/profile/billing/portal" hx-swap="none">Manage plan</button>
 			</div>
 		}
-		if hasPlanToManage(web.CurrentUser(c)) {
+		if !web.IsNativeApp(c) && hasPlanToManage(web.CurrentUser(c)) {
 			<div class="field">
 				<button
 					class="button"
@@ -176,7 +176,7 @@ templ planSection(c *fiber.Ctx) {
 				</button>
 			</div>
 		}
-		if canChoosePlan(web.CurrentUser(c)) {
+		if !web.IsNativeApp(c) && canChoosePlan(web.CurrentUser(c)) {
 			<div class="field plan-options">
 				for _, plan := range stripe.Plans {
 					if label := stripe.PlanLabel(plan); label != "" {

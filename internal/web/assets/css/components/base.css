@@ -19,6 +19,11 @@ body {
 	transition: top var(--duration-fast) var(--ease-standard);
 }
 
+.skip-link:not(:focus) {
+	/* Off-screen until focused; its shadow would otherwise bleed into the top edge. */
+	box-shadow: none;
+}
+
 .skip-link:focus {
 	top: var(--space-2);
 }

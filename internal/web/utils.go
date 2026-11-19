@@ -43,6 +43,13 @@ func CurrentUser(c *fiber.Ctx) *models.User {
 	return utils.GetLocal[models.User](c, utils.LocalCurrentUser)
 }
 
+// IsNativeApp reports whether the request came from the native shell, which
+// hides marketing links and billing controls.
+func IsNativeApp(c *fiber.Ctx) bool {
+	native := utils.GetLocal[bool](c, utils.LocalIsNativeApp)
+	return native != nil && *native
+}
+
 type LabelValue[T any] struct {
 	Label string
 	Value T

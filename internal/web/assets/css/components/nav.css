@@ -96,6 +96,11 @@
 }
 
 
+#app-nav:not(.open) {
+	/* Slid off-screen; its shadow would otherwise bleed into the right edge. */
+	box-shadow: none;
+}
+
 #app-nav {
 	background-color: var(--surface);
 	font-size: 1.1rem;
@@ -142,4 +147,16 @@
 			color: var(--accent);
 		}
 	}
+}
+
+/* Native shell: the hamburger and the slide-out menu are fixed to the viewport,
+   so they move down by the same top inset the header grows by. */
+:root[data-native-app] .toggle-button-border {
+	top: calc(1.625rem + 1px - 1.25rem + env(safe-area-inset-top, 0px));
+}
+:root[data-native-app] .toggle-button {
+	top: calc(1.625rem + env(safe-area-inset-top, 0px));
+}
+:root[data-native-app] #app-nav {
+	padding-top: calc(5rem + env(safe-area-inset-top, 0px));
 }

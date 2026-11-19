@@ -39,6 +39,17 @@ func appearanceOf(c *fiber.Ctx) (string, string) {
 	return user.EffectiveAppearance()
 }
 
+// viewportContent lets the native shell's page draw under the system bars
+// (viewport-fit=cover); the header and footer then pad themselves by the
+// safe-area insets (see components/header.css and footer.css) so their own
+// background fills the bar areas in whichever theme is active.
+func viewportContent(c *fiber.Ctx) string {
+	if IsNativeApp(c) {
+		return "width=device-width, initial-scale=1.0, viewport-fit=cover"
+	}
+	return "width=device-width, initial-scale=1.0"
+}
+
 func resolveHead(h *Head) *Head {
 	if h == nil {
 		return DefaultHead()
@@ -59,10 +70,13 @@ templ baseWithHead(c *fiber.Ctx, h *Head) {
 		if CurrentUser(c) != nil {
 			data-appearance-sync
 		}
+		if IsNativeApp(c) {
+			data-native-app
+		}
 	>
 		<head>
 			<meta charset="UTF-8"/>
-			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<meta name="viewport" content={ viewportContent(c) }/>
 			<title>Contour Journal - { h.Title }</title>
 			<meta name="og:title" content={ fmt.Sprintf("Contour Journal - %s", h.Title) }/>
 			<meta name="description" content={ h.Description }/>

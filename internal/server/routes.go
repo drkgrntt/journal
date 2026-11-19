@@ -45,6 +45,7 @@ func (s *FiberServer) RegisterFiberRoutes() {
 
 	s.App.Use(
 		middleware.FilterBots,
+		middleware.DetectNativeApp,
 		middleware.DeserializeToken,
 		middleware.LogAccess,
 	)
