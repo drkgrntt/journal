@@ -12,6 +12,10 @@ const (
 	LocalRequestID    = "requestID"
 	LocalRequestError = "requestError"
 
+	// LocalIsNativeApp is the *bool set by middleware.DetectNativeApp: true when
+	// the request comes from the native shell (mobile/). Presentation only.
+	LocalIsNativeApp = "isNativeApp"
+
 	// LocalEmailConfirmed is the *bool result of following a confirmation link.
 	LocalEmailConfirmed = "emailConfirmed"
 

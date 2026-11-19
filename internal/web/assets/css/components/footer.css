@@ -29,3 +29,9 @@
 		color: var(--accent);
 	}
 }
+
+/* Native shell: keep the footer clear of the gesture bar. */
+:root[data-native-app] #footer {
+	padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+	height: calc(var(--footer-height) + env(safe-area-inset-bottom, 0px));
+}

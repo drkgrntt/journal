@@ -110,3 +110,10 @@
 :root[data-theme="dark"] .top-bar .theme-toggle .fa-moon {
 	display: inline;
 }
+
+/* Native shell: the page draws under the status bar / camera cutout, so the
+   header grows by the top inset and its own background fills that area. */
+:root[data-native-app] .top-bar {
+	padding-top: env(safe-area-inset-top, 0px);
+	height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+}

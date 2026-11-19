@@ -28,8 +28,8 @@ tmp/
 # .env file
 .env
 
-# Project build
-main
+# Project build (anchored: a bare `main` also matches mobile/android/app/src/main)
+/main
 *templ.go
 
 # OS X generated file
