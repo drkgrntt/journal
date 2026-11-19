@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Contour Journal</string>
+    <string name="title_activity_main">Contour Journal</string>
+    <string name="package_name">app.contourjournal</string>
+    <string name="custom_url_scheme">app.contourjournal</string>
+</resources>

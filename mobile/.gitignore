@@ -1,0 +1,5 @@
+node_modules/
+.env
+# The android/ project has its own .gitignore (build output, generated web assets
+# and config). Everything else in it is committed: the manifest, MainActivity,
+# icons, and the Gradle wrapper.
