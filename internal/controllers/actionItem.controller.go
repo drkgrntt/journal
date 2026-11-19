@@ -85,14 +85,22 @@ func (c *ActionItemController) getActionItems(ctx *fiber.Ctx) error {
 
 	journalTypeParam := ctx.Query("journalType")
 	if journalTypeParam != "" {
-		tx = tx.Where("journal_id IN (SELECT id FROM journals WHERE journal_type_id IN (SELECT id FROM journal_types WHERE code = ?))", journalTypeParam)
+		// A built-in type's code or one of the user's custom types' SubID,
+		// matched the same way as the journal list's topic filter.
+		tx = tx.Where(
+			"journal_id IN (?)",
+			journalFilters(c.db, c.db.Table("journals").Select("id"), currentUser.ID, journalTypeParam, false),
+		)
 	}
 
 	pageSize := 10
 	page := ctx.QueryInt("page")
 	tx = tx.Limit(pageSize + 1).Offset(page * pageSize)
 
-	tx.Find(&actionItems)
+	if err := tx.Find(&actionItems).Error; err != nil {
+		utils.SetRequestError(ctx, err)
+		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Could not load action items"})
+	}
 	ctx.Locals(utils.LocalActionItems, &actionItems)
 
 	if len(actionItems) > pageSize {
