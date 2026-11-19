@@ -19,9 +19,38 @@
 	gap: .5rem;
 	padding-bottom: 1rem;
 
-	.filter-heading {
-		font-size: 1.1rem;
-		font-weight: 600;
+	.topics {
+		display: flex;
+		flex-direction: column;
+		gap: .5rem;
+
+		&[open] .topics-summary::after {
+			transform: rotate(225deg) translate(-1px, -1px);
+		}
+	}
+
+	.topics-summary {
+		display: inline-flex;
+		align-items: center;
+		gap: .5rem;
+		cursor: pointer;
+		list-style: none;
+		padding: .3rem 0;
+		margin-bottom: .5rem;
+
+		&::-webkit-details-marker {
+			display: none;
+		}
+
+		&::after {
+			content: "";
+			width: .45rem;
+			height: .45rem;
+			border-right: 2px solid currentColor;
+			border-bottom: 2px solid currentColor;
+			transform: rotate(45deg) translateY(-2px);
+			transition: transform var(--duration-fast) var(--ease-standard);
+		}
 	}
 
 	.filter-set {

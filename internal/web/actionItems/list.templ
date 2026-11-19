@@ -175,6 +175,24 @@ func getJournalTypes(c *fiber.Ctx) []*models.JournalType {
 	return *journalTypes
 }
 
+func currentTopicName(c *fiber.Ctx) string {
+	topic := c.Query("journalType")
+	if topic == "" {
+		return "Any"
+	}
+	for _, t := range getJournalTypes(c) {
+		if t.Code == topic {
+			return t.Name
+		}
+	}
+	for _, t := range web.CurrentUser(c).CustomJournalTypes {
+		if t.SubID() == topic {
+			return t.Name
+		}
+	}
+	return "Any"
+}
+
 templ listPageFilters(c *fiber.Ctx) {
 	<div
 		id="action-item-list-filters"
@@ -201,8 +219,11 @@ templ listPageFilters(c *fiber.Ctx) {
 				Incomplete
 			</a>
 		</div>
-		<h4 class="filter-heading">Journal Topics</h4>
-		<div class="filter-set">
+		<details class="topics">
+			<summary class="topics-summary">
+				Topic: <strong>{ currentTopicName(c) }</strong>
+			</summary>
+			<div class="filter-set">
 			<a
 				href={ templ.SafeURL(fmt.Sprintf("/action-items?completed=%s", c.Query("completed"))) }
 				class={ "filter", templ.KV("active", c.Query("journalType") == "") }
@@ -225,6 +246,7 @@ templ listPageFilters(c *fiber.Ctx) {
 					{ customJournalType.Name }
 				</a>
 			}
-		</div>
+			</div>
+		</details>
 	</div>
 }

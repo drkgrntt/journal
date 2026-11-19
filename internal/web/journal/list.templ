@@ -15,6 +15,24 @@ func getJournals(c *fiber.Ctx) []*models.Journal {
 	return *journals
 }
 
+func currentTopicName(c *fiber.Ctx) string {
+	topic := c.Query("topic")
+	if topic == "" {
+		return "All"
+	}
+	for _, t := range getJournalTypes(c) {
+		if t.Code == topic {
+			return t.Name
+		}
+	}
+	for _, t := range web.CurrentUser(c).CustomJournalTypes {
+		if t.SubID() == topic {
+			return t.Name
+		}
+	}
+	return "All"
+}
+
 templ loadMore(c *fiber.Ctx) {
 	<button
 		class="button"
@@ -121,8 +139,11 @@ templ ListPage(c *fiber.Ctx) {
 					Bookmarked
 				</a>
 			</div>
-			<h4 class="filter-heading">Topics</h4>
-			<div class="sorts">
+			<details class="topics">
+				<summary class="topics-summary">
+					Topic: <strong>{ currentTopicName(c) }</strong>
+				</summary>
+				<div class="sorts">
 				<a
 					href={ templ.SafeURL(fmt.Sprintf("/journal?sort=%s&date=%s", c.Query("sort"), c.Query("date"))) }
 					class={ "sort", templ.KV("active", c.Query("topic") == "") }
@@ -145,7 +166,8 @@ templ ListPage(c *fiber.Ctx) {
 						{ customJournalType.Name }
 					</a>
 				}
-			</div>
+				</div>
+			</details>
 			<ul class="list" journal-list>
 				@listItemsWithButton(c, false)
 			</ul>
