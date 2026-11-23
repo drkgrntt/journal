@@ -345,10 +345,27 @@ document.addEventListener("focusin", function(e) {
 // [can-reveal] marks text that is meant to be read even with blur on (e.g. the
 // daily reminder): a click or Enter/Space toggles it instead of the user having
 // to turn the whole setting off.
-function toggleReveal(element) {
-	element.dataset.revealed = element.dataset.revealed === "true" ? "false" : "true"
+// A reveal is temporary: it re-blurs after a short while, and whenever the tab
+// is hidden, so a revealed entry can't be left open on screen. It lives only
+// in the DOM, so navigating or an htmx swap also resets it.
+const REVEAL_MS = 15000
+const revealTimers = new WeakMap()
+
+function setRevealed(element, revealed) {
+	clearTimeout(revealTimers.get(element))
+	element.dataset.revealed = revealed ? "true" : "false"
+	if (revealed) revealTimers.set(element, setTimeout(() => setRevealed(element, false), REVEAL_MS))
 	applyBlur(element)
 }
+
+function toggleReveal(element) {
+	setRevealed(element, element.dataset.revealed !== "true")
+}
+
+document.addEventListener("visibilitychange", function() {
+	if (!document.hidden) return
+	document.querySelectorAll('[can-reveal][data-revealed="true"]').forEach(el => setRevealed(el, false))
+})
 
 document.addEventListener("click", function(e) {
 	const element = e.target.closest("[can-reveal]")

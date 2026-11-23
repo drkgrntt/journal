@@ -63,7 +63,7 @@ templ ListItem(c *fiber.Ctx, actionItem *models.ActionItem) {
 					<i class="fa fa-check" aria-hidden="true"></i>
 				</button>
 			</form>
-			<p can-blur class={ fmt.Sprintf("text %s", completedClass(actionItem)) }>
+			<p can-blur can-reveal tabindex="0" class={ fmt.Sprintf("text %s", completedClass(actionItem)) }>
 				{ actionItem.Text }
 				if actionItem.HasJournalType() {
 					<span class="journal-type">({ actionItem.Journal.JournalType.Name })</span>

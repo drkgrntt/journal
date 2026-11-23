@@ -23,7 +23,7 @@ templ Card(c *fiber.Ctx, reminder *models.Reminder, swap bool) {
 			hx-swap-oob="outerHTML:#daily-reminder"
 		}
 	>
-		<p can-blur can-reveal tabindex="0" title="Click to show or hide" class="text">{ reminder.Text }</p>
+		<p can-blur can-reveal tabindex="0" class="text">{ reminder.Text }</p>
 		<button
 			class="shuffle"
 			type="button"

@@ -36,7 +36,7 @@ templ ListItem(c *fiber.Ctx, recurringActionItem *models.RecurringActionItem) {
 			}
 		</div>
 		<div class="info">
-			<p can-blur class="text">
+			<p can-blur can-reveal tabindex="0" class="text">
 				{ recurringActionItem.Text }
 			</p>
 			@components.KebabMenu() {
