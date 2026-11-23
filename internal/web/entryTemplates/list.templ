@@ -21,8 +21,8 @@ templ ListItem(c *fiber.Ctx, entryTemplate *models.EntryTemplate, canEdit bool) 
 	>
 		<div class="info">
 			<div class="text">
-				<p can-blur class="name">{ entryTemplate.Name }</p>
-				<p can-blur class="body">{ entryTemplate.Body }</p>
+				<p can-blur can-reveal tabindex="0" class="name">{ entryTemplate.Name }</p>
+				<p can-blur can-reveal tabindex="0" class="body">{ entryTemplate.Body }</p>
 			</div>
 			@components.KebabMenu() {
 				<div class="kebab-content">

@@ -6,6 +6,11 @@
 	filter: blur(3px);
 }
 
+/* Blurred, tappable text: a tap reveals it for a moment (utils/index.js). */
+[can-reveal][style*="blur"] {
+	cursor: pointer;
+}
+
 input[can-blur]:placeholder-shown,
 textarea[can-blur]:placeholder-shown {
 	filter: none;

@@ -18,7 +18,7 @@ templ ListItem(c *fiber.Ctx, reminder *models.Reminder) {
 		class="item"
 	>
 		<div class="info">
-			<p can-blur class="text">
+			<p can-blur can-reveal tabindex="0" class="text">
 				{ reminder.Text }
 			</p>
 			@components.KebabMenu() {
