@@ -50,7 +50,9 @@ func CreateToken(expiresIn time.Duration, additionalClaims map[string]any) (stri
 	return token, nil
 }
 
-func CreateAccessToken(userId uuid.UUID) (string, error) {
+// CreateAccessToken signs a session token. version is the user's TokenVersion;
+// bumping it on the user ends every session and reset link issued before.
+func CreateAccessToken(userId uuid.UUID, version int) (string, error) {
 	expiresIn, err := time.ParseDuration(accessTokenExpiresIn())
 	if err != nil {
 		return "", fmt.Errorf("invalid expiry duration: %w", err)
@@ -58,6 +60,7 @@ func CreateAccessToken(userId uuid.UUID) (string, error) {
 
 	claims := make(map[string]any)
 	claims["sub"] = userId
+	claims["ver"] = version
 
 	token, err := CreateToken(expiresIn, claims)
 
@@ -70,6 +73,9 @@ func CreateAccessToken(userId uuid.UUID) (string, error) {
 
 type TokenData struct {
 	UserID uuid.UUID
+	// Version is the TokenVersion the token was issued at. Tokens issued
+	// before versions existed have none and count as 0.
+	Version int
 }
 
 func ValidateToken(token string) (*TokenData, error) {
@@ -109,13 +115,77 @@ func ValidateToken(token string) (*TokenData, error) {
 		return nil, fmt.Errorf("validate: unable to parse tokens: %s", err)
 	}
 
+	if _, isOtherPurpose := claims["purpose"]; isOtherPurpose {
+		return nil, fmt.Errorf("validate: not a session token")
+	}
+
+	ver, _ := claims["ver"].(float64)
 	tokenData := TokenData{
-		UserID: userId,
+		UserID:  userId,
+		Version: int(ver),
 	}
 	return &tokenData, nil
 }
 
 const confirmEmailPurpose = "confirm-email"
+const resetPasswordPurpose = "reset-password"
+
+// CreateResetToken makes the password-reset link token. Like the confirmation
+// token it has no "sub" claim and a purpose, so it can never work as a login
+// cookie, and a session cookie can never work as a reset token. It carries the
+// user's TokenVersion, which the reset bumps, so a link works once.
+func CreateResetToken(userId uuid.UUID, version int) (string, error) {
+	return CreateToken(time.Minute*5, map[string]any{
+		"purpose": resetPasswordPurpose,
+		"uid":     userId.String(),
+		"ver":     version,
+	})
+}
+
+// ValidateResetToken returns the user ID and TokenVersion a reset token was
+// issued for.
+func ValidateResetToken(token string) (uuid.UUID, int, error) {
+	claims, err := parseClaims(token)
+	if err != nil {
+		return uuid.Nil, 0, err
+	}
+	purpose, _ := claims["purpose"].(string)
+	uid, _ := claims["uid"].(string)
+	if purpose != resetPasswordPurpose || uid == "" {
+		return uuid.Nil, 0, fmt.Errorf("validate: not a reset token")
+	}
+	userId, err := uuid.Parse(uid)
+	if err != nil {
+		return uuid.Nil, 0, fmt.Errorf("validate: bad user id")
+	}
+	ver, _ := claims["ver"].(float64)
+	return userId, int(ver), nil
+}
+
+func parseClaims(token string) (jwt.MapClaims, error) {
+	decodedPublicKey, err := base64.StdEncoding.DecodeString(accessTokenPublicKey())
+	if err != nil {
+		return nil, fmt.Errorf("could not decode: %w", err)
+	}
+	key, err := jwt.ParseRSAPublicKeyFromPEM(decodedPublicKey)
+	if err != nil {
+		return nil, fmt.Errorf("validate: parse key: %w", err)
+	}
+	parsed, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected method: %s", t.Header["alg"])
+		}
+		return key, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("validate: %w", err)
+	}
+	claims, ok := parsed.Claims.(jwt.MapClaims)
+	if !ok || !parsed.Valid {
+		return nil, fmt.Errorf("validate: invalid token")
+	}
+	return claims, nil
+}
 
 // CreateEmailConfirmToken makes a link token for confirming one address. It
 // deliberately has no "sub" claim, so ValidateToken rejects it and it can never

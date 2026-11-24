@@ -340,12 +340,24 @@ func (c *ProfileController) updatePassword(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).SendString("Passwords do not match")
 	}
 
-	err = c.db.Model(currentUser).
-		Updates(&models.User{Password: body.NewPassword}).Error
+	if msg := models.ValidatePassword(body.NewPassword); msg != "" {
+		return ctx.Status(http.StatusBadRequest).SendString(msg)
+	}
+
+	// Bumping the version ends every other session; this one gets a fresh token.
+	newVersion := currentUser.TokenVersion + 1
+	err = c.db.Model(&models.User{}).
+		Where("id = ?", currentUser.ID).
+		Updates(&models.User{Password: body.NewPassword, TokenVersion: newVersion}).Error
 	if err != nil {
 		logger.Warn(err.Error())
 		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error updating user")
+	}
+	currentUser.TokenVersion = newVersion
+	if err := setSessionCookie(ctx, currentUser); err != nil {
+		utils.SetRequestError(ctx, err)
+		return ctx.Status(http.StatusInternalServerError).SendString("Password updated, but signing you back in failed. Log in again.")
 	}
 
 	return ctx.SendStatus(http.StatusAccepted)

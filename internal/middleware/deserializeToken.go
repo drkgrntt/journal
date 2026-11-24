@@ -30,6 +30,11 @@ func DeserializeToken(ctx *fiber.Ctx) error {
 		return ctx.Next()
 	}
 
+	// A password change or reset bumps the version, ending older sessions.
+	if user.TokenVersion != data.Version {
+		return ctx.Next()
+	}
+
 	ctx.Locals(utils.LocalCurrentUser, &user)
 	return ctx.Next()
 }

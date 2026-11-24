@@ -13,10 +13,13 @@ func init() {
 
 type User struct {
 	*Base
-	Email            string `gorm:"uniqueIndex:idx_users_email,where:deleted_at IS NULL;not null" json:"email,omitempty"`
-	FirstName        string `gorm:"not null" json:"firstName,omitempty"`
-	LastName         string `gorm:"not null" json:"lastName,omitempty"`
-	Password         string `gorm:"not null" json:"-"`
+	Email     string `gorm:"uniqueIndex:idx_users_email,where:deleted_at IS NULL;not null" json:"email,omitempty"`
+	FirstName string `gorm:"not null" json:"firstName,omitempty"`
+	LastName  string `gorm:"not null" json:"lastName,omitempty"`
+	Password  string `gorm:"not null" json:"-"`
+	// TokenVersion is stamped into session and reset tokens. Bumping it ends
+	// every session and pending reset link (see utils.CreateAccessToken).
+	TokenVersion     int    `gorm:"not null;default:0" json:"-"`
 	StripeCustomerID string `gorm:"type:text" json:"stripeCustomerId,omitempty"`
 	// Appearance preferences (see appearance.go). Empty = default.
 	Theme      string `gorm:"type:text;not null;default:''" json:"theme,omitempty"`
@@ -61,6 +64,25 @@ func (u *User) FullName() string {
 		fullName = u.Email
 	}
 	return fullName
+}
+
+// Password length limits. bcrypt only accepts up to 72 bytes (hashPassword
+// would otherwise silently store an empty hash).
+const (
+	MinPasswordLength = 8
+	MaxPasswordBytes  = 72
+)
+
+// ValidatePassword returns a message fit to show the person, or "" if the
+// password is acceptable.
+func ValidatePassword(password string) string {
+	if len(password) < MinPasswordLength {
+		return "Password must be at least 8 characters"
+	}
+	if len(password) > MaxPasswordBytes {
+		return "Password must be at most 72 bytes"
+	}
+	return ""
 }
 
 func (u *User) hashPassword(password string) string {

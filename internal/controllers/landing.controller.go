@@ -40,7 +40,7 @@ func (c *LandingController) RegisterViewRoutes() {
 }
 
 func (c *LandingController) RegisterApiRoutes() {
-	c.api.Post("/feedback", c.sendFeedback)
+	c.api.Post("/feedback", middleware.RateLimit(5, time.Hour), c.sendFeedback)
 }
 
 type Feedback struct {
