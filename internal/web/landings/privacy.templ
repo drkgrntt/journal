@@ -32,7 +32,7 @@ templ PrivacyPage(c *fiber.Ctx) {
 				the status of your plan. It never sees or stores your card details.
 			</p>
 			<p>
-				<strong>Request logs.</strong> The site keeps a short, anonymous log of requests: the time, the page requested, and whether it worked. It does not record your IP address, browser, account, or anything you write, so it can’t be tied to a person. Entries are deleted after 14 days. It’s there to spot errors and outages. Each request also gets a random reference code that isn’t tied to you or to any other request. If something goes wrong on the server, you’ll see the code, and if you send it to me I can find what happened.
+				<strong>Request logs.</strong> The site keeps a short, anonymous log of requests: the time, the page requested, and whether it worked. It does not record your IP address, browser, account, or anything you write, so it can’t be tied to a person. Entries are deleted after 14 days. It’s there to spot errors and outages. Each request also gets a random reference code that isn’t tied to you or to any other request. If something goes wrong on the server, you’ll see the code, and if you send it to me I can find what happened. To slow down password guessing and spam, the server briefly counts recent sign-in, reset, and feedback attempts per connection, in memory only. The counts are never saved and disappear within an hour.
 			</p>
 			<p>
 				<strong>Feedback.</strong> If you send feedback, your message and the optional

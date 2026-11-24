@@ -7,6 +7,7 @@ import (
 	"journal/internal/utils"
 	"journal/internal/web"
 	"net/http"
+	"os"
 	"runtime/debug"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,6 +15,8 @@ import (
 )
 
 func (s *FiberServer) RegisterFiberRoutes() {
+	s.App.Use(middleware.SecurityHeaders(os.Getenv("APP_ENV") == "production"))
+
 	s.App.Use("/assets", filesystem.New(filesystem.Config{
 		// Every request that reaches here carries the current build's
 		// ?v=AssetVersion (base.templ's tags, and each CSS/JS file's own

@@ -48,12 +48,13 @@ func dailyBackup() {
 		return
 	}
 
-	path, err := backup(connectionStr())
+	path, err := backup()
 	if err != nil {
 		logger.Error("err", "backup failed", err)
 		return
 	}
-	defer os.Remove(path)
+	// The dump lives in its own private directory; remove the whole thing.
+	defer os.RemoveAll(filepath.Dir(path))
 	if err := upload(path); err != nil {
 		logger.Error("upload failed", err)
 		return
@@ -64,12 +65,21 @@ func dailyBackup() {
 	}
 }
 
-func backup(connStr string) (string, error) {
-	outPath := fmt.Sprintf("/tmp/backup-%s.sql", time.Now().Format("2006-01-02-15-04-05"))
-	cmd := exec.Command("pg_dump", connStr, "-f", outPath)
+// backup dumps the database into a private (0700) temp directory and returns
+// the file's path. The password goes to pg_dump through PGPASSWORD, not the
+// command line, where any local user could read it with ps.
+func backup() (string, error) {
+	dir, err := os.MkdirTemp("", "backup-")
+	if err != nil {
+		return "", fmt.Errorf("creating backup directory: %w", err)
+	}
+	outPath := filepath.Join(dir, fmt.Sprintf("backup-%s.sql", time.Now().Format("2006-01-02-15-04-05")))
+	cmd := exec.Command("pg_dump", "-h", host, "-p", port, "-U", username, "-d", database, "-f", outPath)
+	cmd.Env = append(os.Environ(), "PGPASSWORD="+password, "PGSSLMODE=disable")
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
+		os.RemoveAll(dir)
 		return "", fmt.Errorf("pg_dump failed: %w, stderr: %s", err, stderr.String())
 	}
 	return outPath, nil

@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 	"log"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -96,5 +98,27 @@ func TestClose(t *testing.T) {
 
 	if srv.Close() != nil {
 		t.Fatalf("expected Close() to return nil")
+	}
+}
+
+// backup must work with the password passed via the environment, and leave the
+// dump in a directory only the app can read.
+func TestBackupDumpsToAPrivateDirectory(t *testing.T) {
+	path, err := backup()
+	if err != nil {
+		t.Skipf("pg_dump unavailable or incompatible with the test server: %v", err)
+	}
+	dir := filepath.Dir(path)
+	defer os.RemoveAll(dir)
+
+	info, err := os.Stat(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if perm := info.Mode().Perm(); perm != 0o700 {
+		t.Errorf("backup dir mode = %o, want 700", perm)
+	}
+	if fi, err := os.Stat(path); err != nil || fi.Size() == 0 {
+		t.Errorf("dump missing or empty: %v", err)
 	}
 }
