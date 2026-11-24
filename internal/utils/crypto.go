@@ -15,8 +15,14 @@ import (
 // CRYPTO_KEY with t.Setenv.
 func cryptoKey() []byte { return []byte(os.Getenv("CRYPTO_KEY")) }
 
-func Encrypt(plaintext string) (string, error) {
-	block, err := aes.NewCipher(cryptoKey())
+func Encrypt(plaintext string) (string, error) { return EncryptWithKey(cryptoKey(), plaintext) }
+
+func Decrypt(ciphertext string) (string, error) { return DecryptWithKey(cryptoKey(), ciphertext) }
+
+// EncryptWithKey and DecryptWithKey take the key explicitly, for key rotation
+// (cmd/rotatekey), where two keys are in play at once.
+func EncryptWithKey(key []byte, plaintext string) (string, error) {
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
 	}
@@ -35,13 +41,13 @@ func Encrypt(plaintext string) (string, error) {
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-func Decrypt(ciphertext string) (string, error) {
+func DecryptWithKey(key []byte, ciphertext string) (string, error) {
 	data, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
 		return "", err
 	}
 
-	block, err := aes.NewCipher(cryptoKey())
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
 	}
