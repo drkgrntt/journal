@@ -72,6 +72,15 @@ func Start() {
 		logger.Error("Error scheduling request log pruning", "error", err.Error())
 	}
 
+	// Delete expired sessions
+	_, err = s.NewJob(
+		gocron.DurationJob(requestLogPruneInterval),
+		gocron.NewTask(pruneSessions),
+	)
+	if err != nil {
+		logger.Error("Error scheduling session pruning", "error", err.Error())
+	}
+
 	s.Start()
 }
 

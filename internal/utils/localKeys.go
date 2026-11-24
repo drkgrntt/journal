@@ -6,6 +6,10 @@ package utils
 const (
 	LocalCurrentUser = "currentUser"
 
+	// LocalSessionID is the *uuid.UUID of the signed-in session (set by
+	// middleware.DeserializeToken), so "everywhere else" can mean all but this one.
+	LocalSessionID = "sessionID"
+
 	// LocalRequestID is the *string random reference for this request (set by
 	// middleware.RequestID); LocalRequestError is the *string safe description of
 	// why a request failed (see SetRequestError).

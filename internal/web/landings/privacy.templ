@@ -80,7 +80,10 @@ templ PrivacyPage(c *fiber.Ctx) {
 			<p>
 				The journal sets two cookies: one keeps you logged in, and one remembers your
 				time zone so dates and times show correctly. Neither is used for tracking or
-				analytics.
+				analytics. The login cookie is a random code that the server renews about once
+				a day. The server keeps only a scrambled copy of it and the dates it was made
+				and renewed, never your IP address or browser, so that logging out (or “Log out
+				everywhere” on your profile) really ends the session.
 			</p>
 			<p>
 				Your browser also stores your appearance settings. While you write a new entry,

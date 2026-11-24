@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -35,7 +36,6 @@ func setAuthEnv(t *testing.T) {
 	pubPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubDER})
 	t.Setenv("ACCESS_TOKEN_PRIVATE_KEY", base64.StdEncoding.EncodeToString(privPEM))
 	t.Setenv("ACCESS_TOKEN_PUBLIC_KEY", base64.StdEncoding.EncodeToString(pubPEM))
-	t.Setenv("ACCESS_TOKEN_EXPIRES_IN", "60m")
 	t.Setenv("CRYPTO_KEY", testCryptoKey)
 }
 
@@ -101,19 +101,35 @@ func sessionStatus(t *testing.T, app *fiber.App, token string) int {
 	return resp.StatusCode
 }
 
-func TestLogoutClearsTheSessionCookieAtItsOwnPath(t *testing.T) {
+func TestLogoutEndsTheSessionAndClearsTheCookie(t *testing.T) {
 	setAuthEnv(t)
 	testutil.Tx(t, func(tx *gorm.DB) {
-		resp := post(t, authApp(t, tx), http.MethodPost, "/api/auth/logout", nil)
+		u := testutil.User(t, tx, "logout@example.com")
+		mine, _ := models.CreateSession(tx, u.ID, time.Now().UTC())
+		theirs, _ := models.CreateSession(tx, u.ID, time.Now().UTC())
+
+		req := httptest.NewRequest(http.MethodPost, "/api/auth/logout", nil)
+		req.AddCookie(&http.Cookie{Name: "x-token", Value: mine})
+		resp, err := authApp(t, tx).Test(req, -1)
+		if err != nil {
+			t.Fatal(err)
+		}
 		c := cookieNamed(resp, "x-token")
 		if c == nil {
 			t.Fatal("no x-token cookie in the logout response")
 		}
 		if c.Path != "/" {
-			t.Errorf("Path = %q, want \"/\" (else the browser keeps the real cookie)", c.Path)
+			t.Errorf("Path = %q, want \"/\"", c.Path)
 		}
 		if c.Value != "" || c.Expires.After(time.Now()) || c.Expires.IsZero() {
 			t.Errorf("cookie not cleared: value=%q expires=%v", c.Value, c.Expires)
+		}
+		sessions := sessionApp(t, tx)
+		if got := sessionStatus(t, sessions, mine); got != http.StatusUnauthorized {
+			t.Errorf("the logged-out token still works (%d): logout only cleared the cookie", got)
+		}
+		if got := sessionStatus(t, sessions, theirs); got != http.StatusOK {
+			t.Errorf("logging out ended the user's other session (%d)", got)
 		}
 	})
 }
@@ -184,7 +200,7 @@ func TestResetLinkWorksOnceAndEndsOldSessions(t *testing.T) {
 		u := testutil.User(t, tx, "reset@example.com")
 		app := authApp(t, tx)
 		sessions := sessionApp(t, tx)
-		oldSession, _ := utils.CreateAccessToken(u.ID, u.TokenVersion)
+		oldSession, _ := models.CreateSession(tx, u.ID, time.Now().UTC())
 		link, _ := utils.CreateResetToken(u.ID, u.TokenVersion)
 
 		if resp := post(t, app, http.MethodPut, "/api/auth/reset", resetForm(link, "brand-new-pass")); resp.StatusCode != http.StatusOK {
@@ -213,7 +229,7 @@ func TestResetRejectsSessionCookieAndWeakPassword(t *testing.T) {
 	testutil.Tx(t, func(tx *gorm.DB) {
 		u := testutil.User(t, tx, "reset2@example.com")
 		app := authApp(t, tx)
-		session, _ := utils.CreateAccessToken(u.ID, u.TokenVersion)
+		session, _ := models.CreateSession(tx, u.ID, time.Now().UTC())
 		if resp := post(t, app, http.MethodPut, "/api/auth/reset", resetForm(session, "brand-new-pass")); resp.StatusCode != http.StatusBadRequest {
 			t.Errorf("session token as reset token = %d, want 400", resp.StatusCode)
 		}
@@ -243,28 +259,79 @@ func TestResetTokenCannotBeUsedAsALoginCookie(t *testing.T) {
 	})
 }
 
+// sessionAuthedApp is newAuthedTestApp plus the session id DeserializeToken
+// would set, for handlers that act on "this session".
+func sessionAuthedApp(t *testing.T, tx *gorm.DB, u *models.User, sessionID uuid.UUID, cs ...Controller) *fiber.App {
+	t.Helper()
+	app := fiber.New()
+	app.Use(func(c *fiber.Ctx) error {
+		c.Locals(utils.LocalCurrentUser, u)
+		c.Locals(utils.LocalSessionID, &sessionID)
+		return c.Next()
+	})
+	for _, c := range cs {
+		c.Init(tx, app)
+		c.RegisterApiRoutes()
+	}
+	return app
+}
+
 func TestPasswordChangeEndsOtherSessionsButKeepsThisOne(t *testing.T) {
 	setAuthEnv(t)
 	testutil.Tx(t, func(tx *gorm.DB) {
 		u := testutil.User(t, tx, "change@example.com")
-		oldSession, _ := utils.CreateAccessToken(u.ID, u.TokenVersion)
-		app := newAuthedTestApp(t, tx, u, &ProfileController{})
+		now := time.Now().UTC()
+		this, _ := models.CreateSession(tx, u.ID, now)
+		elsewhere, _ := models.CreateSession(tx, u.ID, now)
+		thisSession, _ := models.FindSession(tx, this, now)
+
+		app := sessionAuthedApp(t, tx, u, thisSession.ID, &ProfileController{})
 		resp := post(t, app, http.MethodPut, "/api/profile/password", url.Values{
 			"currentPassword": {"password"}, "newPassword": {"a-new-password"}, "confirmNewPassword": {"a-new-password"},
 		})
 		if resp.StatusCode != http.StatusAccepted {
 			t.Fatalf("status = %d, want 202", resp.StatusCode)
 		}
-		fresh := cookieNamed(resp, "x-token")
-		if fresh == nil {
-			t.Fatal("no fresh session cookie, this device would be logged out")
+		sessions := sessionApp(t, tx)
+		if code := sessionStatus(t, sessions, elsewhere); code != http.StatusUnauthorized {
+			t.Errorf("other session = %d, want 401", code)
+		}
+		if code := sessionStatus(t, sessions, this); code != http.StatusOK {
+			t.Errorf("this session = %d, want 200 (it should stay signed in)", code)
+		}
+	})
+}
+
+func TestSignOutEverywhereEndsEverySessionAndClearsTheCookie(t *testing.T) {
+	setAuthEnv(t)
+	testutil.Tx(t, func(tx *gorm.DB) {
+		u := testutil.User(t, tx, "everywhere@example.com")
+		other := testutil.User(t, tx, "bystander@example.com")
+		now := time.Now().UTC()
+		this, _ := models.CreateSession(tx, u.ID, now)
+		elsewhere, _ := models.CreateSession(tx, u.ID, now)
+		bystander, _ := models.CreateSession(tx, other.ID, now)
+		thisSession, _ := models.FindSession(tx, this, now)
+
+		app := sessionAuthedApp(t, tx, u, thisSession.ID, &ProfileController{})
+		resp := post(t, app, http.MethodPost, "/api/profile/sign-out-everywhere", nil)
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("status = %d, want 200", resp.StatusCode)
+		}
+		if resp.Header.Get("HX-Redirect") != "/auth/login" {
+			t.Errorf("HX-Redirect = %q", resp.Header.Get("HX-Redirect"))
+		}
+		if c := cookieNamed(resp, "x-token"); c == nil || c.Value != "" || c.Path != "/" {
+			t.Errorf("cookie not cleared: %+v", c)
 		}
 		sessions := sessionApp(t, tx)
-		if code := sessionStatus(t, sessions, oldSession); code != http.StatusUnauthorized {
-			t.Errorf("old session = %d, want 401", code)
+		for name, tok := range map[string]string{"this": this, "other": elsewhere} {
+			if code := sessionStatus(t, sessions, tok); code != http.StatusUnauthorized {
+				t.Errorf("%s session = %d, want 401", name, code)
+			}
 		}
-		if code := sessionStatus(t, sessions, fresh.Value); code != http.StatusOK {
-			t.Errorf("fresh session = %d, want 200", code)
+		if code := sessionStatus(t, sessions, bystander); code != http.StatusOK {
+			t.Errorf("another user's session = %d, want 200", code)
 		}
 	})
 }

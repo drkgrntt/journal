@@ -39,11 +39,10 @@ func newTestKeys(t *testing.T) testKeys {
 	}
 }
 
-func setTokenEnv(t *testing.T, k testKeys, expiresIn string) {
+func setTokenEnv(t *testing.T, k testKeys, _ string) {
 	t.Helper()
 	t.Setenv("ACCESS_TOKEN_PRIVATE_KEY", k.privEnv)
 	t.Setenv("ACCESS_TOKEN_PUBLIC_KEY", k.pubEnv)
-	t.Setenv("ACCESS_TOKEN_EXPIRES_IN", expiresIn)
 }
 
 func signWith(t *testing.T, method jwt.SigningMethod, key any, claims jwt.MapClaims) string {
@@ -55,107 +54,10 @@ func signWith(t *testing.T, method jwt.SigningMethod, key any, claims jwt.MapCla
 	return s
 }
 
-func TestAccessTokenRoundTrip(t *testing.T) {
-	setTokenEnv(t, newTestKeys(t), "60m")
-	id := uuid.New()
-	tok, err := CreateAccessToken(id, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	data, err := ValidateToken(tok)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if data.UserID != id {
-		t.Errorf("UserID = %s, want %s", data.UserID, id)
-	}
-}
-
-func TestCreateAccessTokenErrors(t *testing.T) {
-	keys := newTestKeys(t)
-	tests := []struct {
-		name string
-		priv string
-		exp  string
-	}{
-		{"invalid expiry", keys.privEnv, "soon"},
-		{"missing expiry", keys.privEnv, ""},
-		{"missing private key", "", "60m"},
-		{"private key not base64", "%%%", "60m"},
-		{"private key not PEM", base64.StdEncoding.EncodeToString([]byte("nope")), "60m"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			setTokenEnv(t, keys, tt.exp)
-			t.Setenv("ACCESS_TOKEN_PRIVATE_KEY", tt.priv)
-			if _, err := CreateAccessToken(uuid.New(), 0); err == nil {
-				t.Error("expected error")
-			}
-		})
-	}
-}
-
-func TestCreateAccessTokenAcceptsPKCS8(t *testing.T) {
-	keys := newTestKeys(t)
-	der, err := x509.MarshalPKCS8PrivateKey(keys.priv)
-	if err != nil {
-		t.Fatal(err)
-	}
-	pk8 := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der})
-	keys.privEnv = base64.StdEncoding.EncodeToString(pk8)
-	setTokenEnv(t, keys, "1h")
-	id := uuid.New()
-	tok, err := CreateAccessToken(id, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if data, err := ValidateToken(tok); err != nil || data.UserID != id {
-		t.Errorf("ValidateToken = %v, %v", data, err)
-	}
-}
-
-func TestValidateTokenRejects(t *testing.T) {
-	keys := newTestKeys(t)
-	other := newTestKeys(t)
-	setTokenEnv(t, keys, "60m")
-	id := uuid.New().String()
-	now := time.Now()
-	valid := func() jwt.MapClaims {
-		return jwt.MapClaims{"sub": id, "exp": now.Add(time.Hour).Unix(), "iat": now.Unix()}
-	}
-	expired := valid()
-	expired["exp"] = now.Add(-time.Hour).Unix()
-	noSub := valid()
-	delete(noSub, "sub")
-	badSub := valid()
-	badSub["sub"] = "not-a-uuid"
-
-	tests := []struct {
-		name string
-		tok  string
-	}{
-		{"expired", signWith(t, jwt.SigningMethodRS256, keys.priv, expired)},
-		{"different key", signWith(t, jwt.SigningMethodRS256, other.priv, valid())},
-		{"HS256", signWith(t, jwt.SigningMethodHS256, []byte("secret"), valid())},
-		{"none alg", signWith(t, jwt.SigningMethodNone, jwt.UnsafeAllowNoneSignatureType, valid())},
-		{"no sub", signWith(t, jwt.SigningMethodRS256, keys.priv, noSub)},
-		{"bad sub uuid", signWith(t, jwt.SigningMethodRS256, keys.priv, badSub)},
-		{"garbage", "not.a.token"},
-		{"empty", ""},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if data, err := ValidateToken(tt.tok); err == nil {
-				t.Errorf("accepted token, got %+v", data)
-			}
-		})
-	}
-}
-
 func TestValidateTokenBadEnv(t *testing.T) {
 	keys := newTestKeys(t)
 	setTokenEnv(t, keys, "60m")
-	tok, err := CreateAccessToken(uuid.New(), 0)
+	tok, err := CreateResetToken(uuid.New(), 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -170,8 +72,8 @@ func TestValidateTokenBadEnv(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Setenv("ACCESS_TOKEN_PUBLIC_KEY", tt.pub)
-			if _, err := ValidateToken(tok); err == nil {
-				t.Error("ValidateToken: expected error")
+			if _, _, err := ValidateResetToken(tok); err == nil {
+				t.Error("ValidateResetToken: expected error")
 			}
 			if _, _, err := ValidateEmailConfirmToken(tok); err == nil {
 				t.Error("ValidateEmailConfirmToken: expected error")
@@ -202,25 +104,14 @@ func TestEmailConfirmTokenRoundTrip(t *testing.T) {
 	}
 }
 
-func TestEmailConfirmTokenNotALoginToken(t *testing.T) {
+func TestResetTokenNotAConfirmToken(t *testing.T) {
 	setTokenEnv(t, newTestKeys(t), "60m")
-	tok, err := CreateEmailConfirmToken(uuid.New(), "a@b.com")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if data, err := ValidateToken(tok); err == nil {
-		t.Fatalf("email confirm token accepted as login token: %+v", data)
-	}
-}
-
-func TestAccessTokenNotAConfirmToken(t *testing.T) {
-	setTokenEnv(t, newTestKeys(t), "60m")
-	tok, err := CreateAccessToken(uuid.New(), 0)
+	tok, err := CreateResetToken(uuid.New(), 0)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, _, err := ValidateEmailConfirmToken(tok); err == nil {
-		t.Fatal("access token accepted as email confirm token")
+		t.Fatal("reset token accepted as email confirm token")
 	}
 }
 
@@ -305,35 +196,6 @@ func TestDaysTokenValid(t *testing.T) {
 	}
 }
 
-func TestAccessTokenCarriesVersion(t *testing.T) {
-	setTokenEnv(t, newTestKeys(t), "60m")
-	tok, err := CreateAccessToken(uuid.New(), 7)
-	if err != nil {
-		t.Fatal(err)
-	}
-	data, err := ValidateToken(tok)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if data.Version != 7 {
-		t.Errorf("Version = %d, want 7", data.Version)
-	}
-}
-
-func TestTokenWithoutVersionCountsAsZero(t *testing.T) {
-	keys := newTestKeys(t)
-	setTokenEnv(t, keys, "60m")
-	id := uuid.New()
-	old := signWith(t, jwt.SigningMethodRS256, keys.priv, jwt.MapClaims{"sub": id.String(), "exp": time.Now().Add(time.Hour).Unix()})
-	data, err := ValidateToken(old)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if data.Version != 0 {
-		t.Errorf("Version = %d, want 0 for a token issued before versions", data.Version)
-	}
-}
-
 func TestResetTokenRoundTrip(t *testing.T) {
 	setTokenEnv(t, newTestKeys(t), "60m")
 	id := uuid.New()
@@ -347,37 +209,6 @@ func TestResetTokenRoundTrip(t *testing.T) {
 	}
 	if gotID != id || ver != 3 {
 		t.Errorf("got (%s, %d), want (%s, 3)", gotID, ver, id)
-	}
-}
-
-// The reset link is emailed, so it must never double as a login cookie.
-func TestResetTokenIsNotASessionToken(t *testing.T) {
-	setTokenEnv(t, newTestKeys(t), "60m")
-	tok, err := CreateResetToken(uuid.New(), 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if data, err := ValidateToken(tok); err == nil {
-		t.Errorf("ValidateToken accepted a reset token: %+v", data)
-	}
-}
-
-// A stolen session cookie must not be usable to reset the password.
-func TestSessionTokenIsNotAResetToken(t *testing.T) {
-	setTokenEnv(t, newTestKeys(t), "60m")
-	tok, err := CreateAccessToken(uuid.New(), 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, _, err := ValidateResetToken(tok); err == nil {
-		t.Error("ValidateResetToken accepted a session token")
-	}
-	conf, err := CreateEmailConfirmToken(uuid.New(), "a@b.co")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, _, err := ValidateResetToken(conf); err == nil {
-		t.Error("ValidateResetToken accepted a confirmation token")
 	}
 }
 
@@ -404,15 +235,42 @@ func TestValidateResetTokenRejects(t *testing.T) {
 	}
 }
 
-// Even a token that somehow carries a "sub" must not log in if it is marked
-// for another purpose.
-func TestValidateTokenRejectsOtherPurposeEvenWithSub(t *testing.T) {
+// Keys may be stored as PKCS#8 as well as PKCS#1.
+func TestResetTokenAcceptsPKCS8Key(t *testing.T) {
 	keys := newTestKeys(t)
-	setTokenEnv(t, keys, "60m")
-	tok := signWith(t, jwt.SigningMethodRS256, keys.priv, jwt.MapClaims{
-		"sub": uuid.New().String(), "purpose": resetPasswordPurpose, "exp": time.Now().Add(time.Hour).Unix(),
-	})
-	if data, err := ValidateToken(tok); err == nil {
-		t.Errorf("accepted a purpose-marked token: %+v", data)
+	der, err := x509.MarshalPKCS8PrivateKey(keys.priv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keys.privEnv = base64.StdEncoding.EncodeToString(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der}))
+	setTokenEnv(t, keys, "")
+	id := uuid.New()
+	tok, err := CreateResetToken(id, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _, err := ValidateResetToken(tok); err != nil || got != id {
+		t.Errorf("ValidateResetToken = %v, %v", got, err)
+	}
+}
+
+func TestCreateResetTokenNeedsAPrivateKey(t *testing.T) {
+	keys := newTestKeys(t)
+	for name, priv := range map[string]string{"missing": "", "not base64": "%%%", "not PEM": base64.StdEncoding.EncodeToString([]byte("nope"))} {
+		t.Run(name, func(t *testing.T) {
+			setTokenEnv(t, keys, "")
+			t.Setenv("ACCESS_TOKEN_PRIVATE_KEY", priv)
+			if _, err := CreateResetToken(uuid.New(), 0); err == nil {
+				t.Error("expected error")
+			}
+		})
+	}
+}
+
+// A session cookie is a random string, never a valid reset token.
+func TestSessionTokenIsNotAResetToken(t *testing.T) {
+	setTokenEnv(t, newTestKeys(t), "")
+	if _, _, err := ValidateResetToken("QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI"); err == nil {
+		t.Error("ValidateResetToken accepted a random session-style token")
 	}
 }

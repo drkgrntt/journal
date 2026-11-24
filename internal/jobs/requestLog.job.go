@@ -28,3 +28,15 @@ func deleteRequestLogBefore(db *gorm.DB, cutoff time.Time) (int64, error) {
 	res := db.Unscoped().Where("created_at < ?", cutoff).Delete(&models.Analytic{})
 	return res.RowsAffected, res.Error
 }
+
+// pruneSessions deletes sessions that have expired.
+func pruneSessions() {
+	n, err := models.DeleteExpiredSessions(DB(), time.Now().UTC())
+	if err != nil {
+		logger.Error("Error pruning sessions", "error", err.Error())
+		return
+	}
+	if n > 0 {
+		logger.Info("Pruned sessions", "rows", n)
+	}
+}

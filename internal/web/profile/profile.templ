@@ -406,6 +406,20 @@ templ reminderEmailSection(c *fiber.Ctx) {
 	}
 }
 
+templ signOutEverywhereSection(c *fiber.Ctx) {
+	<form
+		class="form"
+		hx-post="/api/profile/sign-out-everywhere"
+		hx-swap="none"
+	>
+		<h4>Log out everywhere</h4>
+		<p>Ends every signed-in session, on this device and any other. Changing your password already signs out the others.</p>
+		<div class="field">
+			<button type="submit" class="button">Log out everywhere</button>
+		</div>
+	</form>
+}
+
 templ ProfilePage(c *fiber.Ctx) {
 	@web.Base(c, nil) {
 		<div id="profile-page">
@@ -416,6 +430,7 @@ templ ProfilePage(c *fiber.Ctx) {
 				<div class="forms">
 					@infoForm(c)
 					@passwordForm(c)
+					@signOutEverywhereSection(c)
 					@planSection(c)
 				</div>
 			</section>

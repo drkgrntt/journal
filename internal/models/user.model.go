@@ -17,8 +17,8 @@ type User struct {
 	FirstName string `gorm:"not null" json:"firstName,omitempty"`
 	LastName  string `gorm:"not null" json:"lastName,omitempty"`
 	Password  string `gorm:"not null" json:"-"`
-	// TokenVersion is stamped into session and reset tokens. Bumping it ends
-	// every session and pending reset link (see utils.CreateAccessToken).
+	// TokenVersion is stamped into password-reset links. A reset or password
+	// change bumps it, so each link works once (see utils.CreateResetToken).
 	TokenVersion     int    `gorm:"not null;default:0" json:"-"`
 	StripeCustomerID string `gorm:"type:text" json:"stripeCustomerId,omitempty"`
 	// Appearance preferences (see appearance.go). Empty = default.
