@@ -37,6 +37,10 @@
 		&.danger {
 			color: var(--awful-color);
 		}
+
+		@media (pointer: coarse) {
+			padding: .5rem 0;
+		}
 	}
 
 	.dialog {

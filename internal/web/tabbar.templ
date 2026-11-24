@@ -1,0 +1,66 @@
+package web
+
+import (
+	"strings"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+type tabItem struct {
+	Key   string
+	Href  string
+	Label string
+	Icon  string
+}
+
+// tabItems are the signed-in app's main destinations, shown as a bottom bar
+// on phones (components/tabBar.css). Everything else (reminders, logout, the
+// marketing links) stays in the slide-out menu.
+var tabItems = []tabItem{
+	{Key: "today", Href: "/dashboard", Label: "Today", Icon: "fa-pen-to-square"},
+	{Key: "journal", Href: "/journal", Label: "Journal", Icon: "fa-book-open"},
+	{Key: "actions", Href: "/action-items", Label: "Actions", Icon: "fa-list-check"},
+	{Key: "profile", Href: "/profile", Label: "Profile", Icon: "fa-user"},
+}
+
+// activeTab maps a request path to the tab it belongs to ("" for none).
+// /dashboard (Today and Patterns) and the new-entry page are both "Today";
+// every other /journal page is "Journal".
+func activeTab(path string) string {
+	switch {
+	case path == "/dashboard", path == "/journal/new":
+		return "today"
+	case path == "/journal", strings.HasPrefix(path, "/journal/"):
+		return "journal"
+	case path == "/action-items", strings.HasPrefix(path, "/action-items/"):
+		return "actions"
+	case path == "/profile", strings.HasPrefix(path, "/profile/"):
+		return "profile"
+	}
+	return ""
+}
+
+// ShowTabBar is true for signed-in pages; logged-out visitors keep the
+// marketing footer and the menu.
+func ShowTabBar(c *fiber.Ctx) bool {
+	return CurrentUser(c) != nil
+}
+
+templ TabBar(c *fiber.Ctx) {
+	if ShowTabBar(c) {
+		<nav class="tab-bar" aria-label="Main">
+			for _, item := range tabItems {
+				<a
+					class={ "tab-bar-item", templ.KV("active", item.Key == activeTab(c.Path())) }
+					href={ templ.SafeURL(item.Href) }
+					if item.Key == activeTab(c.Path()) {
+						aria-current="page"
+					}
+				>
+					<i class={ "fa-solid", item.Icon } aria-hidden="true"></i>
+					<span>{ item.Label }</span>
+				</a>
+			}
+		</nav>
+	}
+}
