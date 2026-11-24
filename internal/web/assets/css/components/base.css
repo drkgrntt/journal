@@ -79,3 +79,63 @@ a {
 a:hover {
 	color: var(--accent-hover);
 }
+
+/* App-feel touch behavior. Taps on controls respond immediately (no
+   double-tap-to-zoom delay) and don't flash the browser's gray highlight;
+   the pressed state below replaces it. */
+html {
+	-webkit-tap-highlight-color: transparent;
+}
+
+a,
+button,
+label,
+summary,
+select,
+input,
+textarea,
+[role="button"] {
+	touch-action: manipulation;
+}
+
+/* Chrome (header, menu, footer, tabs, buttons) isn't text to select: a long
+   press shouldn't highlight it or pop the link preview. Page content,
+   entries and inputs stay selectable. */
+.top-bar,
+#app-nav,
+#footer,
+.toggle-button-border,
+.tabs,
+button,
+.button {
+	-webkit-user-select: none;
+	user-select: none;
+	-webkit-touch-callout: none;
+}
+
+/* Pressed feedback for touch (hover alone gives none). Buttons already
+   scale in button.css. */
+#app-nav .link:active,
+.tabs .tab:active,
+.top-bar .theme-toggle:active,
+.toggle-button-border:active {
+	background-color: var(--surface-hover);
+}
+
+.top-bar .brand-link:active,
+#footer .links a:active {
+	opacity: .6;
+}
+
+/* Page-to-page navigations cross-fade instead of flashing blank (browsers
+   without cross-document view transitions just load as before). */
+@media (prefers-reduced-motion: no-preference) {
+	@view-transition {
+		navigation: auto;
+	}
+
+	::view-transition-old(root),
+	::view-transition-new(root) {
+		animation-duration: .15s;
+	}
+}
