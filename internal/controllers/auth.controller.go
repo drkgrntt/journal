@@ -57,42 +57,15 @@ type AuthFormData struct {
 	Password string `form:"password"`
 }
 
-const sessionCookieName = "x-token"
-const sessionLifetime = time.Hour * 24 * 30
-
-// setSessionCookie signs the person in. The token carries their TokenVersion,
-// so a later password change or reset ends it.
-func setSessionCookie(ctx *fiber.Ctx, user *models.User) error {
-	token, err := utils.CreateAccessToken(user.ID, user.TokenVersion)
+// startSession signs the person in by creating a session and sending its
+// token as the cookie.
+func (c *AuthController) startSession(ctx *fiber.Ctx, user *models.User) error {
+	token, err := models.CreateSession(c.db, user.ID, time.Now().UTC())
 	if err != nil {
 		return err
 	}
-	ctx.Cookie(&fiber.Cookie{
-		Name:     sessionCookieName,
-		Value:    token,
-		HTTPOnly: true,
-		SameSite: "Lax",
-		Secure:   os.Getenv("APP_ENV") == "production",
-		Path:     "/",
-		Expires:  time.Now().Add(sessionLifetime),
-		MaxAge:   int(sessionLifetime.Seconds()),
-	})
+	utils.SetSessionCookie(ctx, token)
 	return nil
-}
-
-// clearSessionCookie must repeat the Path the cookie was set with, or the
-// browser treats it as a different cookie and the session survives.
-func clearSessionCookie(ctx *fiber.Ctx) {
-	ctx.Cookie(&fiber.Cookie{
-		Name:     sessionCookieName,
-		Value:    "",
-		HTTPOnly: true,
-		SameSite: "Lax",
-		Secure:   os.Getenv("APP_ENV") == "production",
-		Path:     "/",
-		Expires:  time.Unix(0, 0),
-		MaxAge:   -1,
-	})
 }
 
 func (c *AuthController) register(ctx *fiber.Ctx) error {
@@ -148,7 +121,7 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 		logger.Error("Error sending email confirmation", "error", err.Error())
 	}
 
-	if err := setSessionCookie(ctx, &user); err != nil {
+	if err := c.startSession(ctx, &user); err != nil {
 		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error creating token")
 	}
@@ -175,7 +148,7 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).SendString("Email or password incorrect")
 	}
 
-	if err := setSessionCookie(ctx, &user); err != nil {
+	if err := c.startSession(ctx, &user); err != nil {
 		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error creating token")
 	}
@@ -184,7 +157,11 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 }
 
 func (c *AuthController) logout(ctx *fiber.Ctx) error {
-	clearSessionCookie(ctx)
+	if err := models.DeleteSessionByToken(c.db, ctx.Cookies(utils.SessionCookieName)); err != nil {
+		utils.SetRequestError(ctx, err)
+		return ctx.Status(http.StatusInternalServerError).SendString("Error logging out")
+	}
+	utils.ClearSessionCookie(ctx)
 	return ctx.Status(http.StatusNoContent).Redirect("/auth/login")
 }
 
@@ -273,6 +250,12 @@ func (c *AuthController) resetPassword(ctx *fiber.Ctx) error {
 	}
 	if res.RowsAffected == 0 {
 		return ctx.Status(http.StatusBadRequest).SendString("This reset link isn't valid or has expired. Ask for a new one.")
+	}
+
+	// A reset signs out every browser, including any that had the old password.
+	if err := models.DeleteUserSessions(c.db, userID, nil); err != nil {
+		utils.SetRequestError(ctx, err)
+		return ctx.Status(http.StatusInternalServerError).SendString("Password updated, but signing out other browsers failed. Log out everywhere from your profile.")
 	}
 
 	return ctx.Status(http.StatusOK).SendString("Password updated, <a href='/auth/login'>login</a> to continue.")

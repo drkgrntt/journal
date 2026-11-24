@@ -56,14 +56,25 @@ async function clearOfflineData() {
 	}
 }
 
-// Logging out wipes the on-device drafts and the cached page (which contains
+const SIGN_OUT_EVERYWHERE_PATH = "/api/profile/sign-out-everywhere"
+const SIGN_OUT_PATHS = ["/api/auth/logout", SIGN_OUT_EVERYWHERE_PATH]
+
+// Logging out (or signing out everywhere) wipes the on-device drafts and the cached page (which contains
 // the user's outstanding action items). Drafts that haven't synced get one
 // last attempt first, and a warning if they still can't - logging out would
 // otherwise silently throw them away.
 document.addEventListener("htmx:confirm", async (event) => {
-	if (event.detail.path !== "/api/auth/logout") return
+	if (!SIGN_OUT_PATHS.includes(event.detail.path)) return
 
 	event.preventDefault()
+	// No hx-confirm on the form: confirm.js would answer it too and send twice.
+	if (event.detail.path === SIGN_OUT_EVERYWHERE_PATH) {
+		const sure = await window.confirmDialog(
+			"Sign out of every browser and device, including this one?",
+			"Log out everywhere",
+		)
+		if (!sure) return
+	}
 	if (pendingDrafts().length > 0) {
 		const remaining = await flushDrafts()
 		if (remaining > 0) {

@@ -6,7 +6,7 @@ Code read-through of auth, tokens, ownership checks, Stripe, backups and depende
 
 **Deploy checklist (not done yet):**
 - [x] nginx: both journal server blocks (`contourjournal.com`, `journal.derekgarnett.com`) in `/etc/nginx/sites-available/default` now set `X-Real-IP`, `X-Forwarded-For` and `X-Forwarded-Proto` (done and checked 2026-11-24; backup alongside the file). Without these the rate limiter sees every visitor as 127.0.0.1.
-- [ ] Run migration `000012_token_version` before restarting the app.
+- [ ] Run migrations `000012_token_version` and (if the sessions work ships with it) `000013_sessions` before restarting the app.
 - [ ] Rebuild the image (Go 1.26 base; also clears the Go stdlib advisories that local `go1.26.5` still shows).
 - [ ] After deploy: load the dashboard and `/journal/new` and check the console for CSP errors; log in, log out, reset a password; confirm a 429 only for the client that hit the limit.
 - [ ] Check `mobile/.env.production` (tracked in git, not inspected) holds no secrets.
@@ -20,6 +20,16 @@ Clean on review: every route group has `RequireAuth` except the intended public 
    - **Fixed.** Reset tokens now have `purpose: reset-password` and `uid`, no `sub` (`CreateResetToken` / `ValidateResetToken`). `ValidateToken` rejects any token carrying a `purpose`. Same pattern as the email-confirmation token.
 3. **No revocation.** Sessions were stateless 30-day JWTs; a password change or reset ended nothing, and reset links could be reused within 5 minutes.
    - **Fixed.** `users.token_version` (migration `000012`, additive, default 0, so existing sessions stay valid). Session and reset tokens carry `ver`; `DeserializeToken` ignores a token whose version differs from the user's. A reset or password change bumps the version. The reset update is conditional on the version (`WHERE token_version = ?`), so a link works exactly once even under concurrent requests. Changing your password in the profile keeps that device signed in with a fresh token and signs out the rest.
+
+### Follow-up: server-side sessions (2026-11-24)
+
+The fixes for #2 and #3 used versioned JWT cookies, which still couldn't be revoked per browser. They were replaced with a `sessions` table (migration `000013`):
+- The cookie is a random token; only its SHA-256 hash is stored, with no IP or user agent.
+- A session lasts 30 days from its last rotation. The token rotates about daily (conditional UPDATE, so simultaneous requests can't both rotate), the old token works for 5 more minutes, and the cookie is re-sent so active use stays signed in.
+- Logout deletes the session. A password change deletes the other sessions (this one stays). A reset, or the new profile button "Log out everywhere" (`POST /api/profile/sign-out-everywhere`), deletes all.
+- `ValidateToken`, `CreateAccessToken` and `ACCESS_TOKEN_EXPIRES_IN` are gone. `ACCESS_TOKEN_PRIVATE_KEY`/`PUBLIC_KEY` still sign reset and confirmation links. `users.token_version` now only makes reset links single-use.
+- **Deploying this signs everyone out once** (existing JWT cookies no longer count). Unsynced offline drafts stay on the device and sync after signing back in.
+- Each request now does a session lookup plus the user load (two indexed queries instead of one).
 
 ## Medium
 

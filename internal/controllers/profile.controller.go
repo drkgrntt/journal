@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/stripe/stripe-go/v84"
 	portal "github.com/stripe/stripe-go/v84/billingportal/session"
@@ -52,6 +53,7 @@ func (c *ProfileController) RegisterApiRoutes() {
 
 	c.api.Put("/", c.updateUser)
 	c.api.Put("/password", c.updatePassword)
+	c.api.Post("/sign-out-everywhere", c.signOutEverywhere)
 	c.api.Put("/appearance", middleware.RequireSubscription, c.updateAppearance)
 	c.api.Put("/reminder-email", c.updateReminderEmail)
 	c.api.Post("/confirm-email", c.resendEmailConfirmation)
@@ -344,23 +346,35 @@ func (c *ProfileController) updatePassword(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).SendString(msg)
 	}
 
-	// Bumping the version ends every other session; this one gets a fresh token.
-	newVersion := currentUser.TokenVersion + 1
+	// Bumping the version also kills any reset link issued before this change.
 	err = c.db.Model(&models.User{}).
 		Where("id = ?", currentUser.ID).
-		Updates(&models.User{Password: body.NewPassword, TokenVersion: newVersion}).Error
+		Updates(&models.User{Password: body.NewPassword, TokenVersion: currentUser.TokenVersion + 1}).Error
 	if err != nil {
 		logger.Warn(err.Error())
 		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error updating user")
 	}
-	currentUser.TokenVersion = newVersion
-	if err := setSessionCookie(ctx, currentUser); err != nil {
+
+	// Every other browser signs out; this one stays.
+	if err := models.DeleteUserSessions(c.db, currentUser.ID, utils.GetLocal[uuid.UUID](ctx, utils.LocalSessionID)); err != nil {
 		utils.SetRequestError(ctx, err)
-		return ctx.Status(http.StatusInternalServerError).SendString("Password updated, but signing you back in failed. Log in again.")
+		return ctx.Status(http.StatusInternalServerError).SendString("Password updated, but signing out other browsers failed. Use Log out everywhere.")
 	}
 
 	return ctx.SendStatus(http.StatusAccepted)
+}
+
+// signOutEverywhere ends every session for the current user, this one included.
+func (c *ProfileController) signOutEverywhere(ctx *fiber.Ctx) error {
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
+	if err := models.DeleteUserSessions(c.db, currentUser.ID, nil); err != nil {
+		utils.SetRequestError(ctx, err)
+		return ctx.Status(http.StatusInternalServerError).SendString("Error signing out")
+	}
+	utils.ClearSessionCookie(ctx)
+	ctx.Set("HX-Redirect", "/auth/login")
+	return ctx.SendStatus(http.StatusOK)
 }
 
 type UpdateAppearanceBody struct {

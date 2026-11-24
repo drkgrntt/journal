@@ -17,7 +17,6 @@ import (
 // them with t.Setenv.
 func accessTokenPrivateKey() string { return os.Getenv("ACCESS_TOKEN_PRIVATE_KEY") }
 func accessTokenPublicKey() string  { return os.Getenv("ACCESS_TOKEN_PUBLIC_KEY") }
-func accessTokenExpiresIn() string  { return os.Getenv("ACCESS_TOKEN_EXPIRES_IN") }
 
 func CreateToken(expiresIn time.Duration, additionalClaims map[string]any) (string, error) {
 	decodedPrivateKey, err := base64.StdEncoding.DecodeString(accessTokenPrivateKey())
@@ -50,90 +49,13 @@ func CreateToken(expiresIn time.Duration, additionalClaims map[string]any) (stri
 	return token, nil
 }
 
-// CreateAccessToken signs a session token. version is the user's TokenVersion;
-// bumping it on the user ends every session and reset link issued before.
-func CreateAccessToken(userId uuid.UUID, version int) (string, error) {
-	expiresIn, err := time.ParseDuration(accessTokenExpiresIn())
-	if err != nil {
-		return "", fmt.Errorf("invalid expiry duration: %w", err)
-	}
-
-	claims := make(map[string]any)
-	claims["sub"] = userId
-	claims["ver"] = version
-
-	token, err := CreateToken(expiresIn, claims)
-
-	if err != nil {
-		return "", fmt.Errorf("create: sign token: %w", err)
-	}
-
-	return token, nil
-}
-
-type TokenData struct {
-	UserID uuid.UUID
-	// Version is the TokenVersion the token was issued at. Tokens issued
-	// before versions existed have none and count as 0.
-	Version int
-}
-
-func ValidateToken(token string) (*TokenData, error) {
-	decodedPublicKey, err := base64.StdEncoding.DecodeString(accessTokenPublicKey())
-	if err != nil {
-		return nil, fmt.Errorf("could not decode: %w", err)
-	}
-
-	key, err := jwt.ParseRSAPublicKeyFromPEM(decodedPublicKey)
-
-	if err != nil {
-		return nil, fmt.Errorf("validate: parse key: %w", err)
-	}
-
-	parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("unexpected method: %s", t.Header["alg"])
-		}
-		return key, nil
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("validate: %w", err)
-	}
-
-	claims, ok := parsedToken.Claims.(jwt.MapClaims)
-	if !ok || !parsedToken.Valid {
-		return nil, fmt.Errorf("validate: invalid token")
-	}
-
-	if claims["sub"] == nil {
-		return nil, fmt.Errorf("validate: no sub")
-	}
-
-	userId, err := uuid.Parse(claims["sub"].(string))
-	if err != nil {
-		return nil, fmt.Errorf("validate: unable to parse tokens: %s", err)
-	}
-
-	if _, isOtherPurpose := claims["purpose"]; isOtherPurpose {
-		return nil, fmt.Errorf("validate: not a session token")
-	}
-
-	ver, _ := claims["ver"].(float64)
-	tokenData := TokenData{
-		UserID:  userId,
-		Version: int(ver),
-	}
-	return &tokenData, nil
-}
-
 const confirmEmailPurpose = "confirm-email"
 const resetPasswordPurpose = "reset-password"
 
-// CreateResetToken makes the password-reset link token. Like the confirmation
-// token it has no "sub" claim and a purpose, so it can never work as a login
-// cookie, and a session cookie can never work as a reset token. It carries the
-// user's TokenVersion, which the reset bumps, so a link works once.
+// CreateResetToken makes the password-reset link token. It carries the user's
+// TokenVersion, which a reset or password change bumps, so a link works once.
+// Sessions are random server-side tokens (models.Session), so a reset link is
+// never a login and a session cookie is never a reset token.
 func CreateResetToken(userId uuid.UUID, version int) (string, error) {
 	return CreateToken(time.Minute*5, map[string]any{
 		"purpose": resetPasswordPurpose,
@@ -188,8 +110,8 @@ func parseClaims(token string) (jwt.MapClaims, error) {
 }
 
 // CreateEmailConfirmToken makes a link token for confirming one address. It
-// deliberately has no "sub" claim, so ValidateToken rejects it and it can never
-// be used as a login cookie. It carries the address it was issued for, so a
+// deliberately is a signed link token, never a session: sessions are random
+// tokens stored server-side (models.Session). It carries the address it was issued for, so a
 // later change of address invalidates it.
 func CreateEmailConfirmToken(userId uuid.UUID, email string) (string, error) {
 	return CreateToken(time.Hour*48, map[string]any{
