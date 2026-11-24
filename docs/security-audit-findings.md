@@ -2,7 +2,14 @@
 
 Code read-through of auth, tokens, ownership checks, Stripe, backups and dependencies, plus `govulncheck`. Not a pen test: nothing was run against a live deployment. `mobile/.env.production` is tracked in git and was not inspected (blocked in the audit session); check it holds no secrets.
 
-**Status: everything below is fixed in the working tree, not yet committed or deployed.** `go vet`, `make build` and `go test ./...` pass. Fixes for #2-#5 have tests that were confirmed to go red when the fix is broken.
+**Status (2026-11-24): all findings fixed or explicitly accepted, merged to `main`. Not yet deployed.** `go vet`, `make build` and `go test ./...` pass. Fixes for #2-#5 have tests that were confirmed to go red when the fix is broken.
+
+**Deploy checklist (not done yet):**
+- [x] nginx: both journal server blocks (`contourjournal.com`, `journal.derekgarnett.com`) in `/etc/nginx/sites-available/default` now set `X-Real-IP`, `X-Forwarded-For` and `X-Forwarded-Proto` (done and checked 2026-11-24; backup alongside the file). Without these the rate limiter sees every visitor as 127.0.0.1.
+- [ ] Run migration `000012_token_version` before restarting the app.
+- [ ] Rebuild the image (Go 1.26 base; also clears the Go stdlib advisories that local `go1.26.5` still shows).
+- [ ] After deploy: load the dashboard and `/journal/new` and check the console for CSP errors; log in, log out, reset a password; confirm a 429 only for the client that hit the limit.
+- [ ] Check `mobile/.env.production` (tracked in git, not inspected) holds no secrets.
 
 Clean on review: every route group has `RequireAuth` except the intended public ones; every `get<Thing>` handler scopes by `creator_id`; no SQL injection (`Order`/`Raw`/`Where` use constants or placeholders); webhook signature is verified; `/dev` is blocked in production; cookies are `HttpOnly`, `SameSite=Lax`, `Secure` in production; entry encryption is AES-GCM with random nonces; `.env` is ignored and was never committed.
 

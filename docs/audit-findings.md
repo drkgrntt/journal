@@ -1,5 +1,7 @@
 # Repo Audit Findings (2026-09-17)
 
+> A security-focused audit followed on 2026-11-24: see `docs/security-audit-findings.md`.
+
 Full-repo audit for bugs, anti-patterns, and cleanup opportunities, done via four parallel agents covering controllers/middleware/auth, models/database/scopes/seed, views (templ + JS), and jobs/emails/stripe/logger/utils.
 
 **Status as of 2026-09-18: all 10 critical items fixed and verified** (build/vet clean; schema changes live-verified against the dev DB, including on a throwaway fresh database). See "Resolution notes" after each item and the new "Migration system" section below for what shipped beyond the original findings.
@@ -78,7 +80,7 @@ Fixing #8 exposed that GORM's `AutoMigrate` can't retype/replace an existing con
 
 ## Verified clean
 
-- JWT/crypto helpers (`internal/utils/tokens.go`, `crypto.go`) are sound — algorithm allowlisted, exp/nbf checked.
+- JWT/crypto helpers (`internal/utils/tokens.go`, `crypto.go`) are sound — algorithm allowlisted, exp/nbf checked. (A later audit found the tokens were interchangeable and unrevocable; fixed. See `docs/security-audit-findings.md`.)
 - No raw SQL string concatenation anywhere in the audited code.
 - Mailgun recipient redirection in non-prod environments is intentional and correct.
 - Most `GetLocal`/`CurrentUser` nil-deref sites in templates are properly gated by `RequireAuth`.
