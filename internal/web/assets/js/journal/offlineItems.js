@@ -104,6 +104,15 @@ function pendingItem(kind, op) {
 	return li
 }
 
+// Adds a device-only item to its list. Blur is on by default in CSS and cleared
+// per element by a pass on htmx's load event (utils/index.js), so an element
+// built here has to be offered to that pass or it stays blurred whatever the
+// person's setting is.
+function addPending(list, li) {
+	list.append(li)
+	window.htmx?.trigger(li, "htmx:load")
+}
+
 function setCompleted(li, complete) {
 	li.querySelector("p.text")?.classList.toggle("completed", complete)
 	const flag = li.querySelector('input[name="isComplete"]')
@@ -132,7 +141,8 @@ function handleFailedRequest(event) {
 		if (!text) return
 		const op = enqueueOp({ kind: route.kind, type: "create", ref: {}, text })
 		if (!op) return
-		document.querySelector(LIST_SELECTOR[route.kind])?.append(pendingItem(route.kind, op))
+		const list = document.querySelector(LIST_SELECTOR[route.kind])
+		if (list) addPending(list, pendingItem(route.kind, op))
 		const input = document.getElementById(route.kind === "action" ? "text" : "thankful-text")
 		if (input) input.value = ""
 		return
@@ -211,7 +221,7 @@ function showPending() {
 			if (!list || list.querySelector(`[data-client-id="${CSS.escape(op.ref.clientId)}"]`)) continue
 			const li = pendingItem(op.kind, op)
 			if (op.isComplete) setCompleted(li, true)
-			list.append(li)
+			addPending(list, li)
 			continue
 		}
 		const id = op.ref.serverId
