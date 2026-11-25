@@ -6,6 +6,10 @@
 // so the form (and autosave's on-device drafts, see assets/js/utils/drafts.js)
 // opens anywhere. It deliberately caches nothing else - in particular no
 // dashboard, journal list or entry pages, since those hold decrypted entries.
+// The one exception to "nothing decrypted" is /journal/new itself: it carries
+// the user's open action items and the daily reminder, which is also what lets
+// them complete an action offline (see assets/js/journal/offlineItems.js).
+// Logout deletes these caches (offline.js).
 
 const VERSION = "__ASSET_VERSION__"
 const ASSETS_CACHE = `contour-assets-${VERSION}`

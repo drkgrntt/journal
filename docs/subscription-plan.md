@@ -14,7 +14,7 @@ Replaces the per-feature "products" model (Routines, Custom Topics bought one-ti
 ## Principles
 
 - The free core stays fully functional. Paid = customization or automation, or things that cost real money to run.
-- Never paywalled: export, blur mode, encryption, bookmarks, basic patterns, offline drafts.
+- Never paywalled: export, blur mode, encryption, bookmarks, basic patterns, offline drafts, offline actions and thankfuls.
 - Nothing analyzes or resurfaces entries, at any tier.
 - Lapsing never costs access to the app or any data. Paid features go quiet; nothing is deleted.
 - Copy describes the subscription plainly as how things are. No announcement or "changed my mind" framing (the only existing user is the owner, so nothing is being walked back).

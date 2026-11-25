@@ -32,3 +32,7 @@ A toggle in the nav that unblurs everything on screen for a while, for reading a
 ## Copy
 
 The landing page, about page, and the "what is Contour Journal" blog post mention blur mode in general terms ("a blur mode if you're somewhere public"). They don't describe how reading works, so they didn't need to change. The blog sentence could take a clause like "and a tap on any blurred text shows it for a few seconds" if that's ever wanted.
+
+## Gotcha: elements built in JS
+
+`[can-blur]` is blurred by CSS by default, and `utils/index.js` clears it per element on htmx's load event. An element created with `createElement` never gets that pass, so it stays blurred even with blur mode off. After inserting one, call `htmx.trigger(el, "htmx:load")` (see `addPending` in `js/journal/offlineItems.js`).
