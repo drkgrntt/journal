@@ -55,6 +55,7 @@ func (c *ProfileController) RegisterApiRoutes() {
 	c.api.Put("/password", c.updatePassword)
 	c.api.Post("/sign-out-everywhere", c.signOutEverywhere)
 	c.api.Put("/appearance", middleware.RequireSubscription, c.updateAppearance)
+	c.api.Put("/preferences", c.updatePreferences)
 	c.api.Put("/reminder-email", c.updateReminderEmail)
 	c.api.Post("/confirm-email", c.resendEmailConfirmation)
 	c.api.Post("/billing/checkout/:plan", c.startCheckout)
@@ -402,6 +403,36 @@ func (c *ProfileController) updateAppearance(ctx *fiber.Ctx) error {
 		logger.Warn(err.Error())
 		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).SendString("Error saving appearance")
+	}
+	return ctx.SendStatus(http.StatusOK)
+}
+
+type UpdatePreferencesBody struct {
+	AddAnotherEntry bool `form:"addAnotherEntry"`
+}
+
+// updatePreferences saves the current user's own preferences. Only their own
+// row is ever touched, and only the fields named here (the rest of
+// User.Metadata, e.g. hidden patterns, is kept).
+func (c *ProfileController) updatePreferences(ctx *fiber.Ctx) error {
+	var body UpdatePreferencesBody
+	if err := ctx.BodyParser(&body); err != nil {
+		return ctx.Status(http.StatusBadRequest).SendString("Bad request reading body")
+	}
+
+	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
+	prefs := currentUser.Preferences()
+	prefs.AddAnotherEntry = body.AddAnotherEntry
+	if err := currentUser.SetPreferences(prefs); err != nil {
+		logger.Warn(err.Error())
+		utils.SetRequestError(ctx, err)
+		return ctx.Status(http.StatusInternalServerError).SendString("Error saving preferences")
+	}
+
+	if err := c.db.Model(currentUser).Update("metadata", currentUser.Metadata).Error; err != nil {
+		logger.Warn(err.Error())
+		utils.SetRequestError(ctx, err)
+		return ctx.Status(http.StatusInternalServerError).SendString("Error saving preferences")
 	}
 	return ctx.SendStatus(http.StatusOK)
 }

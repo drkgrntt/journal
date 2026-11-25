@@ -11,7 +11,7 @@ import (
 
 // patternDef is one entry on the Patterns tab: a title/description for its
 // accordion plus the chart component itself, keyed so a user can opt out of
-// it individually (see dashboardPreferences in the dashboard controller,
+// it individually (see models.UserPreferences,
 // which persists hidden keys to User.Metadata).
 type patternDef struct {
 	Key         string

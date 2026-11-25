@@ -163,7 +163,10 @@ templ Form(c *fiber.Ctx, journal *models.Journal) {
 					name="addAnotherEntry"
 					id="addAnotherEntry"
 					value="true"
-					checked?={ journal == nil && c.Query("addAnother") == "true" }
+					checked?={ journal == nil && (c.Query("addAnother") == "true" || web.CurrentUser(c).Preferences().AddAnotherEntry) }
+					if journal == nil {
+						onchange="fetch('/api/profile/preferences', {method: 'PUT', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: 'addAnotherEntry=' + this.checked, credentials: 'same-origin'}).catch(() => {})"
+					}
 				/>
 				<label class="label" for="addAnotherEntry">Add another entry</label>
 			</div>

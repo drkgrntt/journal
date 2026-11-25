@@ -117,20 +117,9 @@ func (c *DashboardController) setOutstandingActionItems(ctx *fiber.Ctx) error {
 	return ctx.Next()
 }
 
-// dashboardPreferences is stored in the current user's Metadata jsonb column
-// (see models.EncodeMetadata/CastMetadata) -- HiddenPatterns holds the keys
-// (dashboard.PatternKeys) of Patterns-tab charts the user has opted out of.
-type dashboardPreferences struct {
-	HiddenPatterns []string `json:"hiddenPatterns"`
-}
-
 func hiddenPatternSet(user *models.User) map[string]bool {
 	hidden := map[string]bool{}
-	err, prefs := models.CastMetadata[dashboardPreferences](user.Metadata)
-	if err != nil {
-		return hidden
-	}
-	for _, key := range prefs.HiddenPatterns {
+	for _, key := range user.Preferences().HiddenPatterns {
 		hidden[key] = true
 	}
 	return hidden
@@ -165,13 +154,14 @@ func (c *DashboardController) setPatternHidden(ctx *fiber.Ctx, hidden bool) erro
 	}
 	sort.Strings(updated)
 
-	metadata, err := models.EncodeMetadata(dashboardPreferences{HiddenPatterns: updated})
-	if err != nil {
+	// Read-modify-write the whole document so other preferences survive.
+	prefs := currentUser.Preferences()
+	prefs.HiddenPatterns = updated
+	if err := currentUser.SetPreferences(prefs); err != nil {
 		logger.Error(err.Error())
 		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error saving preference"})
 	}
-	currentUser.Metadata = metadata
 
 	if err := c.db.Save(currentUser).Error; err != nil {
 		logger.Error(err.Error())
