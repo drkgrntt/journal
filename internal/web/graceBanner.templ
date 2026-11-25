@@ -13,6 +13,7 @@ templ GraceBanner(c *fiber.Ctx) {
 			id="grace-banner"
 			class="grace-banner"
 			data-ends={ user.AccessEndsAt().Format("2006-01-02") }
+			data-user={ user.ID.String() }
 			role="note"
 		>
 			<p>
@@ -32,13 +33,13 @@ templ GraceBanner(c *fiber.Ctx) {
 		<script>
 			function dismissGraceBanner() {
 				const banner = document.getElementById('grace-banner')
-				try { localStorage.setItem('grace-banner-dismissed', banner.dataset.ends) } catch (e) {}
+				try { localStorage.setItem('grace-banner-dismissed-' + banner.dataset.user, banner.dataset.ends) } catch (e) {}
 				banner.remove()
 			}
 			(function () {
 				const banner = document.getElementById('grace-banner')
 				try {
-					if (banner && localStorage.getItem('grace-banner-dismissed') === banner.dataset.ends) banner.remove()
+					if (banner && localStorage.getItem('grace-banner-dismissed-' + banner.dataset.user) === banner.dataset.ends) banner.remove()
 				} catch (e) {}
 			})()
 		</script>

@@ -77,6 +77,7 @@ templ baseWithHead(c *fiber.Ctx, h *Head) {
 		}
 		if CurrentUser(c) != nil {
 			data-appearance-sync
+			data-appearance-user={ id(c) }
 		}
 		if IsNativeApp(c) {
 			data-native-app
@@ -92,6 +93,7 @@ templ baseWithHead(c *fiber.Ctx, h *Head) {
 			<meta name="og:title" content={ fmt.Sprintf("Contour Journal - %s", h.Title) }/>
 			<meta name="description" content={ h.Description }/>
 			<meta name="theme-color" id="theme-color-meta" content="#ffffff"/>
+			<meta name="htmx-config" content='{"historyEnabled":false}'/>
 			<script src={ AssetURL("/assets/js/theme.js") }></script>
 			<link href={ AssetURL("/assets/fontawesome/css/fontawesome.css") } rel="stylesheet"/>
 			<link href={ AssetURL("/assets/fontawesome/css/solid.css") } rel="stylesheet"/>

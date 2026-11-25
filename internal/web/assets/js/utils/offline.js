@@ -49,7 +49,7 @@ async function clearOfflineData() {
 		const keys = await caches.keys()
 		await Promise.all(keys.filter((key) => key.startsWith("contour-")).map((key) => caches.delete(key)))
 		Object.keys(localStorage)
-			.filter((key) => key.startsWith(WARMED_KEY))
+			.filter((key) => key.startsWith(WARMED_KEY) || key.startsWith("appearance-") || key.startsWith("grace-banner-dismissed-"))
 			.forEach((key) => localStorage.removeItem(key))
 	} catch {
 		// Nothing to clear.

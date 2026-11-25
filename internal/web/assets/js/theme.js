@@ -24,7 +24,12 @@
 // /journal/new copy, which can predate the latest choice, so the mirrored
 // value wins. Only the allowlisted tokens are ever stored or applied.
 // Never throws: storage can be blocked, and this runs before first paint.
-var APPEARANCE_KEY = "appearance";
+// Mirrored per user, so one person's palette is never applied to another on a
+// shared device. Empty when signed out, where nothing is mirrored.
+function appearanceKey() {
+	var uid = document.documentElement.getAttribute("data-appearance-user");
+	return uid ? "appearance-" + uid : "";
+}
 var PALETTES = ["lavender", "sky", "rose", "sand"];
 var FONTS = ["serif"];
 
@@ -37,7 +42,8 @@ function setAppearance(palette, font) {
 	if (font) root.setAttribute("data-font", font);
 	else root.removeAttribute("data-font");
 	try {
-		localStorage.setItem(APPEARANCE_KEY, JSON.stringify({ palette: palette, font: font }));
+		var key = appearanceKey();
+		if (key) localStorage.setItem(key, JSON.stringify({ palette: palette, font: font }));
 	} catch (e) {}
 	// The installed app's system-bar color comes from the manifest.
 	var link = document.getElementById("manifest-link");
@@ -50,10 +56,14 @@ function setAppearance(palette, font) {
 	try {
 		var root = document.documentElement;
 		if (!root.hasAttribute("data-appearance-sync")) return;
+		var key = appearanceKey();
+		if (!key) return;
+		// Older builds kept one unscoped copy.
+		localStorage.removeItem("appearance");
 		var palette = root.getAttribute("data-palette") || "";
 		var font = root.getAttribute("data-font") || "";
 		if (navigator.onLine === false) {
-			var saved = JSON.parse(localStorage.getItem(APPEARANCE_KEY) || "null");
+			var saved = JSON.parse(localStorage.getItem(key) || "null");
 			if (saved) {
 				palette = saved.palette;
 				font = saved.font;
@@ -65,7 +75,7 @@ function setAppearance(palette, font) {
 			if (font) root.setAttribute("data-font", font);
 			else root.removeAttribute("data-font");
 		} else {
-			localStorage.setItem(APPEARANCE_KEY, JSON.stringify({ palette: palette, font: font }));
+			localStorage.setItem(key, JSON.stringify({ palette: palette, font: font }));
 		}
 	} catch (e) {}
 })();
