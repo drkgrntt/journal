@@ -4,6 +4,7 @@
 
 import { currentUserId } from "./index.js"
 import { flushDrafts, pendingDrafts, removeAllDrafts } from "./drafts.js"
+import { flushOutbox, pendingOps, removeAllOutbox } from "./outbox.js"
 
 const WARM_INTERVAL_MS = 6 * 60 * 60 * 1000
 const WARMED_KEY = "offline-warmed-at"
@@ -45,6 +46,7 @@ window.addEventListener("load", registerServiceWorker)
 
 async function clearOfflineData() {
 	removeAllDrafts()
+	removeAllOutbox()
 	try {
 		const keys = await caches.keys()
 		await Promise.all(keys.filter((key) => key.startsWith("contour-")).map((key) => caches.delete(key)))
@@ -59,7 +61,7 @@ async function clearOfflineData() {
 const SIGN_OUT_EVERYWHERE_PATH = "/api/profile/sign-out-everywhere"
 const SIGN_OUT_PATHS = ["/api/auth/logout", SIGN_OUT_EVERYWHERE_PATH]
 
-// Logging out (or signing out everywhere) wipes the on-device drafts and the cached page (which contains
+// Logging out (or signing out everywhere) wipes the on-device drafts and queued changes, and the cached page (which contains
 // the user's outstanding action items). Drafts that haven't synced get one
 // last attempt first, and a warning if they still can't - logging out would
 // otherwise silently throw them away.
@@ -75,10 +77,10 @@ document.addEventListener("htmx:confirm", async (event) => {
 		)
 		if (!sure) return
 	}
-	if (pendingDrafts().length > 0) {
-		const remaining = await flushDrafts()
+	if (pendingDrafts().length > 0 || pendingOps().length > 0) {
+		const remaining = (await flushDrafts()) + (await flushOutbox())
 		if (remaining > 0) {
-			const noun = remaining === 1 ? "entry hasn't" : "entries haven't"
+			const noun = remaining === 1 ? "change hasn't" : "changes haven't"
 			const proceed = await window.confirmDialog(
 				`${remaining} ${noun} synced yet. Logging out will discard ${remaining === 1 ? "it" : "them"}.`,
 				"Log out anyway",
