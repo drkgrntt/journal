@@ -39,6 +39,9 @@ function setAppearance(palette, font) {
 	try {
 		localStorage.setItem(APPEARANCE_KEY, JSON.stringify({ palette: palette, font: font }));
 	} catch (e) {}
+	// The installed app's system-bar color comes from the manifest.
+	var link = document.getElementById("manifest-link");
+	if (link) link.setAttribute("href", "/manifest.webmanifest" + (palette ? "?palette=" + palette : ""));
 	// Charts bake their colors in when built.
 	document.dispatchEvent(new Event("themechange"));
 }

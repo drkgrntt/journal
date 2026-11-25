@@ -39,6 +39,14 @@ func appearanceOf(c *fiber.Ctx) (string, string) {
 	return user.EffectiveAppearance()
 }
 
+// manifestURL carries the palette so the installed app's theme color follows it.
+func manifestURL(c *fiber.Ctx) string {
+	if palette, _ := appearanceOf(c); palette != "" {
+		return "/manifest.webmanifest?palette=" + palette
+	}
+	return "/manifest.webmanifest"
+}
+
 // viewportContent lets the native shell's page (and the signed-in tab bar) draw under the system bars
 // (viewport-fit=cover); the header and footer then pad themselves by the
 // safe-area insets (see components/header.css and footer.css) so their own
@@ -91,7 +99,7 @@ templ baseWithHead(c *fiber.Ctx, h *Head) {
 			<link href={ AssetURL("/assets/fontawesome/css/sharp-thin.css") } rel="stylesheet"/>
 			<link href={ AssetURL("/assets/css/output.css") } rel="stylesheet"/>
 			<link rel="icon" type="image/png" href="/assets/images/icon-192.png"/>
-			<link rel="manifest" href="/assets/manifest.json"/>
+			<link rel="manifest" id="manifest-link" href={ manifestURL(c) }/>
 			<link rel="apple-touch-icon" href="/assets/images/icon-192.png"/>
 			<meta name="mobile-web-app-capable" content="yes"/>
 			<meta name="apple-mobile-web-app-capable" content="yes"/>

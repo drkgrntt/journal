@@ -52,3 +52,19 @@ func TestResolveAppearance(t *testing.T) {
 		})
 	}
 }
+
+func TestPaletteThemeColor(t *testing.T) {
+	cases := map[string]string{
+		"":         DefaultThemeColor,
+		"bogus":    DefaultThemeColor,
+		"lavender": "#C8B8F9",
+		"sky":      "#B8DEF9",
+		"rose":     "#F9B8C8",
+		"sand":     "#F9E1B8",
+	}
+	for in, want := range cases {
+		if got := PaletteThemeColor(in); got != want {
+			t.Errorf("PaletteThemeColor(%q) = %s, want %s", in, got, want)
+		}
+	}
+}
