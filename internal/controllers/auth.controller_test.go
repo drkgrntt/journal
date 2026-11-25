@@ -147,6 +147,9 @@ func TestLoginSetsASessionThatWorks(t *testing.T) {
 		if got := sessionStatus(t, sessionApp(t, tx), c.Value); got != http.StatusOK {
 			t.Errorf("session status = %d, want 200", got)
 		}
+		if got := resp.Header.Get("HX-Redirect"); got != "/dashboard" {
+			t.Errorf("HX-Redirect = %q, want a full-page redirect to /dashboard", got)
+		}
 	})
 }
 

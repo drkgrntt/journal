@@ -4,8 +4,6 @@ templ AuthForm(action string) {
 	<form
 		id="auth-form"
 		hx-post={ action }
-		hx-target="body"
-		hx-push-url="/dashboard"
 	>
 		<div class="field">
 			<label class="label" for="email">Email</label>

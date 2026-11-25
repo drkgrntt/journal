@@ -126,7 +126,10 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusInternalServerError).SendString("Error creating token")
 	}
 
-	return ctx.Redirect("/dashboard")
+	// A full page load, not an htmx body swap: the swap leaves <html> (palette,
+	// font, tab bar) from the logged-out page.
+	ctx.Set("HX-Redirect", "/dashboard")
+	return ctx.SendStatus(http.StatusNoContent)
 }
 
 func (c *AuthController) login(ctx *fiber.Ctx) error {
@@ -153,7 +156,10 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusInternalServerError).SendString("Error creating token")
 	}
 
-	return ctx.Redirect("/dashboard")
+	// A full page load, not an htmx body swap: the swap leaves <html> (palette,
+	// font, tab bar) from the logged-out page.
+	ctx.Set("HX-Redirect", "/dashboard")
+	return ctx.SendStatus(http.StatusNoContent)
 }
 
 func (c *AuthController) logout(ctx *fiber.Ctx) error {
@@ -162,7 +168,8 @@ func (c *AuthController) logout(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusInternalServerError).SendString("Error logging out")
 	}
 	utils.ClearSessionCookie(ctx)
-	return ctx.Status(http.StatusNoContent).Redirect("/auth/login")
+	ctx.Set("HX-Redirect", "/auth/login")
+	return ctx.SendStatus(http.StatusNoContent)
 }
 
 func (c *AuthController) forgot(ctx *fiber.Ctx) error {
