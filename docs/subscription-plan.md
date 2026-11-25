@@ -4,7 +4,7 @@
 
 Shipped to production on 2026-11-17 (merged to `main`, migrations 000004-000008 applied, live Stripe prices and portal created with `cmd/stripesetup`, the live webhook endpoint set to the four event types below, and the owner account comped).
 
-- The old `features` / `user_features` tables are unread but not yet dropped; a later migration should drop them.
+- The old `features` / `user_features` tables and models were dropped in migration `000014_drop_features`.
 - Email confirmation (migration 000008) was added after the original plan: reminder emails only go to a confirmed address, nothing else is gated on it. See the Email confirmation bullet in `CLAUDE.md`.
 - Active subscribers can switch to Lifetime from the profile (no credit for unused time), and the Stripe portal is configured to switch between monthly and annual. The portal switching was not confirmed in the hosted portal UI, so check it with a real subscription.
 - The live webhook endpoint must stay subscribed to `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, and `customer.subscription.deleted`.

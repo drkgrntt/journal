@@ -709,7 +709,7 @@ func (c *DashboardController) getRoutineCompletionRate(ctx *fiber.Ctx) error {
 	return utils.RenderComponent(dashboard.RoutineCompletionRateContent(ctx), ctx)
 }
 
-// Topic distribution over time -- are you writing more about health lately, more about work?
+// Topic distribution -- a snapshot of how your entries split across topics (not a trend over time).
 func (c *DashboardController) getTopicDistribution(ctx *fiber.Ctx) error {
 	tz := ctx.Cookies("tz", "UTC")
 	loc, err := time.LoadLocation(tz)
