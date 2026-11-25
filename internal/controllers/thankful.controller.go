@@ -138,15 +138,42 @@ func (c *ThankfulController) getThankfulForm(ctx *fiber.Ctx) error {
 }
 
 func (c *ThankfulController) createThankful(ctx *fiber.Ctx) error {
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
+
+	clientID, err := parseClientID(ctx)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
+	}
+
+	// A create the server has already seen (the first attempt's response was
+	// lost) becomes an update of that thankful. Scoped to the current user.
+	if clientID != "" {
+		var existing models.Thankful
+		err := c.db.Preload("Journal").
+			Where("creator_id = ?", user.ID).
+			Where("metadata->>'clientId' = ?", clientID).
+			First(&existing).Error
+		if err == nil {
+			ctx.Locals(utils.LocalThankful, &existing)
+			return c.updateThankful(ctx)
+		}
+	}
+
 	var thankful models.Thankful
-	err := c.parseThankfulFromBody(ctx, &thankful)
+	err = c.parseThankfulFromBody(ctx, &thankful)
 	if err != nil {
 		logger.Warn(err.Error())
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	thankful.Base = &models.Base{CreatorID: &user.ID, LastUpdaterID: &user.ID}
+	if clientID != "" {
+		thankful.Metadata, err = models.EncodeMetadata(models.ThankfulMetadata{ClientID: clientID})
+		if err != nil {
+			utils.SetRequestError(ctx, err)
+			return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating thankful"})
+		}
+	}
 
 	err = c.db.Create(&thankful).Error
 	if err != nil {
@@ -159,6 +186,7 @@ func (c *ThankfulController) createThankful(ctx *fiber.Ctx) error {
 		c.db.Where("id = ?", thankful.JournalID).First(&thankful.Journal)
 	}
 
+	ctx.Set("X-Item-Id", thankful.ID.String())
 	components := []templ.Component{
 		thankfulViews.ListItem(ctx, &thankful),
 		thankfulViews.Form(ctx, thankful.Journal, nil),
@@ -189,6 +217,7 @@ func (c *ThankfulController) updateThankful(ctx *fiber.Ctx) error {
 		c.db.Where("id = ?", thankful.JournalID).First(&thankful.Journal)
 	}
 
+	ctx.Set("X-Item-Id", thankful.ID.String())
 	components := []templ.Component{
 		thankfulViews.ListItem(ctx, thankful),
 		thankfulViews.Form(ctx, thankful.Journal, nil),

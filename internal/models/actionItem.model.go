@@ -27,6 +27,13 @@ type ActionItem struct {
 	IsEncrypted bool `gorm:"type:bool;not null" json:"isEncrypted"`
 }
 
+// ActionItemMetadata is the typed shape of an ActionItem's Metadata column.
+type ActionItemMetadata struct {
+	// ClientID is the client-generated id of an offline-queued create, so a
+	// replayed create can be recognized as the same item.
+	ClientID string `json:"clientId,omitempty"`
+}
+
 func (a *ActionItem) IsRecurring() bool {
 	return a.RecurringActionItemID != nil
 }

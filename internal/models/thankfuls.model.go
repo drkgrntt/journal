@@ -22,6 +22,13 @@ type Thankful struct {
 	IsEncrypted bool `gorm:"type:bool;not null" json:"isEncrypted"`
 }
 
+// ThankfulMetadata is the typed shape of a Thankful's Metadata column.
+type ThankfulMetadata struct {
+	// ClientID is the client-generated id of an offline-queued create, so a
+	// replayed create can be recognized as the same thankful.
+	ClientID string `json:"clientId,omitempty"`
+}
+
 func (t *Thankful) HasJournal() bool {
 	return t.JournalID != nil
 }

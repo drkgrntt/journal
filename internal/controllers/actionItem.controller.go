@@ -8,6 +8,7 @@ import (
 	"journal/internal/utils"
 	"journal/internal/web/actionItems"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/a-h/templ"
@@ -137,10 +138,47 @@ func (c *ActionItemController) RegisterApiRoutes() {
 }
 
 type ActionItemBody struct {
-	Text        string `form:"text"`
-	CompletedAt int    `form:"completedAt"`
+	Text string `form:"text"`
+	// CompletedAt is unix milliseconds, set by clients replaying an offline
+	// completion so the time it was done survives the delay.
+	CompletedAt int64  `form:"completedAt"`
 	IsComplete  bool   `form:"isComplete"`
 	JournalID   string `form:"journalId"`
+}
+
+const (
+	maxClientIDLen       = 64
+	completedAtMaxAge    = 90 * 24 * time.Hour
+	completedAtMaxFuture = 5 * time.Minute
+)
+
+// parseClientID reads the optional clientId form field a queued offline create
+// carries so a replay can be matched to the row it already made.
+func parseClientID(ctx *fiber.Ctx) (string, error) {
+	clientID := strings.TrimSpace(ctx.FormValue("clientId"))
+	if len(clientID) > maxClientIDLen {
+		return "", errors.New("clientId too long")
+	}
+	return clientID, nil
+}
+
+// resolveCompletedAt picks the completion time for an item being marked
+// complete: the client's time if it is plausible, else the existing one (so a
+// retried request doesn't move it), else now.
+func resolveCompletedAt(supplied int64, existing *time.Time, now time.Time) time.Time {
+	if supplied != 0 {
+		t := time.UnixMilli(supplied)
+		if !t.Before(now.Add(-completedAtMaxAge)) && !t.After(now.Add(completedAtMaxFuture)) {
+			if t.After(now) {
+				return now
+			}
+			return t
+		}
+	}
+	if existing != nil && !existing.IsZero() {
+		return *existing
+	}
+	return now
 }
 
 func (c *ActionItemController) parseActionItemFromBody(ctx *fiber.Ctx, actionItem *models.ActionItem) error {
@@ -156,18 +194,11 @@ func (c *ActionItemController) parseActionItemFromBody(ctx *fiber.Ctx, actionIte
 	actionItem.Text = body.Text
 
 	if body.IsComplete {
-		now := time.Now()
-		actionItem.CompletedAt = &now
-	} else if actionItem.CompletedAt != nil {
+		completedAt := resolveCompletedAt(body.CompletedAt, actionItem.CompletedAt, time.Now())
+		actionItem.CompletedAt = &completedAt
+	} else {
 		actionItem.CompletedAt = nil
 	}
-
-	// if body.CompletedAt != 0 {
-	// 	date := time.UnixMilli(int64(body.CompletedAt))
-	// 	actionItem.CompletedAt = &date
-	// } else if actionItem.CompletedAt != nil {
-	// 	actionItem.CompletedAt = nil
-	// }
 
 	if body.JournalID != "" {
 		journalUuid, err := uuid.Parse(body.JournalID)
@@ -195,15 +226,42 @@ func (c *ActionItemController) getActionItemForm(ctx *fiber.Ctx) error {
 }
 
 func (c *ActionItemController) createActionItem(ctx *fiber.Ctx) error {
+	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
+
+	clientID, err := parseClientID(ctx)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
+	}
+
+	// A create the server has already seen (the first attempt's response was
+	// lost) becomes an update of that item. Scoped to the current user.
+	if clientID != "" {
+		var existing models.ActionItem
+		err := c.db.Preload("Journal").
+			Where("creator_id = ?", user.ID).
+			Where("metadata->>'clientId' = ?", clientID).
+			First(&existing).Error
+		if err == nil {
+			ctx.Locals(utils.LocalActionItem, &existing)
+			return c.updateActionItem(ctx)
+		}
+	}
+
 	var actionItem models.ActionItem
-	err := c.parseActionItemFromBody(ctx, &actionItem)
+	err = c.parseActionItemFromBody(ctx, &actionItem)
 	if err != nil {
 		logger.Warn(err.Error())
 		return ctx.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Bad request reading body"})
 	}
 
-	user := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
 	actionItem.Base = &models.Base{CreatorID: &user.ID, LastUpdaterID: &user.ID}
+	if clientID != "" {
+		actionItem.Metadata, err = models.EncodeMetadata(models.ActionItemMetadata{ClientID: clientID})
+		if err != nil {
+			utils.SetRequestError(ctx, err)
+			return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error creating action item"})
+		}
+	}
 
 	err = c.db.Create(&actionItem).Error
 	if err != nil {
@@ -216,6 +274,7 @@ func (c *ActionItemController) createActionItem(ctx *fiber.Ctx) error {
 		c.db.Where("id = ?", actionItem.JournalID).First(&actionItem.Journal)
 	}
 
+	ctx.Set("X-Item-Id", actionItem.ID.String())
 	components := []templ.Component{
 		actionItems.ListItem(ctx, &actionItem),
 		actionItems.Form(ctx, actionItem.Journal, nil),
@@ -246,6 +305,7 @@ func (c *ActionItemController) updateActionItem(ctx *fiber.Ctx) error {
 		c.db.Where("id = ?", actionItem.JournalID).First(&actionItem.Journal)
 	}
 
+	ctx.Set("X-Item-Id", actionItem.ID.String())
 	components := []templ.Component{
 		actionItems.ListItem(ctx, actionItem),
 		actionItems.Form(ctx, actionItem.Journal, nil),
