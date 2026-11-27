@@ -22,6 +22,9 @@ function initAutosave() {
 	// Set while the last save couldn't reach the server (offline, 5xx, expired
 	// session); the text is safe in an on-device draft until it can.
 	let needsRetry = false
+	// Done was pressed, so this entry is wanted even with no text (a rating
+	// alone, say). Until then an empty new entry isn't drafted or saved.
+	let submitted = false
 
 	// A brand-new entry gets a client-generated id, sent with every save, so
 	// an on-device draft can be retried without ever creating the entry twice
@@ -105,7 +108,7 @@ function initAutosave() {
 	function persistDraft() {
 		if (!draftId) return
 		const id = currentId()
-		if (!id && (!entryEl || entryEl.value.trim() === "")) {
+		if (!id && !submitted && (!entryEl || entryEl.value.trim() === "")) {
 			removeDraft(currentUserId(), draftId)
 			return
 		}
@@ -131,7 +134,7 @@ function initAutosave() {
 
 		const id = currentId()
 		const entryEmpty = !entryEl || entryEl.value.trim() === ""
-		if (!id && entryEmpty) return
+		if (!id && !submitted && entryEmpty) return
 
 		// FormData's default multipart/form-data encoding doesn't get the
 		// actionItemIds[]/thankfulIds[] bracket-stripping the server only
@@ -199,7 +202,11 @@ function initAutosave() {
 
 	form.addEventListener("input", onEdit)
 	form.addEventListener("change", onEdit)
-	form.addEventListener("submit", () => clearTimeout(debounceTimer))
+	form.addEventListener("submit", () => {
+		clearTimeout(debounceTimer)
+		submitted = true
+		persistDraft()
+	})
 
 	// "Done" goes through htmx rather than autosave. Once the server has it
 	// the draft is redundant; if the request never got there, the draft stays
