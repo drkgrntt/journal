@@ -60,8 +60,8 @@ func TestUpdatePreferences(t *testing.T) {
 func TestUpdatePreferencesNeedsLogin(t *testing.T) {
 	testutil.Tx(t, func(tx *gorm.DB) {
 		code, _ := send(t, newTestApp(t, tx, &ProfileController{}), http.MethodPut, "/api/profile/preferences", form("addAnotherEntry", "true"))
-		if code != http.StatusFound {
-			t.Errorf("status %d, want 302 to login", code)
+		if code != http.StatusUnauthorized {
+			t.Errorf("status %d, want 401", code)
 		}
 	})
 }

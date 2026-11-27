@@ -74,15 +74,48 @@ func TestRequireSubscription(t *testing.T) {
 	}
 }
 
+// A signed-out page load is sent to the login page. A background request (htmx
+// or a write) gets a 401 instead: following a redirect ends in a 200 login
+// page, which the client would take for a successful save and drop its draft.
 func TestRequireAuth(t *testing.T) {
-	res := run(t, RequireAuth, nil, nil)
-	if res.StatusCode != fiber.StatusFound || res.Header.Get("Location") != "/auth/login" {
-		t.Errorf("no user: got %d -> %q, want 302 -> /auth/login", res.StatusCode, res.Header.Get("Location"))
+	htmx := map[string]string{"HX-Request": "true"}
+	tests := []struct {
+		name, method string
+		header       map[string]string
+		want         int
+		location     string
+	}{
+		{"page load", http.MethodGet, nil, 302, "/auth/login"},
+		{"head", http.MethodHead, nil, 302, "/auth/login"},
+		{"htmx get", http.MethodGet, htmx, 401, ""},
+		{"htmx post", http.MethodPost, htmx, 401, ""},
+		{"fetch post", http.MethodPost, nil, 401, ""},
+		{"fetch put", http.MethodPut, nil, 401, ""},
+		{"fetch delete", http.MethodDelete, nil, 401, ""},
 	}
-	// RequireAuth has no htmx special case: it still sends a plain redirect.
-	res = run(t, RequireAuth, nil, map[string]string{"HX-Request": "true"})
-	if res.StatusCode != fiber.StatusFound || res.Header.Get("HX-Redirect") != "" {
-		t.Errorf("htmx: got %d HX-Redirect=%q", res.StatusCode, res.Header.Get("HX-Redirect"))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reached := false
+			app := fiber.New()
+			app.All("/", RequireAuth, func(c *fiber.Ctx) error {
+				reached = true
+				return c.SendString("ok")
+			})
+			req := httptest.NewRequest(tt.method, "/", nil)
+			for k, v := range tt.header {
+				req.Header.Set(k, v)
+			}
+			res, err := app.Test(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if res.StatusCode != tt.want || res.Header.Get("Location") != tt.location {
+				t.Errorf("got %d -> %q, want %d -> %q", res.StatusCode, res.Header.Get("Location"), tt.want, tt.location)
+			}
+			if reached {
+				t.Error("handler ran without a user")
+			}
+		})
 	}
 	if got := run(t, RequireAuth, &models.User{}, nil).StatusCode; got != 200 {
 		t.Errorf("with user: got %d, want 200", got)

@@ -290,8 +290,8 @@ func TestCrossUserReferences(t *testing.T) {
 	})
 }
 
-// Unauthenticated requests are redirected, never served.
-func TestUnauthenticatedAPIIsRedirected(t *testing.T) {
+// Unauthenticated writes are refused, never served.
+func TestUnauthenticatedAPIIsRefused(t *testing.T) {
 	testutil.Tx(t, func(tx *gorm.DB) {
 		for _, c := range []struct {
 			name string
@@ -303,8 +303,8 @@ func TestUnauthenticatedAPIIsRedirected(t *testing.T) {
 		} {
 			app := newTestApp(t, tx, c.c)
 			code, _ := send(t, app, http.MethodDelete, c.path, nil)
-			if code != http.StatusFound {
-				t.Errorf("%s: status %d, want 302 to login", c.name, code)
+			if code != http.StatusUnauthorized {
+				t.Errorf("%s: status %d, want 401", c.name, code)
 			}
 		}
 	})
