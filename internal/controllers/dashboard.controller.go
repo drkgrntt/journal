@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -84,17 +85,28 @@ func bucketDaysByRating(daysToValues map[string][]int, min, max int) map[int]int
 	return counts
 }
 
+// calendarJournals loads what the rating calendar needs. The page receives these
+// records as JSON and draws a dot from the date and rating, so nothing else
+// (above all not the entry text) is selected.
+func (c *DashboardController) calendarJournals(userID uuid.UUID, where string, args ...any) ([]*models.Journal, error) {
+	var journals []*models.Journal
+	err := c.db.
+		Select("date", "rating_id").
+		Where("creator_id = ?", userID).
+		Where(where, args...).
+		Preload("Rating").
+		Find(&journals).Error
+	return journals, err
+}
+
+// setJournals loads the recent entries behind the dashboard's inline calendar.
 func (c *DashboardController) setJournals(ctx *fiber.Ctx) error {
 	currentUser := utils.GetLocal[models.User](ctx, utils.LocalCurrentUser)
-	var journals []*models.Journal
-
-	c.db.
-		Where("creator_id = ?", currentUser.ID).
-		Where("date >= ?", time.Now().AddDate(0, -1, -1)).
-		Preload("Rating").
-		Preload("JournalType").
-		Order("created_at DESC").
-		Find(&journals)
+	journals, err := c.calendarJournals(currentUser.ID, "date >= ?", time.Now().AddDate(0, -1, -1))
+	if err != nil {
+		utils.SetRequestError(ctx, err)
+		return ctx.Status(http.StatusInternalServerError).SendString("Error loading the dashboard")
+	}
 
 	ctx.Locals(utils.LocalJournals, &journals)
 
@@ -237,15 +249,11 @@ func (c *DashboardController) getCalendar(ctx *fiber.Ctx) error {
 	windowEnd := date.AddDate(0, 1, 1).UTC()
 
 	if lens == patterns.LensRating {
-		var journals []*models.Journal
-
-		c.db.
-			Where("creator_id = ?", currentUser.ID).
-			Where("date BETWEEN ? AND ?", windowStart, windowEnd).
-			Preload("Rating").
-			Preload("JournalType").
-			Order("created_at DESC").
-			Find(&journals)
+		journals, err := c.calendarJournals(currentUser.ID, "date BETWEEN ? AND ?", windowStart, windowEnd)
+		if err != nil {
+			utils.SetRequestError(ctx, err)
+			return ctx.Status(http.StatusInternalServerError).SendString("Error loading the calendar")
+		}
 
 		ctx.Locals(utils.LocalJournals, &journals)
 		return utils.RenderComponent(dashboard.RatingCalendar(ctx), ctx)

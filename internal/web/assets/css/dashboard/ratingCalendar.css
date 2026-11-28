@@ -68,5 +68,11 @@
 	}
 	td {
 		font-size: 2rem;
+		height: 3rem;
+	}
+	/* A day with nothing keeps its plain, quiet number (no dot). */
+	td:not(:has(*)) {
+		font-size: .9rem;
+		opacity: .6;
 	}
 }

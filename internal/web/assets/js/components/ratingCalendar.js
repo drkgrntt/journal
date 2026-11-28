@@ -30,10 +30,8 @@ function initCountLens(calendar, lens) {
     })
     const count = counts[dateKey] || 0
 
-    if (count === 0) {
-      td.innerHTML = `<span title='${dateString}'>●</span>`;
-      return;
-    }
+    // An empty day stays the plain day number the server rendered.
+    if (count === 0) return;
 
     const step = Math.min(count, 3)
     const dot = document.createElement(linksToJournal ? 'a' : 'span')
@@ -98,10 +96,8 @@ function initRatingCalendar() {
       day: 'numeric'
     })
 
-    if (filtered.length === 0) {
-      td.innerHTML = `<span title='${dateString}\nNo Journals'>●</span>`;
-      return;
-    }
+    // An empty day stays the plain day number the server rendered.
+    if (filtered.length === 0) return;
 
     const averageRating = filtered.reduce(function(total, journal) {
       return total + journal.rating.value
