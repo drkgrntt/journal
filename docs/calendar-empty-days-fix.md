@@ -1,6 +1,6 @@
 # Fix: empty calendar days read as "missed"
 
-Status: fixed 2026-11-28, not yet deployed. Empty days keep their day number, smaller and muted. Checked in a headless desktop browser, not on a phone. The notes below are as written before the fix.
+Status: fixed and deployed 2026-11-28. Empty days keep their day number, smaller and muted. Checked in a headless desktop browser, not on a phone. The notes below are as written before the fix.
 
 ## Problem
 

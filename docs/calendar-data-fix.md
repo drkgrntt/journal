@@ -1,6 +1,6 @@
 # Fix: the rating calendar sends entry text to the page
 
-Status: fixed 2026-11-28, not yet deployed. The dashboard page's inline calendar had the same leak from a second query (`setJournals`); both now load through `calendarJournals`. The notes below are as written before the fix.
+Status: fixed and deployed 2026-11-28. The dashboard page's inline calendar had the same leak from a second query (`setJournals`); both now load through `calendarJournals`. The notes below are as written before the fix.
 
 ## Problem
 

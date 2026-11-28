@@ -1,6 +1,6 @@
 # Fix: deleting things, and deleting an account
 
-Status: both problems and the export gap fixed 2026-11-28, not yet deployed. Migration `000015` (removes already soft-deleted rows) has not run in production. Took the recommendations below: immediate deletion, Stripe customer kept, lifetime is given up. Still open: purging processed email jobs, including feedback. The Stripe cancel step was not tried against a Stripe test account. The notes below are as written before the fix.
+Status: both problems and the export gap fixed and deployed 2026-11-28. Migration `000015` (removes already soft-deleted rows) ran in production the same day. Took the recommendations below: immediate deletion, Stripe customer kept, lifetime is given up. Still open: purging processed email jobs, including feedback. The Stripe cancel step was not tried against a Stripe test account. The notes below are as written before the fix.
 
 ## Problem 1: deleted writing is kept
 
