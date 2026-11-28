@@ -183,7 +183,7 @@ func (c *EntryTemplateController) updateEntryTemplate(ctx *fiber.Ctx) error {
 func (c *EntryTemplateController) deleteEntryTemplate(ctx *fiber.Ctx) error {
 	entryTemplate := utils.GetLocal[models.EntryTemplate](ctx, utils.LocalEntryTemplate)
 
-	if err := c.db.Delete(entryTemplate).Error; err != nil {
+	if err := c.db.Unscoped().Delete(entryTemplate).Error; err != nil {
 		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting template"})
 	}

@@ -345,7 +345,7 @@ func (c *RecurringActionItemController) updateRecurringActionItem(ctx *fiber.Ctx
 func (c *RecurringActionItemController) deleteRecurringActionItem(ctx *fiber.Ctx) error {
 	recurringActionItem := utils.GetLocal[models.RecurringActionItem](ctx, utils.LocalRecurringActionItem)
 
-	err := c.db.Delete(recurringActionItem).Error
+	err := c.db.Unscoped().Delete(recurringActionItem).Error
 	if err != nil {
 		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting recurring action item"})

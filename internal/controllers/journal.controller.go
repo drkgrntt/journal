@@ -529,7 +529,7 @@ func (c *JournalController) updateJournal(ctx *fiber.Ctx) error {
 
 func (c *JournalController) deleteJournal(ctx *fiber.Ctx) error {
 	journal := utils.GetLocal[models.Journal](ctx, utils.LocalJournal)
-	err := c.db.Delete(journal).Error
+	err := c.db.Unscoped().Delete(journal).Error
 	if err != nil {
 		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting journal"})

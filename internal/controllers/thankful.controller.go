@@ -229,7 +229,7 @@ func (c *ThankfulController) updateThankful(ctx *fiber.Ctx) error {
 func (c *ThankfulController) deleteThankful(ctx *fiber.Ctx) error {
 	thankful := utils.GetLocal[models.Thankful](ctx, utils.LocalThankful)
 
-	err := c.db.Delete(thankful).Error
+	err := c.db.Unscoped().Delete(thankful).Error
 	if err != nil {
 		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting thankful"})

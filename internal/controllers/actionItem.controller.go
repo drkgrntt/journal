@@ -317,7 +317,7 @@ func (c *ActionItemController) updateActionItem(ctx *fiber.Ctx) error {
 func (c *ActionItemController) deleteActionItem(ctx *fiber.Ctx) error {
 	actionItem := utils.GetLocal[models.ActionItem](ctx, utils.LocalActionItem)
 
-	err := c.db.Delete(actionItem).Error
+	err := c.db.Unscoped().Delete(actionItem).Error
 	if err != nil {
 		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting action item"})

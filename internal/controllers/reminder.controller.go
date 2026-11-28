@@ -173,7 +173,7 @@ func (c *ReminderController) updateReminder(ctx *fiber.Ctx) error {
 func (c *ReminderController) deleteReminder(ctx *fiber.Ctx) error {
 	reminder := utils.GetLocal[models.Reminder](ctx, utils.LocalReminder)
 
-	err := c.db.Delete(reminder).Error
+	err := c.db.Unscoped().Delete(reminder).Error
 	if err != nil {
 		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting reminder"})

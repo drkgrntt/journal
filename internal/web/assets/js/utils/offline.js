@@ -92,3 +92,11 @@ document.addEventListener("htmx:confirm", async (event) => {
 	await clearOfflineData()
 	event.detail.issueRequest(true)
 })
+
+// A deleted account leaves nothing behind on this device either. This waits for
+// the server to confirm, so a mistyped password doesn't cost any drafts.
+document.addEventListener("htmx:afterRequest", async (event) => {
+	if (event.detail.pathInfo?.requestPath !== "/api/profile/delete-account" || !event.detail.successful) return
+	await clearOfflineData()
+	window.location.assign("/")
+})

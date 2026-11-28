@@ -229,6 +229,45 @@ templ exportSection(c *fiber.Ctx) {
 	</div>
 }
 
+// deleteAccountWarning says what goes, including what a paid plan loses.
+func deleteAccountWarning(user *models.User) string {
+	warning := "This removes your account and everything you've written, right away. It can't be undone."
+	switch user.SubscriptionStatus {
+	case models.SubscriptionLifetime:
+		return warning + " Your lifetime plan goes with it."
+	case models.SubscriptionActive, models.SubscriptionPastDue:
+		return warning + " Your subscription is canceled first."
+	}
+	return warning
+}
+
+templ deleteAccountSection(c *fiber.Ctx) {
+	<form
+		class="form"
+		hx-post="/api/profile/delete-account"
+		hx-swap="none"
+		hx-confirm="Delete your account and everything in it? This can't be undone."
+	>
+		<h4>Delete Your Account</h4>
+		<p>{ deleteAccountWarning(web.CurrentUser(c)) }</p>
+		<p>If you want a copy, export it first.</p>
+		<div class="field">
+			<label for="deleteAccountPassword" class="label">Password</label>
+			<input
+				class="input"
+				type="password"
+				name="password"
+				id="deleteAccountPassword"
+				autocomplete="current-password"
+				required
+			/>
+		</div>
+		<div class="field">
+			<button type="submit" class="button">Delete my account</button>
+		</div>
+	</form>
+}
+
 templ customJournalTypeForm(c *fiber.Ctx) {
 	<div class="form">
 		<h4>Custom Topics</h4>
@@ -448,6 +487,7 @@ templ ProfilePage(c *fiber.Ctx) {
 				<h2 class="group-heading">Your data</h2>
 				<div class="forms">
 					@exportSection(c)
+					@deleteAccountSection(c)
 				</div>
 			</section>
 		</div>

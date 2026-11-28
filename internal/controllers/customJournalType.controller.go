@@ -156,7 +156,7 @@ func (c *CustomJournalTypeController) updateCustomJournalType(ctx *fiber.Ctx) er
 func (c *CustomJournalTypeController) deleteCustomJournalType(ctx *fiber.Ctx) error {
 	customJournalType := utils.GetLocal[models.CustomJournalType](ctx, utils.LocalCustomJournalType)
 
-	err := c.db.Delete(customJournalType).Error
+	err := c.db.Unscoped().Delete(customJournalType).Error
 	if err != nil {
 		utils.SetRequestError(ctx, err)
 		return ctx.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting custom journal type"})

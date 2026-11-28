@@ -24,8 +24,10 @@ const (
 	backupPrefix = "backups/"
 
 	// Retention windows: keep every backup for 30 days, then thin to
-	// one per week until backups are 6 months old, then one per month.
+	// one per week until backups are 6 months old, then one per month, and
+	// delete everything a year old. The privacy page states these.
 	dailyRetention = 30 * 24 * time.Hour
+	maxBackupYears = 1
 )
 
 func init() {
@@ -128,8 +130,8 @@ func parseBackupTime(key string) (time.Time, error) {
 // pruneBackups lists all backups in R2 and deletes the ones that fall
 // outside the retention policy: everything younger than 30 days is kept,
 // backups between 30 days and 6 months old are thinned to one per
-// (ISO) week, and anything older than 6 months is thinned to one per
-// calendar month.
+// (ISO) week, older ones to one per calendar month, and nothing is kept
+// past a year.
 func pruneBackups() error {
 	client := newS3Client()
 	ctx := context.Background()
@@ -191,6 +193,7 @@ func backupsToPrune(backups []backupObject, now time.Time) []string {
 
 	thirtyDaysAgo := now.Add(-dailyRetention)
 	sixMonthsAgo := now.AddDate(0, -6, 0)
+	oldestKept := now.AddDate(-maxBackupYears, 0, 0)
 
 	type bucketKey struct{ a, b int }
 	weeklyKeep := map[bucketKey]backupObject{}
@@ -199,6 +202,8 @@ func backupsToPrune(backups []backupObject, now time.Time) []string {
 
 	for _, b := range backups {
 		switch {
+		case !b.t.After(oldestKept):
+			// Too old to keep at all.
 		case b.t.After(thirtyDaysAgo):
 			keep[b.key] = true
 		case b.t.After(sixMonthsAgo):

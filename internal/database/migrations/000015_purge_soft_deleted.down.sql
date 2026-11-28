@@ -1,0 +1,1 @@
+-- Nothing to undo in the schema. The removed rows only exist in backups.

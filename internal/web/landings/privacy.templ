@@ -12,7 +12,7 @@ templ PrivacyPage(c *fiber.Ctx) {
 			<p>
 				This journal is a personal tool, not a data collection platform. This policy
 				explains what data is collected, how it’s used, who else handles it, and what
-				control you have over it. Last updated November 18, 2026.
+				control you have over it. Last updated November 28, 2026.
 			</p>
 			<h3>What information is collected</h3>
 			<p>
@@ -60,7 +60,7 @@ templ PrivacyPage(c *fiber.Ctx) {
 			<ul>
 				<li><strong>Stripe</strong> processes payments for paid plans.</li>
 				<li><strong>Mailgun</strong> delivers email, so it sees your email address, your name, and the content of the emails sent to you.</li>
-				<li><strong>Cloudflare R2</strong> stores daily backups of the database. Backups contain the database as it’s stored, so your writing is still encrypted in them. They’re kept on a rolling schedule and thinned out over time, so data you delete can remain in older backups for a while.</li>
+				<li><strong>Cloudflare R2</strong> stores daily backups of the database. Backups contain the database as it’s stored, so your writing is still encrypted in them. Every daily backup is kept for 30 days, then one a week up to six months, then one a month up to a year, after which it’s deleted. So what you delete can remain in backups for up to a year.</li>
 			</ul>
 			<p>
 				The journal itself runs on a server I manage.
@@ -103,9 +103,11 @@ templ PrivacyPage(c *fiber.Ctx) {
 				you’ve written from your profile.
 			</p>
 			<p>
-				You can delete journal entries you no longer want to keep. If you choose to stop
-				using the app, you can ask for your account and associated data to be deleted
-				through the <a href="/feedback">feedback form</a>.
+				Deleting something removes it from the journal’s database. You can also delete
+				your account from your profile, which removes your account, your writing, and
+				your settings right away. Copies can remain in backups for up to a year, as
+				described above. If you’ve paid, Stripe keeps its own record of the payments. Feedback
+				messages aren’t tied to an account, so they aren’t removed with it.
 			</p>
 			<h3>Changes to this policy</h3>
 			<p>

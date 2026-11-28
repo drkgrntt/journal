@@ -31,6 +31,9 @@ type ProfileController struct {
 	db    *gorm.DB
 	api   fiber.Router
 	views fiber.Router
+	// cancelBilling overrides how account deletion stops billing; nil means
+	// Stripe. Tests set it.
+	cancelBilling func(*models.User) error
 }
 
 func (c *ProfileController) Init(db *gorm.DB, app *fiber.App) {
@@ -61,6 +64,7 @@ func (c *ProfileController) RegisterApiRoutes() {
 	c.api.Post("/billing/checkout/:plan", c.startCheckout)
 	c.api.Post("/billing/portal", c.openPortal)
 	c.api.Get("/export", c.exportJournals)
+	c.api.Post("/delete-account", middleware.RateLimit(5, 15*time.Minute), c.deleteAccount)
 }
 
 type exportedActionItem struct {
@@ -137,6 +141,18 @@ func (c *ProfileController) exportJournals(ctx *fiber.Ctx) error {
 		})
 	}
 
+	// Actions and thankfuls with no entry (never attached, or their entry was
+	// deleted) go in one last group so the export holds everything.
+	loose, err := c.unattachedItems(currentUser.ID)
+	if err != nil {
+		logger.Error(err.Error())
+		utils.SetRequestError(ctx, err)
+		return ctx.Status(http.StatusInternalServerError).SendString("Error exporting journals")
+	}
+	if len(loose.ActionItems) > 0 || len(loose.Thankfuls) > 0 {
+		exports = append(exports, *loose)
+	}
+
 	filename := fmt.Sprintf("contour-journal-export-%s", time.Now().UTC().Format("2006-01-02"))
 
 	if ctx.Query("format") == "json" {
@@ -147,7 +163,11 @@ func (c *ProfileController) exportJournals(ctx *fiber.Ctx) error {
 	var sb strings.Builder
 	sb.WriteString("# Contour Journal Export\n\n")
 	for _, e := range exports {
-		sb.WriteString(fmt.Sprintf("## %s — %s", e.Date, e.Topic))
+		if e.Date == "" {
+			sb.WriteString("## " + e.Topic)
+		} else {
+			sb.WriteString(fmt.Sprintf("## %s — %s", e.Date, e.Topic))
+		}
 		if e.Rating != "" {
 			sb.WriteString(fmt.Sprintf(" (%s)", e.Rating))
 		}
@@ -182,6 +202,35 @@ func (c *ProfileController) exportJournals(ctx *fiber.Ctx) error {
 	ctx.Set("Content-Type", "text/markdown; charset=utf-8")
 	ctx.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s.md"`, filename))
 	return ctx.SendString(sb.String())
+}
+
+const unattachedTopic = "Not attached to an entry"
+
+// unattachedItems returns the user's action items and thankfuls that aren't
+// part of any of their existing entries.
+func (c *ProfileController) unattachedItems(userID uuid.UUID) (*exportedJournal, error) {
+	const unattached = "journal_id IS NULL OR journal_id NOT IN (SELECT id FROM journals WHERE creator_id = ? AND deleted_at IS NULL)"
+	mine := func() *gorm.DB {
+		return c.db.Where("creator_id = ?", userID).Where(unattached, userID).Order("created_at asc")
+	}
+
+	var actionItems []*models.ActionItem
+	if err := mine().Find(&actionItems).Error; err != nil {
+		return nil, err
+	}
+	var thankfuls []*models.Thankful
+	if err := mine().Find(&thankfuls).Error; err != nil {
+		return nil, err
+	}
+
+	group := &exportedJournal{Topic: unattachedTopic}
+	for _, a := range actionItems {
+		group.ActionItems = append(group.ActionItems, exportedActionItem{Text: a.Text, Completed: a.IsComplete()})
+	}
+	for _, t := range thankfuls {
+		group.Thankfuls = append(group.Thankfuls, t.Text)
+	}
+	return group, nil
 }
 
 // ensureStripeCustomer returns the user's Stripe customer ID, creating the
